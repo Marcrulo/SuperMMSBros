@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://drv5qoyqdrc1"]
+
+[node name="Match" type="Node2D" unique_id=1552852153]
+
+[node name="TitleLabel" type="Label" parent="." unique_id=1881382263]
+offset_right = 320.0
+offset_bottom = 180.0
+text = "SUPER MMS BROS"
+horizontal_alignment = 1
+vertical_alignment = 1
