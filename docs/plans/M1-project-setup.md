@@ -347,11 +347,11 @@ func test_actions_exist() -> void:
 
 
 func test_keyboard_bindings() -> void:
-	_assert_keys("move_left", [KEY_A, KEY_LEFT])
-	_assert_keys("move_right", [KEY_D, KEY_RIGHT])
-	_assert_keys("jump", [KEY_W, KEY_UP, KEY_SPACE])
-	_assert_keys("down", [KEY_S, KEY_DOWN])
-	_assert_keys("attack", [KEY_J, KEY_Z])
+	_assert_keys("move_left", [KEY_A])
+	_assert_keys("move_right", [KEY_D])
+	_assert_keys("jump", [KEY_W, KEY_SPACE])
+	_assert_keys("down", [KEY_S])
+	_assert_keys("attack", [KEY_J])
 	_assert_keys("pause", [KEY_ESCAPE])
 
 
@@ -425,26 +425,26 @@ extends SceneTree
 
 func _init() -> void:
 	_set_action("move_left", 0.2, [
-		_key(KEY_A), _key(KEY_LEFT),
+		_key(KEY_A),
 		_axis(JOY_AXIS_LEFT_X, -1.0), _button(JOY_BUTTON_DPAD_LEFT),
 	])
 	_set_action("move_right", 0.2, [
-		_key(KEY_D), _key(KEY_RIGHT),
+		_key(KEY_D),
 		_axis(JOY_AXIS_LEFT_X, 1.0), _button(JOY_BUTTON_DPAD_RIGHT),
 	])
-	_set_action("jump", 0.5, [
-		_key(KEY_W), _key(KEY_UP), _key(KEY_SPACE),
+	_set_action("jump", 0.2, [
+		_key(KEY_W), _key(KEY_SPACE),
 		_button(JOY_BUTTON_A),
 	])
 	_set_action("down", 0.5, [
-		_key(KEY_S), _key(KEY_DOWN),
+		_key(KEY_S),
 		_axis(JOY_AXIS_LEFT_Y, 1.0), _button(JOY_BUTTON_DPAD_DOWN),
 	])
-	_set_action("attack", 0.5, [
-		_key(KEY_J), _key(KEY_Z),
+	_set_action("attack", 0.2, [
+		_key(KEY_J),
 		_button(JOY_BUTTON_X),
 	])
-	_set_action("pause", 0.5, [
+	_set_action("pause", 0.2, [
 		_key(KEY_ESCAPE),
 		_button(JOY_BUTTON_START),
 	])
@@ -490,7 +490,7 @@ godot --headless --path super-mms-bros -s res://tools/apply_input_map.gd
 grep -c '"device":-1' super-mms-bros/project.godot
 ```
 
-Expected: `apply_input_map: save -> OK`; the count is `21` (one per binding).
+Expected: `apply_input_map: save -> OK`; the count is `16` (one per binding).
 
 - [ ] **Step 4: Delete the tool**
 
