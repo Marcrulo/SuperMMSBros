@@ -35,7 +35,11 @@ godot --path super-mms-bros -- --p1=cpu              # CPU vs CPU (from M5)
 godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-ticks=36000   # headless end-to-end (from M5)
 ```
 
-Test command: set up in M1 — record it here when it exists.
+Run the tests (headless; exit code 0 = all passed):
+
+```bash
+godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd
+```
 
 ## Core design rules
 
