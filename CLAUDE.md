@@ -35,6 +35,10 @@ godot --path super-mms-bros -- --p1=cpu              # CPU vs CPU (from M5)
 godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-ticks=36000   # headless end-to-end (from M5)
 ```
 
+Don't run `--import` while the editor is open: two Godot processes writing `.godot/` at once can
+corrupt `.godot/uid_cache.bin` (symptom: `Unrecognized UID` / the game can't find its main scene).
+Fix: close the editor, delete that file, run `--import`.
+
 Run the tests (headless; exit code 0 = all passed):
 
 ```bash

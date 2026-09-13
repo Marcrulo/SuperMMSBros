@@ -180,7 +180,8 @@ func test_physics_runs_at_60_ticks() -> void:
 
 
 func test_main_scene_loads() -> void:
-	var path: String = ProjectSettings.get_setting("application/run/main_scene")
+	# The editor stores the main scene as a "uid://..." reference; ensure_path turns it into a file path.
+	var path := ResourceUID.ensure_path(ProjectSettings.get_setting("application/run/main_scene"))
 	assert_eq(path, "res://match/match.tscn")
 	var scene := load(path) as PackedScene
 	assert_not_null(scene, "main scene should load")
@@ -192,7 +193,7 @@ func test_main_scene_loads() -> void:
 
 
 func test_pixel_font_is_default_and_crisp() -> void:
-	assert_eq(ProjectSettings.get_setting("gui/theme/custom_font"), FONT_PATH)
+	assert_eq(ResourceUID.ensure_path(ProjectSettings.get_setting("gui/theme/custom_font")), FONT_PATH)
 	var font := load(FONT_PATH) as FontFile
 	assert_not_null(font, "font should load")
 	if font == null:
