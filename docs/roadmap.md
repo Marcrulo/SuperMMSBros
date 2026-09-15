@@ -21,7 +21,8 @@ Each milestone ends with something you can run and try. Each gets its own implem
 - A pixel font in `assets/fonts/`.
 
 ### M2 — Movement on the stage
-- `FighterStats` resource, `FighterInput`, `Controller` base class, `KeyboardController`.
+- `FighterStats` resource, `FighterInput`, `Controller` base class, `KeyboardController`,
+  `ScriptedController` (used by the tests).
 - Fighter scene with movement states (`IDLE`, `RUN`, `AIR`) and placeholder visuals.
 - Battlefield stage scene with solid ground and one-way platforms.
 - Match scene that drives the tick (no rules yet) with one keyboard-controlled fighter.

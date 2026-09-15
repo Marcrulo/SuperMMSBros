@@ -8,7 +8,11 @@ terminal and in the editor's GUT panel.
 - Test files: `super-mms-bros/tests/test_<topic>.gd`, each `extends GutTest`.
 - The exact command to run the suite is recorded in `CLAUDE.md` once M1 has set it up.
 - Headless runs need the project imported first (`godot --headless --path super-mms-bros --import`)
-  whenever assets were added or changed.
+  whenever assets were added or changed, and after adding a script with a new `class_name` (the
+  import updates Godot's list of named classes; until then other scripts can't use the name).
+- GUT silently skips a test script that fails to load and still exits with code 0. The test
+  `tests/test_test_scripts_load.gd` loads every test script and fails if one doesn't load, so exit
+  code 0 really means all tests passed.
 
 ## How tests drive the game
 
@@ -16,7 +20,10 @@ terminal and in the editor's GUT panel.
   controllers, set `auto_step = false`, and call `match.step()` directly — so a test controls
   exactly how many ticks pass.
 - After adding a scene to the tree, wait one physics frame (`await wait_physics_frames(1)`) before
-  stepping, so the physics server has registered the stage's colliders.
+  stepping, so the physics server has registered the stage's colliders. The test then resumes
+  *inside* a physics frame, which `Match.step()` and `Fighter.tick()` require (see
+  [architecture](architecture.md#tick-order)); from there it can call them many times in a row
+  without awaiting again.
 - Fighter-level tests may call `fighter.tick(input)` directly on a fighter placed on a stage.
 - Tests assert on the `MatchSnapshot` and on fighter state, never on visuals.
 
