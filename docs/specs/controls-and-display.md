@@ -6,14 +6,15 @@ Gameplay and UI code refer only to these action names, never to specific keys or
 
 | Action | Keyboard | Gamepad |
 |---|---|---|
-| `move_left` | A, ← | left stick left, d-pad left |
-| `move_right` | D, → | left stick right, d-pad right |
-| `jump` | W, ↑, Space | A / Cross (bottom face button) |
-| `down` | S, ↓ | left stick down, d-pad down |
-| `attack` | J, Z | X / Square (left face button) |
+| `move_left` | A | left stick left, d-pad left |
+| `move_right` | D | left stick right, d-pad right |
+| `jump` | W, Space | A / Cross (bottom face button) |
+| `down` | S | left stick down, d-pad down |
+| `attack` | J | X / Square (left face button) |
 | `pause` | Esc | Start |
 
-- J suits WASD players; Z suits arrow-key players.
+- Keyboard play uses one layout: WASD to move and jump (Space also jumps), J to attack. The
+  arrow keys are left free (e.g. for a second player if local multiplayer is added).
 - Stick actions use a dead zone of 0.5 for `down` and 0.2 for `move_left`/`move_right`.
 - Menus use Godot's built-in `ui_*` actions (arrows / d-pad to move focus, Enter / Space / A to
   press), which already support keyboard and gamepad.

@@ -76,6 +76,11 @@ Every tick, `step()` does, in this order:
 
 The order is always the same, which is what makes matches repeatable.
 
+`step()` (and `Fighter.tick()`) must run **inside a physics frame**: `move_and_slide()` takes its time
+step from the physics engine, which is exactly 1/60 s there (also with `--speed`, see below). Outside
+a physics frame it would use the variable render-frame time and break repeatability. `Fighter.tick()`
+asserts this.
+
 ## Hit detection
 
 Hitboxes and hurtboxes are `Area2D` nodes with `RectangleShape2D` collision shapes, so they can be
