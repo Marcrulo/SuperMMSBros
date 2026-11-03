@@ -291,6 +291,39 @@ func test_down_on_the_main_platform_does_nothing() -> void:
 	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE)
 
 
+func test_holding_down_while_falling_passes_through_a_platform() -> void:
+	await _land_on_left_platform()
+	_run(_jump(), 1)
+	_run_until_falling(_hold_jump())
+	_run_until_landed(_hold_down())
+	assert_eq(_fighter.state, Fighter.State.IDLE)
+	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE, "fell past the platform to the main one")
+	assert_true(_fighter.get_collision_mask_value(2), "pass-through platforms are solid again")
+
+
+func test_letting_go_of_down_in_the_air_lands_on_the_platform() -> void:
+	await _land_on_left_platform()
+	_run(_jump(), 1)
+	_run(_hold_down(), 5)
+	assert_false(_fighter.get_collision_mask_value(2), "ignoring pass-through platforms while down is held")
+	_run_until_landed(_idle())
+	assert_almost_eq(_fighter.position.y, PLATFORM_Y, TOLERANCE, "caught by the platform again")
+
+
+func test_holding_down_on_a_platform_does_not_drop() -> void:
+	await _land_on_left_platform()
+	_run(_hold_down(), 10)
+	assert_eq(_fighter.state, Fighter.State.IDLE, "dropping needs a press, not a hold")
+	assert_almost_eq(_fighter.position.y, PLATFORM_Y, TOLERANCE)
+
+
+## Down held, but not pressed this tick.
+func _hold_down() -> FighterInput:
+	var input := FighterInput.new()
+	input.down_held = true
+	return input
+
+
 func _down() -> FighterInput:
 	var input := FighterInput.new()
 	input.down_pressed = true

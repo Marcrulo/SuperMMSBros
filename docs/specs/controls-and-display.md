@@ -28,7 +28,7 @@ physics frame, so `is_action_just_pressed` works per tick):
 |---|---|
 | `move_x` | `Input.get_axis("move_left", "move_right")` |
 | `jump_pressed` / `jump_held` | `is_action_just_pressed("jump")` / `is_action_pressed("jump")` |
-| `down_pressed` | `is_action_just_pressed("down")` |
+| `down_pressed` / `down_held` | `is_action_just_pressed("down")` / `is_action_pressed("down")` |
 | `attack_pressed` | `is_action_just_pressed("attack")` |
 
 `pause` is handled by the HUD/pause menu, not by the controller.

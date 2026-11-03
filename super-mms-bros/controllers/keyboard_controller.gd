@@ -11,5 +11,6 @@ func get_input(_state: RefCounted) -> FighterInput:
 	input.jump_pressed = Input.is_action_just_pressed("jump")
 	input.jump_held = Input.is_action_pressed("jump")
 	input.down_pressed = Input.is_action_just_pressed("down")
+	input.down_held = Input.is_action_pressed("down")
 	input.attack_pressed = Input.is_action_just_pressed("attack")
 	return input

@@ -11,5 +11,7 @@ var jump_pressed: bool = false
 var jump_held: bool = false
 ## Down went down this tick.
 var down_pressed: bool = false
+## Down is held down.
+var down_held: bool = false
 ## Attack went down this tick.
 var attack_pressed: bool = false

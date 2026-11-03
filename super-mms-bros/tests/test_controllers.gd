@@ -13,6 +13,7 @@ func test_fighter_input_starts_empty() -> void:
 	assert_false(input.jump_pressed)
 	assert_false(input.jump_held)
 	assert_false(input.down_pressed)
+	assert_false(input.down_held)
 	assert_false(input.attack_pressed)
 
 
@@ -53,12 +54,14 @@ func test_scripted_controller_without_inputs_is_a_dummy() -> void:
 		assert_false(input.jump_pressed)
 
 
-func test_keyboard_controller_reads_move_and_held_jump() -> void:
+func test_keyboard_controller_reads_move_and_held_buttons() -> void:
 	Input.action_press("move_left")
 	Input.action_press("jump")
+	Input.action_press("down")
 	var input := KeyboardController.new().get_input(null)
 	assert_eq(input.move_x, -1.0)
 	assert_true(input.jump_held)
+	assert_true(input.down_held)
 
 
 func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
@@ -81,3 +84,4 @@ func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
 	assert_false(second.down_pressed, "holding down doesn't press it again")
 	assert_false(second.attack_pressed, "holding attack doesn't press it again")
 	assert_true(second.jump_held, "jump is still held")
+	assert_true(second.down_held, "down is still held")

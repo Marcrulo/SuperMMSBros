@@ -51,6 +51,7 @@ Each tick the fighter receives a `FighterInput`:
 | `jump_pressed` | `bool` | Jump went down this tick |
 | `jump_held` | `bool` | Jump is held |
 | `down_pressed` | `bool` | Down went down this tick |
+| `down_held` | `bool` | Down is held |
 | `attack_pressed` | `bool` | Attack went down this tick |
 
 Actions trigger on *pressed* (the tick the button goes down); holding a button never repeats an
@@ -102,7 +103,10 @@ the state is entered.
   while attacking or in hitstun. Exception: when hit, the victim turns to face the attacker.
 - **Pass-through platforms:** one-way collision, so fighters jump up through them and land on top.
   `down_pressed` while standing on one removes the `stage_platform` layer from the fighter's
-  collision mask for `drop_through_frames` ticks and puts the fighter in `AIR`.
+  collision mask for `drop_through_frames` ticks and puts the fighter in `AIR`. In `AIR`, holding
+  down (`down_held`) also removes that layer, so a falling fighter passes through every
+  pass-through platform while down is held; let go and the next one below catches them again.
+  The main platform is always solid.
 - **Fighters don't collide with each other.**
 
 ## The attack

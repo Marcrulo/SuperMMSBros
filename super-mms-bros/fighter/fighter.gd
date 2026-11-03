@@ -56,10 +56,12 @@ func tick(input: FighterInput) -> void:
 	if state == State.AIR or not is_on_floor():
 		velocity.y = minf(velocity.y + stats.gravity * DELTA, stats.max_fall_speed)
 
+	_update_platform_collision(input)
 	move_and_slide()
 
 	_after_move(input)
 	_count_down_drop_through()
+	_update_platform_collision(input)
 	state_frame += 1
 
 
@@ -70,7 +72,6 @@ func _ground_actions(input: FighterInput) -> void:
 		_can_short_hop = true
 		_set_state(State.AIR)
 	elif input.down_pressed and _is_on_pass_through_platform():
-		set_collision_mask_value(STAGE_PLATFORM_LAYER, false)
 		_drop_through_frames_left = stats.drop_through_frames
 		_set_state(State.AIR)
 	elif input.move_x != 0.0:
@@ -118,8 +119,14 @@ func _after_move(input: FighterInput) -> void:
 func _count_down_drop_through() -> void:
 	if _drop_through_frames_left > 0:
 		_drop_through_frames_left -= 1
-		if _drop_through_frames_left == 0:
-			set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
+
+
+## Pass-through platforms are ignored for a while after dropping through one, and in the air
+## while down is held. Runs before the move (so this tick's input counts) and after it (so the
+## mask is right for anyone reading the fighter between ticks).
+func _update_platform_collision(input: FighterInput) -> void:
+	var ignore := _drop_through_frames_left > 0 or (state == State.AIR and input.down_held)
+	set_collision_mask_value(STAGE_PLATFORM_LAYER, not ignore)
 
 
 ## True if the fighter stands on a pass-through platform (not on solid ground).
