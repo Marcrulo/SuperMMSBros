@@ -250,3 +250,54 @@ func _jump_height(hold_ticks: int) -> float:
 			break
 		_fighter.tick(_hold_jump() if i < hold_ticks else _idle())
 	return start_y - highest
+
+
+# --- Pass-through platforms -------------------------------------------------------------------
+
+
+func test_jumps_up_through_a_platform_and_lands_on_it() -> void:
+	await _land_on_left_platform()
+	assert_eq(_fighter.state, Fighter.State.IDLE)
+	assert_true(_fighter.is_on_floor())
+	assert_almost_eq(_fighter.position.y, PLATFORM_Y, TOLERANCE)
+
+
+func test_down_drops_through_a_platform() -> void:
+	await _land_on_left_platform()
+	_run(_down(), 1)
+	assert_eq(_fighter.state, Fighter.State.AIR)
+	assert_false(_fighter.get_collision_mask_value(2), "ignoring pass-through platforms")
+	_run_until_landed(_idle())
+	assert_eq(_fighter.state, Fighter.State.IDLE)
+	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE, "landed on the main platform")
+	assert_true(_fighter.get_collision_mask_value(2), "pass-through platforms are solid again")
+
+
+func test_platforms_are_ignored_for_drop_through_frames_ticks() -> void:
+	await _land_on_left_platform()
+	_run(_down(), 1)
+	_run(_idle(), _stats.drop_through_frames - 2)
+	assert_false(_fighter.get_collision_mask_value(2), "still ignored after %d ticks" % (_stats.drop_through_frames - 1))
+	_run(_idle(), 1)
+	assert_true(_fighter.get_collision_mask_value(2), "solid again after %d ticks" % _stats.drop_through_frames)
+
+
+func test_down_on_the_main_platform_does_nothing() -> void:
+	await _start_at(Vector2(160, 128))
+	_run(_idle(), 1)
+	_run(_down(), 1)
+	assert_eq(_fighter.state, Fighter.State.IDLE)
+	assert_true(_fighter.get_collision_mask_value(2))
+	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE)
+
+
+func _down() -> FighterInput:
+	var input := FighterInput.new()
+	input.down_pressed = true
+	return input
+
+
+func _land_on_left_platform() -> void:
+	await _start_at(UNDER_LEFT_PLATFORM)
+	_run(_jump(), 1)
+	_run_until_landed(_hold_jump())

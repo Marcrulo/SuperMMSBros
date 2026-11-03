@@ -7,6 +7,8 @@ enum State { IDLE, RUN, AIR }
 
 ## One tick of game time, in seconds (the game runs at 60 ticks per second).
 const DELTA := 1.0 / 60.0
+## Collision layer of pass-through platforms (docs/specs/architecture.md#collision-layers).
+const STAGE_PLATFORM_LAYER := 2
 
 @export var stats: FighterStats
 
@@ -21,9 +23,11 @@ var jumps_left: int = 0
 
 ## True from a ground jump until the fighter stops rising or releases jump.
 var _can_short_hop: bool = false
+## Ticks left before pass-through platforms become solid again after dropping through one.
+var _drop_through_frames_left: int = 0
 
 
-## Puts the fighter at a spawn point, standing still: IDLE, jumps restored.
+## Puts the fighter at a spawn point, standing still: IDLE, jumps restored, platforms solid.
 func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	global_position = spawn_position
 	facing = spawn_facing
@@ -32,6 +36,8 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	state_frame = 0
 	jumps_left = stats.max_air_jumps
 	_can_short_hop = false
+	_drop_through_frames_left = 0
+	set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
 
 
 ## Advances the fighter by one tick. Must run inside a physics frame, because move_and_slide()
@@ -53,14 +59,19 @@ func tick(input: FighterInput) -> void:
 	move_and_slide()
 
 	_after_move(input)
+	_count_down_drop_through()
 	state_frame += 1
 
 
-## IDLE/RUN: jump, or run/stand.
+## IDLE/RUN: jump, drop through a platform, or run/stand.
 func _ground_actions(input: FighterInput) -> void:
 	if input.jump_pressed:
 		velocity.y = -stats.jump_velocity
 		_can_short_hop = true
+		_set_state(State.AIR)
+	elif input.down_pressed and _is_on_pass_through_platform():
+		set_collision_mask_value(STAGE_PLATFORM_LAYER, false)
+		_drop_through_frames_left = stats.drop_through_frames
 		_set_state(State.AIR)
 	elif input.move_x != 0.0:
 		facing = 1 if input.move_x > 0.0 else -1
@@ -102,6 +113,26 @@ func _after_move(input: FighterInput) -> void:
 	elif not is_on_floor():
 		# Walked off a ledge: the double jump is still there.
 		_set_state(State.AIR)
+
+
+func _count_down_drop_through() -> void:
+	if _drop_through_frames_left > 0:
+		_drop_through_frames_left -= 1
+		if _drop_through_frames_left == 0:
+			set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
+
+
+## True if the fighter stands on a pass-through platform (not on solid ground).
+func _is_on_pass_through_platform() -> bool:
+	if not is_on_floor():
+		return false
+	# Look 1 px down, colliding with pass-through platforms only.
+	var saved_mask := collision_mask
+	collision_mask = 0
+	set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
+	var platform_below := test_move(global_transform, Vector2(0, 1))
+	collision_mask = saved_mask
+	return platform_below
 
 
 func _set_state(new_state: State) -> void:
