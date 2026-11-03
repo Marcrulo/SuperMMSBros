@@ -75,6 +75,14 @@ pause={
 ])
 }
 
+[layer_names]
+
+2d_physics/layer_1="stage_solid"
+2d_physics/layer_2="stage_platform"
+2d_physics/layer_3="fighter"
+2d_physics/layer_4="hitbox"
+2d_physics/layer_5="hurtbox"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

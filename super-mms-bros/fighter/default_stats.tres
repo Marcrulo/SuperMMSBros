@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="FighterStats" format=3 uid="uid://7a532m0v0rqu"]
+
+[ext_resource type="Script" uid="uid://vkponc2ve5t6" path="res://fighter/fighter_stats.gd" id="1_hc333"]
+
+[resource]
+script = ExtResource("1_hc333")
+run_speed = 100.0
+ground_accel = 1200.0
+ground_friction = 1200.0
+air_speed = 90.0
+air_accel = 400.0
+air_friction = 150.0
+gravity = 600.0
+max_fall_speed = 250.0
+jump_velocity = 240.0
+double_jump_velocity = 219.0
+short_hop_cut = 0.5
+max_air_jumps = 1
+drop_through_frames = 10
+metadata/_custom_type_script = "uid://vkponc2ve5t6"

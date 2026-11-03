@@ -64,7 +64,7 @@ GUT skips a test script that fails to parse (for example, one that uses a class 
 **Interfaces:**
 - Produces: a failing test (`test_every_test_script_loads`, exit code 1) whenever any `res://tests/test_*.gd` can't load. Later tasks' "verify it fails" steps rely on it.
 
-- [ ] **Step 1: Write the guard test**
+- [x] **Step 1: Write the guard test**
 
 Create `super-mms-bros/tests/test_test_scripts_load.gd`:
 
@@ -84,7 +84,7 @@ func test_every_test_script_loads() -> void:
 				"%s should load; see the SCRIPT ERROR lines above" % file)
 ```
 
-- [ ] **Step 2: Verify it catches a broken test script**
+- [x] **Step 2: Verify it catches a broken test script**
 
 Create `super-mms-bros/tests/test_broken.gd`:
 
@@ -99,7 +99,7 @@ func test_broken() -> void:
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `SCRIPT ERROR: Parse Error` lines for `test_broken.gd`; the run summary shows `Tests 13`, `Passing Tests 12`, `Failing Tests 1` with the failure `test_broken.gd should load; see the SCRIPT ERROR lines above`; `exit=1`.
 
-- [ ] **Step 3: Delete the broken script and run again**
+- [x] **Step 3: Delete the broken script and run again**
 
 ```bash
 rm super-mms-bros/tests/test_broken.gd
@@ -108,7 +108,7 @@ godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "e
 
 Expected: `Passing Tests 13`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 4: Note the import rule in `CLAUDE.md`**
+- [x] **Step 4: Note the import rule in `CLAUDE.md`**
 
 In `CLAUDE.md`, replace the line
 
@@ -122,7 +122,7 @@ with
 godot --headless --path super-mms-bros --import      # import new/changed assets and new class_name scripts (needed before headless runs)
 ```
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add super-mms-bros/tests CLAUDE.md
@@ -147,7 +147,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   - `ScriptedController` (`Controller`): `ScriptedController.new(inputs: Array[FighterInput] = [])`; returns the inputs in order, then empty input; `reset()` starts over.
   - `KeyboardController` (`Controller`): reads the Input Map actions `move_left`, `move_right`, `jump`, `down`, `attack`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `super-mms-bros/tests/test_controllers.gd`:
 
@@ -237,12 +237,12 @@ func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
 	assert_true(second.jump_held, "jump is still held")
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `Parse Error: Identifier "FighterInput" not declared in the current scope` for `test_controllers.gd`; `Tests 13`, `Passing Tests 12`, `Failing Tests 1` (`test_controllers.gd should load`); `exit=1`.
 
-- [ ] **Step 3: Write `FighterInput`**
+- [x] **Step 3: Write `FighterInput`**
 
 Create `super-mms-bros/controllers/fighter_input.gd`:
 
@@ -264,7 +264,7 @@ var down_pressed: bool = false
 var attack_pressed: bool = false
 ```
 
-- [ ] **Step 4: Write the `Controller` base class**
+- [x] **Step 4: Write the `Controller` base class**
 
 Create `super-mms-bros/controllers/controller.gd`:
 
@@ -286,7 +286,7 @@ func reset() -> void:
 	pass
 ```
 
-- [ ] **Step 5: Write `ScriptedController`**
+- [x] **Step 5: Write `ScriptedController`**
 
 Create `super-mms-bros/controllers/scripted_controller.gd`:
 
@@ -316,7 +316,7 @@ func reset() -> void:
 	_next = 0
 ```
 
-- [ ] **Step 6: Write `KeyboardController`**
+- [x] **Step 6: Write `KeyboardController`**
 
 Create `super-mms-bros/controllers/keyboard_controller.gd`:
 
@@ -338,7 +338,7 @@ func get_input(_state: RefCounted) -> FighterInput:
 	return input
 ```
 
-- [ ] **Step 7: Import and run the tests to verify they pass**
+- [x] **Step 7: Import and run the tests to verify they pass**
 
 ```bash
 godot --headless --path super-mms-bros --import
@@ -347,7 +347,7 @@ godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "e
 
 Expected: `Passing Tests 20`, `---- All tests passed! ----`, `exit=0`. (Without the import, `test_controllers.gd` still fails to load: the new class names aren't registered yet.)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add super-mms-bros/controllers super-mms-bros/tests
@@ -370,7 +370,7 @@ Only the movement stats; the attack and knockback stats from the spec are added 
 **Interfaces:**
 - Produces: `FighterStats` (`Resource`) with `run_speed`, `ground_accel`, `ground_friction`, `air_speed`, `air_accel`, `air_friction`, `gravity`, `max_fall_speed`, `jump_velocity`, `double_jump_velocity`, `short_hop_cut` (all `float`), `max_air_jumps`, `drop_through_frames` (`int`). The values live in `res://fighter/default_stats.tres`; the script has no defaults.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `super-mms-bros/tests/test_fighter_stats.gd`:
 
@@ -405,12 +405,12 @@ func test_default_stats_match_the_spec() -> void:
 	assert_eq(stats.drop_through_frames, 10)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: parse errors for `test_fighter_stats.gd` (`Could not find type "FighterStats"`); `Tests 20`, `Passing Tests 19`, `Failing Tests 1` (`test_fighter_stats.gd should load`); `exit=1`.
 
-- [ ] **Step 3: Write `FighterStats`**
+- [x] **Step 3: Write `FighterStats`**
 
 Create `super-mms-bros/fighter/fighter_stats.gd`:
 
@@ -451,7 +451,7 @@ extends Resource
 @export var drop_through_frames: int
 ```
 
-- [ ] **Step 4: Write the default stats**
+- [x] **Step 4: Write the default stats**
 
 Create `super-mms-bros/fighter/default_stats.tres`:
 
@@ -477,7 +477,7 @@ max_air_jumps = 1
 drop_through_frames = 10
 ```
 
-- [ ] **Step 5: Import and run the tests to verify they pass**
+- [x] **Step 5: Import and run the tests to verify they pass**
 
 ```bash
 godot --headless --path super-mms-bros --import
@@ -486,7 +486,7 @@ godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "e
 
 Expected: `Passing Tests 22`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add super-mms-bros/fighter super-mms-bros/tests
@@ -512,7 +512,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
   - `Stage.get_spawn_position(player_index: int) -> Vector2` (global position of `P<n>Spawn`), `Stage.get_spawn_facing(player_index: int) -> int` (from `@export var spawn_facings: Array[int] = [1, -1]`).
   - Layer names in `project.godot`: `layer_names/2d_physics/layer_1..5`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `super-mms-bros/tests/test_stage.gd`:
 
@@ -579,12 +579,12 @@ func _layer_bit(layer: int) -> int:
 	return 1 << (layer - 1)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: parse errors for `test_stage.gd` (`Preload file "res://stage/battlefield.tscn" does not exist`); `Tests 22`, `Passing Tests 21`, `Failing Tests 1`; `exit=1`.
 
-- [ ] **Step 3: Write the `Stage` script**
+- [x] **Step 3: Write the `Stage` script**
 
 Create `super-mms-bros/stage/stage.gd`:
 
@@ -608,7 +608,7 @@ func get_spawn_facing(player_index: int) -> int:
 	return spawn_facings[player_index]
 ```
 
-- [ ] **Step 4: Write the Battlefield scene**
+- [x] **Step 4: Write the Battlefield scene**
 
 Positions come from the stage table in the spec. A `StaticBody2D` sits at the center of its collision rectangle, except the pass-through platforms: their body sits at the platform's top-center and the 4 px shape is offset 2 px down, so the walkable surface is exactly at the body's y. Collision layers are stored as bit values: `collision_layer = 2` is layer 2; the main platform keeps the default (layer 1). Static bodies need no mask (`collision_mask = 0`). Each platform has its own shape resource so one can be resized in the editor without changing the others. The colors are the spec's hex values as floats (`#333c57`, `#566c86`).
 
@@ -709,7 +709,7 @@ position = Vector2(112, 128)
 position = Vector2(208, 128)
 ```
 
-- [ ] **Step 5: Import and run the tests**
+- [x] **Step 5: Import and run the tests**
 
 ```bash
 godot --headless --path super-mms-bros --import
@@ -718,7 +718,7 @@ godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "e
 
 Expected: `Tests 26`, `Passing Tests 25`, `Failing Tests 1`: only `test_collision_layer_names` fails (`[""] expected to equal ["stage_solid"]`, etc.); `exit=1`.
 
-- [ ] **Step 6: Write and run the layer names tool**
+- [x] **Step 6: Write and run the layer names tool**
 
 Create `super-mms-bros/tools/apply_layer_names.gd`:
 
@@ -748,12 +748,12 @@ git diff super-mms-bros/project.godot
 
 Expected: `apply_layer_names: save -> OK`; the diff adds only a `[layer_names]` section with `2d_physics/layer_1="stage_solid"` … `2d_physics/layer_5="hurtbox"`.
 
-- [ ] **Step 7: Run the tests to verify they pass**
+- [x] **Step 7: Run the tests to verify they pass**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `Passing Tests 26`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add super-mms-bros/stage super-mms-bros/tests super-mms-bros/project.godot
@@ -788,7 +788,7 @@ How a tick works (`Fighter.tick(input)`), in order:
   - `Fighter` API: `enum State { IDLE, RUN, AIR }`, `const DELTA := 1.0 / 60.0`, `@export var stats: FighterStats`, `var player_index: int`, `var facing: int` (1/−1), `var state: State`, `var state_frame: int`, `var jumps_left: int`, `func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void`, `func tick(input: FighterInput) -> void`.
   - Test helpers in `test_fighter_movement.gd` used by Tasks 6–7: constants `FLOOR_Y`, `PLATFORM_Y`, `OPEN_SKY`, `UNDER_LEFT_PLATFORM`, `TOLERANCE`; fields `_fighter`, `_stats`; `_start_at(at: Vector2, facing: int = 1)` (async), `_run(input: FighterInput, ticks: int)`, `_idle() -> FighterInput`, `_move(move_x: float) -> FighterInput`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `super-mms-bros/tests/test_fighter_movement.gd`:
 
@@ -916,12 +916,12 @@ func test_state_frame_counts_ticks_in_the_current_state() -> void:
 	assert_eq(_fighter.state_frame, 1)
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: parse errors for `test_fighter_movement.gd` (`Preload file "res://fighter/fighter.tscn" does not exist`, `Fighter` not declared); `Tests 26`, `Passing Tests 25`, `Failing Tests 1`; `exit=1`.
 
-- [ ] **Step 3: Write the `Fighter` script**
+- [x] **Step 3: Write the `Fighter` script**
 
 Create `super-mms-bros/fighter/fighter.gd`:
 
@@ -1010,7 +1010,7 @@ func _set_state(new_state: State) -> void:
 		state_frame = 0
 ```
 
-- [ ] **Step 4: Write the fighter scene**
+- [x] **Step 4: Write the fighter scene**
 
 Create `super-mms-bros/fighter/fighter.tscn` (`collision_layer = 4` is layer 3; `collision_mask = 3` is layers 1 and 2):
 
@@ -1034,7 +1034,7 @@ position = Vector2(0, -12)
 shape = SubResource("RectangleShape2D_body")
 ```
 
-- [ ] **Step 5: Import and run the tests to verify they pass**
+- [x] **Step 5: Import and run the tests to verify they pass**
 
 ```bash
 godot --headless --path super-mms-bros --import
@@ -1043,7 +1043,7 @@ godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "e
 
 Expected: `Passing Tests 33`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add super-mms-bros/fighter super-mms-bros/tests
@@ -1067,7 +1067,7 @@ Numbers to expect, from the stats: a held ground jump rises 46 px (spec: ≈48),
 - Consumes: the Task 5 `Fighter` API and test helpers.
 - Produces: jump behavior in `Fighter.tick()`; test helpers used by Task 7: `_jump() -> FighterInput` (pressed + held), `_hold_jump() -> FighterInput`, `_run_until_landed(input: FighterInput)`, `_run_until_falling(input: FighterInput) -> float`, `_jump_height(hold_ticks: int) -> float`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to the end of `super-mms-bros/tests/test_fighter_movement.gd`:
 
@@ -1203,12 +1203,12 @@ func _jump_height(hold_ticks: int) -> float:
 	return start_y - highest
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `Tests 41`, `Passing Tests 34`, `Failing Tests 7`. Failing: `test_jump_leaves_the_ground`, `test_ground_jump_rises_about_48_px`, `test_short_hop_is_lower_than_a_full_jump`, `test_double_jump_rises_about_40_px`, `test_only_one_double_jump`, `test_walking_off_a_ledge_keeps_the_double_jump`, `test_facing_does_not_change_in_the_air`. (`test_landing_restores_the_double_jump` already passes: without jumps the fighter never leaves the ground.) `exit=1`.
 
-- [ ] **Step 3: Add jumps to the fighter**
+- [x] **Step 3: Add jumps to the fighter**
 
 What changes: a new `_can_short_hop` field (reset in `spawn_at`); `tick()` calls the new `_air_actions()` in `AIR`; `_ground_actions()` starts a ground jump on `jump_pressed`; `_air_actions()` does the double jump (once, sets horizontal speed to `move_x × air_speed`) and the short-hop cut (once, only while rising from a ground jump); landing restores `jumps_left`.
 
@@ -1327,12 +1327,12 @@ func _set_state(new_state: State) -> void:
 		state_frame = 0
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `Passing Tests 41`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add super-mms-bros/fighter super-mms-bros/tests
@@ -1355,7 +1355,7 @@ Jumping up through a platform and landing on it already works (the platforms are
 - Consumes: the Task 5–6 `Fighter` API and test helpers (`_run_until_landed`, `_jump`, `_hold_jump`).
 - Produces: `Fighter.STAGE_PLATFORM_LAYER := 2`; drop-through in `Fighter.tick()`; `spawn_at()` also restores the platform layer in the mask.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to the end of `super-mms-bros/tests/test_fighter_movement.gd`:
 
@@ -1411,12 +1411,12 @@ func _land_on_left_platform() -> void:
 	_run_until_landed(_hold_jump())
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `Tests 45`, `Passing Tests 43`, `Failing Tests 2`: `test_down_drops_through_a_platform` and `test_platforms_are_ignored_for_drop_through_frames_ticks`; `exit=1`.
 
-- [ ] **Step 3: Add dropping through to the fighter**
+- [x] **Step 3: Add dropping through to the fighter**
 
 What changes: `STAGE_PLATFORM_LAYER` constant and `_drop_through_frames_left` field; `spawn_at()` resets both; `_ground_actions()` drops on `down_pressed` when `_is_on_pass_through_platform()`; `tick()` calls `_count_down_drop_through()` after the move, which turns layer 2 back on when the count reaches 0.
 
@@ -1566,12 +1566,12 @@ func _set_state(new_state: State) -> void:
 		state_frame = 0
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: `Passing Tests 45`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add super-mms-bros/fighter super-mms-bros/tests
@@ -1595,7 +1595,7 @@ Replaces the M1 placeholder main scene with the real match: the Battlefield, one
 - Consumes: `Fighter` (Tasks 5–7), `Stage` (Task 4), `KeyboardController`/`ScriptedController` (Task 2).
 - Produces: `Match` (`Node2D`): `@export var auto_step: bool = true`, `var tick: int`, `step() -> void`, `reset() -> void`, `get_fighter(player_index: int) -> Fighter`, `get_controller(player_index: int) -> Controller`, `set_controller(player_index: int, controller: Controller) -> void`. Scene nodes `Stage`, `Fighters/P1`, `Camera2D`. `FighterVisuals` (`Node2D`, child `Visuals` of the fighter).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `super-mms-bros/tests/test_match.gd`:
 
@@ -1686,12 +1686,12 @@ func test_reset_puts_everything_back() -> void:
 	assert_gt(p1.velocity.x, 0.0, "the controller was reset and plays its inputs again")
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "exit=$?"`
 Expected: parse errors for `test_match.gd` (`Could not find type "Match"`); `Tests 45`, `Passing Tests 44`, `Failing Tests 1`; `exit=1`.
 
-- [ ] **Step 3: Write the `Match` script**
+- [x] **Step 3: Write the `Match` script**
 
 Create `super-mms-bros/match/match.gd`:
 
@@ -1758,7 +1758,7 @@ func set_controller(player_index: int, controller: Controller) -> void:
 	_controllers[player_index] = controller
 ```
 
-- [ ] **Step 4: Replace the main scene**
+- [x] **Step 4: Replace the main scene**
 
 Replace the whole of `super-mms-bros/match/match.tscn` with (the `uid` in the first line must stay `uid://drv5qoyqdrc1`):
 
@@ -1782,7 +1782,7 @@ script = ExtResource("1_match")
 position = Vector2(160, 90)
 ```
 
-- [ ] **Step 5: Write the placeholder visuals**
+- [x] **Step 5: Write the placeholder visuals**
 
 Create `super-mms-bros/fighter/fighter_visuals.gd`:
 
@@ -1838,7 +1838,7 @@ shape = SubResource("RectangleShape2D_body")
 script = ExtResource("3_visuals")
 ```
 
-- [ ] **Step 6: Import and run the tests to verify they pass**
+- [x] **Step 6: Import and run the tests to verify they pass**
 
 ```bash
 godot --headless --path super-mms-bros --import
@@ -1847,12 +1847,12 @@ godot --headless --path super-mms-bros -s res://addons/gut/gut_cmdln.gd; echo "e
 
 Expected: `Passing Tests 52`, `---- All tests passed! ----`, `exit=0`.
 
-- [ ] **Step 7: Run the game headless to check for runtime errors**
+- [x] **Step 7: Run the game headless to check for runtime errors**
 
 Run: `godot --headless --path super-mms-bros --quit-after 120; echo "exit=$?"`
 Expected: only the Godot version banner, no `SCRIPT ERROR`, `exit=0`. (`_draw()` runs headless too, so errors in the visuals would show here.)
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add super-mms-bros/match super-mms-bros/fighter super-mms-bros/tests
@@ -1868,7 +1868,7 @@ Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>"
 
 No code. M2 is done when the user has played it.
 
-- [ ] **Step 1: The user plays**
+- [x] **Step 1: The user plays**
 
 Ask the user to run `godot --path super-mms-bros` and try, with keyboard and (if they have one) a gamepad:
 - **A/D** (stick/d-pad): run left and right; the eye turns to the direction of travel; the fighter doesn't turn in the air.
@@ -1879,7 +1879,7 @@ Ask the user to run `godot --path super-mms-bros` and try, with keyboard and (if
 
 Ask how it feels (speeds, jump heights, air control). Record requested changes as values for `default_stats.tres`; tuning happens in M6 unless something is badly off.
 
-- [ ] **Step 2: The user looks at the new pieces in the editor**
+- [x] **Step 2: The user looks at the new pieces in the editor**
 
 Ask the user to run `godot --path super-mms-bros --editor` and open:
 - `fighter/default_stats.tres` in the Inspector (the grouped stats);
@@ -1889,7 +1889,7 @@ Ask the user to run `godot --path super-mms-bros --editor` and open:
 
 Explain each briefly as they look (per `CLAUDE.md`, the user is learning the engine).
 
-- [ ] **Step 3: If the editor changed files, commit them**
+- [x] **Step 3: If the editor changed files, commit them**
 
 Opening the scenes in the editor may add `uid`/`unique_id` attributes to the hand-written `.tscn`/`.tres` files. Close the editor, run `git status --short`; if anything changed, run the test command again and commit:
 
