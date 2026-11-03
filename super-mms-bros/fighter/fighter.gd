@@ -19,6 +19,9 @@ var state: State = State.IDLE
 var state_frame: int = 0
 var jumps_left: int = 0
 
+## True from a ground jump until the fighter stops rising or releases jump.
+var _can_short_hop: bool = false
+
 
 ## Puts the fighter at a spawn point, standing still: IDLE, jumps restored.
 func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
@@ -28,13 +31,16 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	state = State.IDLE
 	state_frame = 0
 	jumps_left = stats.max_air_jumps
+	_can_short_hop = false
 
 
 ## Advances the fighter by one tick. Must run inside a physics frame, because move_and_slide()
 ## takes its time step from the physics engine (which is 1/60 s there).
 func tick(input: FighterInput) -> void:
 	assert(Engine.is_in_physics_frame(), "Fighter.tick() must run inside a physics frame")
-	if state != State.AIR:
+	if state == State.AIR:
+		_air_actions(input)
+	else:
 		_ground_actions(input)
 
 	if state == State.AIR:
@@ -50,13 +56,32 @@ func tick(input: FighterInput) -> void:
 	state_frame += 1
 
 
-## IDLE/RUN: run or stand.
+## IDLE/RUN: jump, or run/stand.
 func _ground_actions(input: FighterInput) -> void:
-	if input.move_x != 0.0:
+	if input.jump_pressed:
+		velocity.y = -stats.jump_velocity
+		_can_short_hop = true
+		_set_state(State.AIR)
+	elif input.move_x != 0.0:
 		facing = 1 if input.move_x > 0.0 else -1
 		_set_state(State.RUN)
 	else:
 		_set_state(State.IDLE)
+
+
+## AIR: double jump, or cut a ground jump short.
+func _air_actions(input: FighterInput) -> void:
+	if input.jump_pressed and jumps_left > 0:
+		velocity.y = -stats.double_jump_velocity
+		velocity.x = input.move_x * stats.air_speed
+		jumps_left -= 1
+		_can_short_hop = false
+	elif _can_short_hop:
+		if velocity.y >= 0.0:
+			_can_short_hop = false
+		elif not input.jump_held:
+			velocity.y *= stats.short_hop_cut
+			_can_short_hop = false
 
 
 ## Moves horizontal speed toward `move_x × top_speed` at `accel`, or toward 0 at `friction`.
@@ -71,8 +96,11 @@ func _steer(move_x: float, top_speed: float, accel: float, friction: float) -> v
 func _after_move(input: FighterInput) -> void:
 	if state == State.AIR:
 		if is_on_floor():
+			jumps_left = stats.max_air_jumps
+			_can_short_hop = false
 			_set_state(State.RUN if input.move_x != 0.0 else State.IDLE)
 	elif not is_on_floor():
+		# Walked off a ledge: the double jump is still there.
 		_set_state(State.AIR)
 
 

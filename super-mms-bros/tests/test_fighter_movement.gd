@@ -119,3 +119,134 @@ func test_state_frame_counts_ticks_in_the_current_state() -> void:
 	_run(_idle(), 1)
 	assert_eq(_fighter.state, Fighter.State.IDLE)
 	assert_eq(_fighter.state_frame, 1)
+
+
+# --- Jumps ------------------------------------------------------------------------------------
+
+
+func test_jump_leaves_the_ground() -> void:
+	await _start_at(OPEN_SKY)
+	_run(_jump(), 1)
+	assert_eq(_fighter.state, Fighter.State.AIR)
+	assert_lt(_fighter.velocity.y, 0.0, "moving up")
+	assert_eq(_fighter.jumps_left, _stats.max_air_jumps, "a ground jump doesn't use the double jump")
+
+
+func test_ground_jump_rises_about_48_px() -> void:
+	await _start_at(OPEN_SKY)
+	assert_almost_eq(_jump_height(60), 48.0, 3.0)
+	assert_eq(_fighter.state, Fighter.State.IDLE, "landed again")
+	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE)
+
+
+func test_short_hop_is_lower_than_a_full_jump() -> void:
+	await _start_at(OPEN_SKY)
+	var full := _jump_height(60)
+	var short := _jump_height(0)
+	assert_lt(short, full * 0.5, "short hop (%.1f px) vs full jump (%.1f px)" % [short, full])
+	assert_gt(short, 8.0)
+
+
+func test_double_jump_rises_about_40_px() -> void:
+	await _start_at(OPEN_SKY)
+	_run(_jump(), 1)
+	_run_until_falling(_hold_jump())
+	var start_y := _fighter.position.y
+	_run(_jump(), 1)
+	var highest := _run_until_falling(_hold_jump())
+	assert_almost_eq(start_y - highest, 40.0, 3.0)
+	assert_eq(_fighter.jumps_left, 0)
+
+
+func test_only_one_double_jump() -> void:
+	await _start_at(OPEN_SKY)
+	_run(_jump(), 1)
+	_run(_idle(), 1)
+	_run(_jump(), 1)
+	assert_eq(_fighter.jumps_left, 0)
+	_run(_idle(), 1)
+	var speed_before := _fighter.velocity.y
+	_run(_jump(), 1)
+	assert_gt(_fighter.velocity.y, speed_before, "no upward kick: gravity keeps pulling")
+	assert_eq(_fighter.jumps_left, 0)
+
+
+func test_landing_restores_the_double_jump() -> void:
+	await _start_at(OPEN_SKY)
+	_run(_jump(), 1)
+	_run(_idle(), 1)
+	_run(_jump(), 1)
+	_run_until_landed(_idle())
+	assert_eq(_fighter.state, Fighter.State.IDLE)
+	assert_eq(_fighter.jumps_left, _stats.max_air_jumps)
+
+
+func test_walking_off_a_ledge_keeps_the_double_jump() -> void:
+	await _start_at(Vector2(244, 128))
+	for i in 60:
+		_fighter.tick(_move(1.0))
+		if _fighter.state == Fighter.State.AIR:
+			break
+	assert_eq(_fighter.state, Fighter.State.AIR, "walked off the right edge")
+	assert_eq(_fighter.jumps_left, _stats.max_air_jumps)
+	_run(_jump(), 1)
+	assert_lt(_fighter.velocity.y, 0.0, "double jump works")
+	assert_eq(_fighter.jumps_left, 0)
+
+
+func test_facing_does_not_change_in_the_air() -> void:
+	await _start_at(Vector2(160, 128), 1)
+	_run(_jump(), 1)
+	_run(_move(-1.0), 10)
+	assert_eq(_fighter.state, Fighter.State.AIR)
+	assert_eq(_fighter.facing, 1, "still facing right while drifting left")
+	_run_until_landed(_idle())
+	_run(_move(-1.0), 1)
+	assert_eq(_fighter.facing, -1, "turns once back on the ground")
+
+
+## The tick jump goes down (it's also held).
+func _jump() -> FighterInput:
+	var input := FighterInput.new()
+	input.jump_pressed = true
+	input.jump_held = true
+	return input
+
+
+func _hold_jump() -> FighterInput:
+	var input := FighterInput.new()
+	input.jump_held = true
+	return input
+
+
+## Ticks with `input` until the fighter is back on the ground (at most 2 seconds).
+func _run_until_landed(input: FighterInput) -> void:
+	for i in 120:
+		_fighter.tick(input)
+		if _fighter.state != Fighter.State.AIR:
+			return
+
+
+## Ticks with `input` until the fighter stops rising; returns the highest y reached.
+func _run_until_falling(input: FighterInput) -> float:
+	var highest := _fighter.position.y
+	for i in 120:
+		_fighter.tick(input)
+		highest = minf(highest, _fighter.position.y)
+		if _fighter.velocity.y >= 0.0:
+			break
+	return highest
+
+
+## Presses jump, keeps holding it for `hold_ticks` more ticks, then lets go and waits for the
+## landing. Returns how many pixels the feet rose.
+func _jump_height(hold_ticks: int) -> float:
+	var start_y := _fighter.position.y
+	var highest := start_y
+	_fighter.tick(_jump())
+	for i in 120:
+		highest = minf(highest, _fighter.position.y)
+		if _fighter.state != Fighter.State.AIR:
+			break
+		_fighter.tick(_hold_jump() if i < hold_ticks else _idle())
+	return start_y - highest
