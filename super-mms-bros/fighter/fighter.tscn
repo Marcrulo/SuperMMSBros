@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://fighter/fighter.gd" id="1_fighter"]
 [ext_resource type="Resource" path="res://fighter/default_stats.tres" id="2_stats"]
+[ext_resource type="Script" path="res://fighter/fighter_visuals.gd" id="3_visuals"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(16, 24)
@@ -15,3 +16,6 @@ stats = ExtResource("2_stats")
 [node name="BodyShape" type="CollisionShape2D" parent="."]
 position = Vector2(0, -12)
 shape = SubResource("RectangleShape2D_body")
+
+[node name="Visuals" type="Node2D" parent="."]
+script = ExtResource("3_visuals")
