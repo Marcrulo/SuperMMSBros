@@ -5,11 +5,11 @@ const FONT_PATH := "res://assets/fonts/PressStart2P-Regular.ttf"
 
 
 func test_display_settings() -> void:
-	assert_eq(ProjectSettings.get_setting("display/window/size/viewport_width"), 320)
-	assert_eq(ProjectSettings.get_setting("display/window/size/viewport_height"), 180)
-	assert_eq(ProjectSettings.get_setting("display/window/size/window_width_override"), 1280)
-	assert_eq(ProjectSettings.get_setting("display/window/size/window_height_override"), 720)
-	assert_eq(ProjectSettings.get_setting("display/window/stretch/mode"), "viewport")
+	assert_eq(ProjectSettings.get_setting("display/window/size/viewport_width"), 480)
+	assert_eq(ProjectSettings.get_setting("display/window/size/viewport_height"), 270)
+	assert_eq(ProjectSettings.get_setting("display/window/size/window_width_override"), 1440)
+	assert_eq(ProjectSettings.get_setting("display/window/size/window_height_override"), 810)
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/mode"), "canvas_items")
 	assert_eq(ProjectSettings.get_setting("display/window/stretch/aspect"), "keep")
 	assert_eq(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "integer")
 
@@ -17,7 +17,7 @@ func test_display_settings() -> void:
 func test_pixel_art_rendering() -> void:
 	assert_eq(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter"), 0,
 		"default texture filter should be Nearest")
-	assert_true(ProjectSettings.get_setting("rendering/2d/snap/snap_2d_transforms_to_pixel"))
+	assert_false(ProjectSettings.get_setting("rendering/2d/snap/snap_2d_transforms_to_pixel"))
 	assert_eq(ProjectSettings.get_setting("rendering/environment/defaults/default_clear_color"),
 		Color("#1a1c2c"))
 

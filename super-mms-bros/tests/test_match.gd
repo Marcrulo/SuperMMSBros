@@ -19,7 +19,7 @@ func test_scene_has_stage_fighter_and_camera() -> void:
 	assert_eq(_match.get_node("Fighters").get_child_count(), 1, "M2 has one fighter")
 	assert_true(_match.get_fighter(0) is Fighter)
 	var camera := _match.get_node("Camera2D") as Camera2D
-	assert_eq(camera.position, Vector2(160, 90))
+	assert_not_null(camera, "a camera (it follows the fighters from Task 4 on)")
 
 
 func test_p1_starts_at_its_spawn_point() -> void:
@@ -27,7 +27,7 @@ func test_p1_starts_at_its_spawn_point() -> void:
 	var p1 := _match.get_fighter(0)
 	assert_eq(_match.tick, 0)
 	assert_eq(p1.player_index, 0)
-	assert_eq(p1.position, Vector2(112, 128))
+	assert_eq(p1.position, Vector2(168, 192))
 	assert_eq(p1.facing, 1)
 	assert_eq(p1.state, Fighter.State.IDLE)
 
@@ -77,7 +77,7 @@ func test_reset_puts_everything_back() -> void:
 	_match.reset()
 	var p1 := _match.get_fighter(0)
 	assert_eq(_match.tick, 0)
-	assert_eq(p1.position, Vector2(112, 128))
+	assert_eq(p1.position, Vector2(168, 192))
 	assert_eq(p1.velocity, Vector2.ZERO)
 	assert_eq(p1.state, Fighter.State.IDLE)
 	_match.step()

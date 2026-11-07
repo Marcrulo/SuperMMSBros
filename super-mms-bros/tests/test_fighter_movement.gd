@@ -5,12 +5,12 @@ extends GutTest
 
 const STAGE_SCENE := preload("res://stage/battlefield.tscn")
 const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
-const FLOOR_Y := 128.0
-const PLATFORM_Y := 96.0
+const FLOOR_Y := 192.0
+const PLATFORM_Y := 160.0
 ## A spot on the main platform with open sky above: no pass-through platform to land on.
-const OPEN_SKY := Vector2(76, 128)
+const OPEN_SKY := Vector2(110, 192)
 ## Right below the left pass-through platform.
-const UNDER_LEFT_PLATFORM := Vector2(112, 128)
+const UNDER_LEFT_PLATFORM := Vector2(168, 192)
 ## move_and_slide() keeps a tiny gap (the collision "safe margin") between body and floor.
 const TOLERANCE := 0.5
 
@@ -61,8 +61,8 @@ func test_scene_setup() -> void:
 func test_spawn_at_resets_the_fighter() -> void:
 	_fighter.velocity = Vector2(50, 50)
 	_fighter.jumps_left = 0
-	_fighter.spawn_at(Vector2(208, 128), -1)
-	assert_eq(_fighter.position, Vector2(208, 128))
+	_fighter.spawn_at(Vector2(312, 192), -1)
+	assert_eq(_fighter.position, Vector2(312, 192))
 	assert_eq(_fighter.facing, -1)
 	assert_eq(_fighter.velocity, Vector2.ZERO)
 	assert_eq(_fighter.state, Fighter.State.IDLE)
@@ -182,7 +182,7 @@ func test_landing_restores_the_double_jump() -> void:
 
 
 func test_walking_off_a_ledge_keeps_the_double_jump() -> void:
-	await _start_at(Vector2(244, 128))
+	await _start_at(Vector2(372, 192))
 	for i in 60:
 		_fighter.tick(_move(1.0))
 		if _fighter.state == Fighter.State.AIR:
@@ -195,7 +195,7 @@ func test_walking_off_a_ledge_keeps_the_double_jump() -> void:
 
 
 func test_facing_does_not_change_in_the_air() -> void:
-	await _start_at(Vector2(160, 128), 1)
+	await _start_at(Vector2(240, 192), 1)
 	_run(_jump(), 1)
 	_run(_move(-1.0), 10)
 	assert_eq(_fighter.state, Fighter.State.AIR)
@@ -283,7 +283,7 @@ func test_platforms_are_ignored_for_drop_through_frames_ticks() -> void:
 
 
 func test_down_on_the_main_platform_does_nothing() -> void:
-	await _start_at(Vector2(160, 128))
+	await _start_at(Vector2(240, 192))
 	_run(_idle(), 1)
 	_run(_down(), 1)
 	assert_eq(_fighter.state, Fighter.State.IDLE)
