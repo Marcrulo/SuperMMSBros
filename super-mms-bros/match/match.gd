@@ -11,6 +11,8 @@ var tick: int = 0
 
 var _fighters: Array[Fighter] = []
 var _controllers: Array[Controller] = []
+## Projectiles in flight, in the order they were fired.
+var _projectiles: Array[Projectile] = []
 
 @onready var _stage := $Stage as Stage
 
@@ -48,15 +50,57 @@ func step() -> void:
 	var inputs: Array[FighterInput] = []
 	for controller in _controllers:
 		inputs.append(controller.get_input(null))
+	for fighter in _fighters:
+		fighter.has_projectile = _projectile_of(fighter.player_index) != null
 	for i in _fighters.size():
 		_fighters[i].tick(inputs[i])
+	_advance_projectiles()
+	_spawn_projectiles()
 	_resolve_hits()
 	_respawn_fighters_out_of_bounds()
 	tick += 1
 
 
-## Collects every hit for this tick, then applies them all, so two fighters can trade. The
-## knockback side and the attacker's position are taken while collecting, before anyone turns
+func get_projectiles() -> Array[Projectile]:
+	return _projectiles
+
+
+func _projectile_of(player_index: int) -> Projectile:
+	for projectile in _projectiles:
+		if projectile.owner_index == player_index:
+			return projectile
+	return null
+
+
+## Moves every projectile one tick and removes the ones past their lifetime or out of bounds.
+func _advance_projectiles() -> void:
+	for projectile in _projectiles.duplicate():
+		projectile.advance()
+		if projectile.is_expired(_stage.blast_zone):
+			_remove_projectile(projectile)
+
+
+## Adds a projectile for every fighter whose side special reached its spawn frame this tick.
+func _spawn_projectiles() -> void:
+	for fighter in _fighters:
+		if not fighter.wants_projectile():
+			continue
+		var data := fighter.stats.moveset.side_special
+		var projectile := Projectile.new()
+		$Projectiles.add_child(projectile)
+		var offset := Vector2(data.hitbox_center.x * fighter.facing, data.hitbox_center.y)
+		projectile.setup(fighter.player_index, fighter.facing, fighter.global_position + offset, data)
+		_projectiles.append(projectile)
+
+
+func _remove_projectile(projectile: Projectile) -> void:
+	_projectiles.erase(projectile)
+	projectile.queue_free()
+
+
+## Collects every hit for this tick — moves and projectiles — then applies them all, so two
+## fighters can trade. A shielding victim blocks instead. The knockback side and the attacker's
+## position are taken while collecting, before anyone turns
 ## around from being hit.
 func _resolve_hits() -> void:
 	var hits: Array[Dictionary] = []
@@ -76,10 +120,29 @@ func _resolve_hits() -> void:
 					"side": attacker.knockback_side(data, victim.get_center()),
 					"attacker_x": attacker.global_position.x,
 				})
+	for projectile in _projectiles:
+		for victim in _fighters:
+			if victim.player_index == projectile.owner_index:
+				continue
+			if projectile.get_hitbox_rect().intersects(victim.get_hurtbox_rect()):
+				hits.append({
+					"projectile": projectile,
+					"victim": victim,
+					"move": projectile.data,
+					"side": projectile.direction,
+					"attacker_x": projectile.global_position.x,
+				})
+				break
 	for hit in hits:
 		var victim := hit.victim as Fighter
-		(hit.attacker as Fighter).register_hit(victim.player_index)
-		victim.take_hit(hit.move, hit.side, hit.attacker_x)
+		if hit.has("attacker"):
+			(hit.attacker as Fighter).register_hit(victim.player_index)
+		else:
+			_remove_projectile(hit.projectile)
+		if victim.state == Fighter.State.SHIELD:
+			victim.block_hit(hit.move, hit.side)
+		else:
+			victim.take_hit(hit.move, hit.side, hit.attacker_x)
 
 
 ## For now a fighter that leaves the blast zone is put straight back at its spawn point.

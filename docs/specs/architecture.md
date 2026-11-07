@@ -74,11 +74,10 @@ Every tick, `step()` does, in this order:
 2. Build the snapshot for this tick.
 3. Ask each fighter's controller for input, P1 then P2. During `COUNTDOWN` the inputs are replaced
    with empty input (controllers are still asked, so the CPU's reaction buffer fills).
-4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2. A fighter whose side
-   special reaches its spawn frame asks the Match for a projectile; the Match adds it (in P1, P2
-   order).
-5. Advance each projectile (in the order they were created) and remove those past their lifetime or
-   outside the blast zone.
+4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2.
+5. Advance each existing projectile (in the order they were created) and remove those past their
+   lifetime or outside the blast zone. Then add a projectile for every fighter whose side special
+   reached its spawn frame this tick (P1, P2 order); a new projectile first moves next tick.
 6. Resolve hits: first collect every hit for this tick — move hitboxes and projectiles against
    hurtboxes — then apply them all (blocked by a shield, or damage + knockback). Two fighters can
    hit each other on the same tick (a trade).

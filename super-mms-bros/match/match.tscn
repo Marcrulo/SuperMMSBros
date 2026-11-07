@@ -16,6 +16,8 @@ script = ExtResource("1_match")
 
 [node name="P2" parent="Fighters" instance=ExtResource("3_fighter")]
 
+[node name="Projectiles" type="Node2D" parent="."]
+
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(240, 160)
 script = ExtResource("4_camera")
