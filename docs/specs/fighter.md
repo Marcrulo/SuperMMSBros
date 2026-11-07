@@ -99,7 +99,8 @@ Checked in this order on each tick; the first that applies happens:
 |---|---|
 | attack pressed → ground attack (by direction) | attack pressed → air attack (by direction) |
 | special pressed → special (by direction) | special pressed → special (by direction) |
-| jump pressed → ground jump | jump pressed and `jumps_left > 0` → double jump |
+| jump pressed with down held on a pass-through platform → drop through | jump pressed and `jumps_left > 0` → double jump |
+| jump pressed → ground jump | |
 | shield held and shield health > 0 → `SHIELD` | jump released while rising from a ground jump → short hop cut |
 | down pressed twice within `drop_double_tap_frames` on a pass-through platform → drop through | |
 | down held → `CROUCH` | |
@@ -140,9 +141,9 @@ Checked in this order on each tick; the first that applies happens:
   starts on the ground. It does not change in the air, while attacking, shielding or in hitstun.
   Exception: when hit, the victim turns to face the attacker.
 - **Pass-through platforms:** one-way collision, so fighters jump up through them and land on top.
-  Pressing down twice within `drop_double_tap_frames` while standing on one removes the
-  `stage_platform` layer from the fighter's collision mask for `drop_through_frames` ticks and puts
-  the fighter in `AIR`. In `AIR`, and during an attack while airborne, holding down also removes
+  Pressing down twice within `drop_double_tap_frames` while standing on one, or pressing jump while
+  holding down (crouching) on one, removes the `stage_platform` layer from the fighter's collision
+  mask for `drop_through_frames` ticks and puts the fighter in `AIR`. In `AIR`, and during an attack while airborne, holding down also removes
   that layer, so a falling fighter passes through every pass-through platform while down is held;
   let go and the next one below catches them again. The main platform is always solid.
 - **Fighters don't collide with each other.**
@@ -152,7 +153,8 @@ Checked in this order on each tick; the first that applies happens:
 Holding down on the ground (when no other action applies). The fighter slides to a stop at
 `ground_friction`, can turn around with left/right but doesn't walk, and uses the crouching
 hurtbox. Releasing down stands up at once. Attack while crouching is the down tilt; special is the
-down special.
+down special. Jump while crouching on a pass-through platform drops through it instead of jumping;
+on the main platform it's a normal jump.
 
 ## Shield
 

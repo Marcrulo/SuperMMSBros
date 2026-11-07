@@ -120,3 +120,23 @@ func test_landing_with_down_held_crouches() -> void:
 		if _fighter.state != Fighter.State.AIR:
 			break
 	assert_eq(_fighter.state, Fighter.State.CROUCH)
+
+
+func test_jump_while_crouching_on_a_platform_drops_through() -> void:
+	await _land_on_left_platform()
+	_run(_make_input(0, true, true), 1)
+	_run(_make_input(0, true), 5)
+	_run(_make_input(0, true, false, true), 1)
+	assert_eq(_fighter.state, Fighter.State.AIR, "dropped")
+	assert_true(_fighter.velocity.y >= 0.0, "didn't jump up")
+	assert_false(_fighter.get_collision_mask_value(2), "platforms ignored")
+	_run(_make_input(), 20)
+	assert_true(_fighter.position.y > PLATFORM_Y + 4.0, "fell below the platform")
+
+
+func test_jump_while_crouching_on_the_main_platform_jumps() -> void:
+	await _start_at(MIDDLE)
+	_run(_make_input(0, true), 5)
+	_run(_make_input(0, true, false, true), 1)
+	assert_eq(_fighter.state, Fighter.State.AIR)
+	assert_true(_fighter.velocity.y < 0.0, "a normal jump")

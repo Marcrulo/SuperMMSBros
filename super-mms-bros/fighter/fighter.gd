@@ -242,20 +242,21 @@ func _free_state(input: FighterInput) -> State:
 	return State.RUN if input.move_x != 0.0 else State.IDLE
 
 
-## IDLE/RUN/CROUCH, first that applies: attack, special, jump, shield, drop through a platform
-## (down pressed twice), crouch, run, stand.
+## IDLE/RUN/CROUCH, first that applies: attack, special, drop through a platform (jump with down
+## held), jump, shield, drop through a platform (down pressed twice), crouch, run, stand.
 func _ground_actions(input: FighterInput) -> void:
 	if input.attack_pressed:
 		_start_move(_pick_normal(input), input)
 	elif input.special_pressed and _pick_special(input) != NO_MOVE:
 		_start_move(_pick_special(input), input)
+	elif input.jump_pressed and input.down_held and _is_on_pass_through_platform():
+		_drop_through()
 	elif input.jump_pressed:
 		_jump()
 	elif input.shield_held and shield_health > 0.0:
 		_set_state(State.SHIELD)
 	elif _is_double_tap(input) and _is_on_pass_through_platform():
-		_drop_through_frames_left = stats.drop_through_frames
-		_set_state(State.AIR)
+		_drop_through()
 	elif input.down_held:
 		_turn_toward(input.move_x)
 		_set_state(State.CROUCH)
@@ -487,6 +488,12 @@ func _land(input: FighterInput) -> void:
 	_can_short_hop = false
 	_launched = false
 	_set_state(_free_state(input))
+
+
+## Fall through the pass-through platform the fighter stands on.
+func _drop_through() -> void:
+	_drop_through_frames_left = stats.drop_through_frames
+	_set_state(State.AIR)
 
 
 ## Down pressed again within drop_double_tap_frames of the last press.
