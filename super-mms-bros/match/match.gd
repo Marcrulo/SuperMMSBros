@@ -1,7 +1,7 @@
 class_name Match
 extends Node2D
 ## Runs a match: owns the tick loop and drives every fighter (docs/specs/architecture.md).
-## M2: one keyboard-controlled fighter on the stage. Rules (stocks, KOs, phases) come in M4.
+## P1 (keyboard) and a dummy; hits are resolved here. Rules (stocks, KOs, phases) come in M7.
 
 ## When on, the Match steps once per physics frame. Tests turn it off and call step() themselves.
 @export var auto_step: bool = true
@@ -21,7 +21,11 @@ func _ready() -> void:
 		var fighter := child as Fighter
 		fighter.player_index = _fighters.size()
 		_fighters.append(fighter)
-		_controllers.append(KeyboardController.new())
+		# P1 plays from the keyboard; everyone else is the dummy until the CPU arrives (M8).
+		if fighter.player_index == 0:
+			_controllers.append(KeyboardController.new())
+		else:
+			_controllers.append(ScriptedController.new())
 	reset()
 
 
@@ -46,8 +50,36 @@ func step() -> void:
 		inputs.append(controller.get_input(null))
 	for i in _fighters.size():
 		_fighters[i].tick(inputs[i])
+	_resolve_hits()
 	_respawn_fighters_out_of_bounds()
 	tick += 1
+
+
+## Collects every hit for this tick, then applies them all, so two fighters can trade. The
+## knockback side and the attacker's position are taken while collecting, before anyone turns
+## around from being hit.
+func _resolve_hits() -> void:
+	var hits: Array[Dictionary] = []
+	for attacker in _fighters:
+		if not attacker.is_hitbox_active():
+			continue
+		var hitbox := attacker.get_hitbox_rect()
+		var data := attacker.current_move()
+		for victim in _fighters:
+			if victim == attacker or attacker.has_hit(victim.player_index):
+				continue
+			if hitbox.intersects(victim.get_hurtbox_rect()):
+				hits.append({
+					"attacker": attacker,
+					"victim": victim,
+					"move": data,
+					"side": attacker.knockback_side(data, victim.get_center()),
+					"attacker_x": attacker.global_position.x,
+				})
+	for hit in hits:
+		var victim := hit.victim as Fighter
+		(hit.attacker as Fighter).register_hit(victim.player_index)
+		victim.take_hit(hit.move, hit.side, hit.attacker_x)
 
 
 ## For now a fighter that leaves the blast zone is put straight back at its spawn point.

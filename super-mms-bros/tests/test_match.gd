@@ -16,7 +16,7 @@ func _add_match(auto_step: bool) -> void:
 func test_scene_has_stage_fighter_and_camera() -> void:
 	_add_match(false)
 	assert_true(_match.get_node("Stage") is Stage)
-	assert_eq(_match.get_node("Fighters").get_child_count(), 1, "M2 has one fighter")
+	assert_eq(_match.get_node("Fighters").get_child_count(), 2, "P1 and the dummy")
 	assert_true(_match.get_fighter(0) is Fighter)
 	var camera := _match.get_node("Camera2D") as Camera2D
 	assert_not_null(camera, "a camera (it follows the fighters from Task 4 on)")
