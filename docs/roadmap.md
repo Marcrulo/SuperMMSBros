@@ -16,6 +16,7 @@ The parked `m3-attack` branch (one attack, fixed knockback, dummy) is reused ins
 | M4 | Sprites, crouch and new controls | move a big-headed sprite fighter with the new key layout, crouch, and drop through platforms with a double tap | [fighter](specs/fighter.md), [art guide](specs/art-guide.md), [controls & display](specs/controls-and-display.md) |
 | M5 | Attacks and damage % | hit a dummy with jab and the three tilts (on the ground and in the air), see its % rise and knock it off the stage | [fighter](specs/fighter.md), [moves](specs/moves.md) |
 | M6 | Shield and specials | shield, break a shield, and use all four specials, including the projectile and the up B recovery | [fighter](specs/fighter.md), [moves](specs/moves.md) |
+| M6b | Launch angles and aerials | feel each move launch along its own angle, use five air attacks, and spike with the Down B dive | [moves](specs/moves.md) |
 | M7 | Match rules | play a full match against the dummy: countdown, KOs, stocks, respawn, damage HUD, win/draw, results, pause, restart | [match & stage](specs/match-and-stage.md) |
 | M8 | CPU opponent | play a real match against the CPU; watch CPU vs CPU; run a headless CPU vs CPU match to completion | [cpu](specs/cpu.md), [architecture](specs/architecture.md) |
 | M9 | Tuning and polish | play a match that feels good — **v1 done** | all |

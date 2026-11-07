@@ -13,8 +13,9 @@ const STAGE_PLATFORM_LAYER := 2
 const MAX_PERCENT := 999.0
 ## No move in progress.
 const NO_MOVE := &""
-## Normal attacks end when they land; specials have their own landing rules.
-const NORMALS: Array[StringName] = [&"jab", &"down_tilt", &"up_tilt", &"side_tilt"]
+## Normal attacks (ground and air) end when they land; specials have their own landing rules.
+const NORMALS: Array[StringName] = [&"jab", &"down_tilt", &"up_tilt", &"side_tilt",
+		&"neutral_air", &"forward_air", &"back_air", &"up_air", &"down_air"]
 ## Special phases that end by their own rule, not after total_frames.
 const OPEN_ENDED: Array[StringName] = [&"neutral_special_charge", &"down_special_dive", &"up_special"]
 
@@ -75,13 +76,13 @@ func get_hurtbox_rect() -> Rect2:
 
 
 ## The data of the move in progress (the charged punch for the neutral special), or null when
-## there's none or the phase has no data of its own (charging, diving).
+## there's none or the phase has no data of its own (charging).
 func current_move() -> MoveData:
 	if state != State.ATTACK or move == NO_MOVE:
 		return null
 	if move == &"neutral_special":
 		return _charged_punch
-	if move in [&"neutral_special_charge", &"down_special_dive"]:
+	if move == &"neutral_special_charge":
 		return null
 	return stats.moveset.get(move) as MoveData
 
@@ -133,6 +134,9 @@ func take_hit(data: MoveData, side: int, attacker_x: float) -> void:
 	var speed := data.base_knockback + data.knockback_growth * percent
 	var angle := deg_to_rad(data.angle_deg)
 	velocity = Vector2(cos(angle) * speed * side, -sin(angle) * speed)
+	if velocity.y > 0.0 and is_on_floor():
+		# A spike on a standing fighter bounces it up instead of driving it into the floor.
+		velocity.y = -velocity.y
 	# Set directly, not with _set_state(): a hit during hitstun restarts it.
 	state = State.HITSTUN
 	state_frame = 0
@@ -333,8 +337,17 @@ func _jump() -> void:
 	_set_state(State.AIR)
 
 
-## The normal attack for the held direction: up, then down, then sideways, else the jab.
+## The normal attack for the held direction: up, then down, then sideways, else the jab; in the
+## air the aerials, with sideways split into forward and back (facing doesn't turn in the air).
 func _pick_normal(input: FighterInput) -> StringName:
+	if state == State.AIR:
+		if input.up_held:
+			return &"up_air"
+		if input.down_held:
+			return &"down_air"
+		if input.move_x != 0.0:
+			return &"forward_air" if signf(input.move_x) == facing else &"back_air"
+		return &"neutral_air"
 	if input.up_held:
 		return &"up_tilt"
 	if input.down_held:

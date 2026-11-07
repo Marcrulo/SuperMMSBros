@@ -217,6 +217,42 @@ ANIMATIONS = {
                    pose(ft=0.8, fk=1.4, bt=0.3, bk=1.1, fa=3.0, fe=0.2, reach=0.6, ba=-1.4)],
 }
 
+# Air attacks: legs tucked like the fall pose, unless the move uses them.
+AIR = dict(ft=0.35, fk=0.4, bt=-0.25, bk=0.5)
+
+
+def air_pose(**changes):
+    return pose(**{**AIR, **changes})
+
+
+ANIMATIONS.update({
+    "neutral_air": [air_pose(crouch=1, ft=0.9, fk=1.6, bt=0.5, bk=1.5, fa=0.9, fe=1.4, ba=-0.9, be=-1.4),
+                    air_pose(crouch=1, ft=1.0, fk=1.8, bt=0.6, bk=1.6, fa=0.7, fe=1.6, ba=-0.7, be=-1.6),
+                    air_pose(fa=1.9, fe=0.0, reach=0.6, ba=-1.9, be=0.0, ft=0.9, fk=0.0, bt=-0.9, bk=0.0),
+                    air_pose(fa=1.4, fe=0.4, ba=-1.4, be=-0.4, ft=0.6, fk=0.3, bt=-0.6, bk=0.3),
+                    air_pose(fa=0.8, fe=0.6, ba=-0.8, be=-0.6)],
+    "forward_air": [air_pose(lean=-1, fa=-1.2, fe=1.6, ba=0.3),
+                    air_pose(lean=-1, fa=-1.5, fe=1.9, ba=0.5),
+                    air_pose(lean=2, fa=1.57, fe=0.0, reach=1.6, ba=-0.6, ft=0.6, fk=0.3),
+                    air_pose(lean=1, fa=1.3, fe=0.3, reach=0.6, ba=-0.4),
+                    air_pose(fa=0.8, fe=0.6)],
+    "back_air": [air_pose(lean=1, bt=0.4, bk=1.6, fa=0.6, ba=-0.4),
+                 air_pose(lean=2, bt=0.6, bk=2.0, ft=0.6, fk=1.0, fa=0.9, ba=-0.2),
+                 air_pose(lean=2, head_dx=1, bt=-1.57, bk=0.0, ft=0.5, fk=0.8, fa=1.0, fe=0.6, ba=-1.0),
+                 air_pose(lean=1, bt=-1.0, bk=0.4, ft=0.4, fk=0.6, fa=0.7, ba=-0.6),
+                 air_pose(fa=0.4, ba=-0.3)],
+    "up_air": [air_pose(fa=-0.4, fe=1.0, ba=0.4, be=1.0),
+               air_pose(crouch=1, fa=0.8, fe=1.2, ba=-0.8, be=-1.2, ft=0.7, fk=1.2, bt=0.4, bk=1.2),
+               air_pose(head_dy=-1, fa=3.0, fe=0.0, reach=1.0, ba=-2.9, be=0.0, ft=0.2, fk=0.2, bt=-0.2, bk=0.2),
+               air_pose(fa=2.4, fe=0.4, ba=-2.3, be=-0.4),
+               air_pose(fa=1.4, fe=0.6, ba=-1.2, be=-0.6)],
+    "down_air": [air_pose(crouch=-1, ft=1.1, fk=1.9, bt=0.8, bk=1.8, fa=1.6, fe=0.4, ba=-1.6, be=-0.4),
+                 air_pose(crouch=-2, ft=1.3, fk=2.2, bt=1.0, bk=2.1, fa=2.0, fe=0.3, ba=-2.0, be=-0.3),
+                 air_pose(head_dy=-1, ft=0.05, fk=0.0, bt=-0.05, bk=0.0, fa=2.6, fe=0.2, ba=-2.6, be=-0.2),
+                 air_pose(ft=0.2, fk=0.2, bt=-0.2, bk=0.3, fa=2.0, fe=0.4, ba=-2.0, be=-0.4),
+                 air_pose(fa=1.2, fe=0.5, ba=-1.2, be=-0.5)],
+})
+
 PROJECTILE = 12
 GLOW_OUTER, GLOW_MID, GLOW_CORE = (41, 54, 111), (65, 166, 246), (115, 239, 247)
 

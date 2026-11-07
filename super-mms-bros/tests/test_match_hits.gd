@@ -4,7 +4,7 @@ extends GutTest
 ## jab's active frames 5–7 are steps 6–8.
 
 const MATCH_SCENE := preload("res://match/match.tscn")
-## The jab on a fighter at 0 %: 120 + 0.8 × 3 = 122.4 px/s at 40°.
+## The jab on a fighter at 0 %: 120 + 0.8 × 3 = 122.4 px/s at 30°.
 const JAB_SPEED := 122.4
 
 var _match: Match
@@ -61,7 +61,7 @@ func test_jab_hits_on_its_first_active_frame() -> void:
 	_steps(1)
 	assert_eq(_p2.state, Fighter.State.HITSTUN)
 	assert_eq(_p2.percent, 3.0)
-	assert_almost_eq(_p2.velocity.x, cos(deg_to_rad(40.0)) * JAB_SPEED, 0.01)
+	assert_almost_eq(_p2.velocity.x, cos(deg_to_rad(30.0)) * JAB_SPEED, 0.01)
 
 
 func test_out_of_range_misses() -> void:
@@ -98,6 +98,25 @@ func test_trade_hits_both_fighters() -> void:
 	assert_gt(_p2.velocity.x, 0.0, "P2 knocked right")
 	assert_eq(_p1.facing, 1)
 	assert_eq(_p2.facing, -1)
+
+
+## P1 dives onto P2, both in the air: P2 is spiked down, and hit only once by the dive.
+func test_dive_spikes_in_the_match() -> void:
+	var dive := FighterInput.new()
+	dive.special_pressed = true
+	dive.special_held = true
+	dive.down_held = true
+	await _place(Vector2(240, 60), 1, Vector2(240, 100), -1, [FighterInput.new(), dive], [])
+	for i in 15:
+		_match.step()
+		if _p2.state == Fighter.State.HITSTUN:
+			break
+	assert_eq(_p2.state, Fighter.State.HITSTUN, "the dive hit")
+	assert_eq(_p2.percent, 8.0)
+	assert_gt(_p2.velocity.y, 0.0, "spiked down")
+	_steps(3)
+	assert_eq(_p1.move, &"down_special_dive", "still diving")
+	assert_eq(_p2.percent, 8.0, "one hit per victim")
 
 
 func test_percent_adds_up() -> void:

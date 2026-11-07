@@ -48,7 +48,7 @@ func test_p2_wears_blue() -> void:
 
 
 func test_animation_for_moves_and_hitstun() -> void:
-	for name in [&"jab", &"down_tilt", &"up_tilt", &"side_tilt"]:
+	for name in [&"jab", &"down_tilt", &"up_tilt", &"side_tilt", &"neutral_air", &"forward_air", &"back_air", &"up_air", &"down_air"]:
 		assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, name), String(name))
 	assert_eq(FighterVisuals.animation_for(Fighter.State.HITSTUN, -50.0), "hurt")
 
@@ -56,7 +56,7 @@ func test_animation_for_moves_and_hitstun() -> void:
 ## The strike drawing (index 2) must show exactly while the move can hit.
 func test_strike_drawing_matches_each_moves_active_frames() -> void:
 	var moves := (load("res://fighter/default_stats.tres") as FighterStats).moveset
-	for name in ["jab", "down_tilt", "up_tilt", "side_tilt"]:
+	for name in ["jab", "down_tilt", "up_tilt", "side_tilt", "neutral_air", "forward_air", "back_air", "up_air", "down_air"]:
 		var data := moves.get(name) as MoveData
 		var timing: Dictionary = FighterVisuals.ANIMATIONS[name]
 		for frame in range(1, data.total_frames() + 1):

@@ -53,6 +53,11 @@ when the move can hit, and what players read.
 | `down_tilt` | down tilt (20) | 5 | 3, 2 · **3** · 6, 6 | no |
 | `up_tilt` | up tilt (23) | 5 | 3, 2 · **4** · 7, 7 | no |
 | `side_tilt` | side tilt (26) | 5 | 4, 3 · **3** · 8, 8 | no |
+| `neutral_air` | neutral air (19) | 5 | 2, 1 · **6** · 5, 5 | no |
+| `forward_air` | forward air (20) | 5 | 3, 2 · **3** · 6, 6 | no |
+| `back_air` | back air (23), kicking behind | 5 | 3, 3 · **3** · 7, 7 | no |
+| `up_air` | up air (20) | 5 | 2, 2 · **4** · 6, 6 | no |
+| `down_air` | down air (23), stomping down | 5 | 3, 3 · **3** · 7, 7 | no |
 | `neutral_special_charge` | neutral special, charging | 2 | 6 each (the game adds a growing glow on the fists) | yes |
 | `neutral_special` | the charged punch (25) | 4 | 3 · **4** · 9, 9 | no |
 | `down_special_dive` | down special, diving in the air | 1 | hold | — |

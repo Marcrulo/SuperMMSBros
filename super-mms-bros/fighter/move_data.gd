@@ -4,7 +4,7 @@ extends Resource
 ## Frames count from 1 on the tick the move starts.
 
 ## FACING: launched toward the attacker's facing side. AWAY: away from the attacker's center
-## (for moves that hit on both sides).
+## (for moves that hit on both sides or behind).
 enum Direction { FACING, AWAY }
 
 @export_group("Frames")
@@ -23,7 +23,7 @@ enum Direction { FACING, AWAY }
 ## Launch speed = base_knockback + knockback_growth × the victim's % after this hit, in px/s.
 @export var base_knockback: float
 @export var knockback_growth: float
-## Launch angle above horizontal.
+## Launch angle above horizontal; negative launches downward (a spike).
 @export var angle_deg: float
 @export var direction: Direction = Direction.FACING
 

@@ -9,6 +9,12 @@
 [ext_resource type="Resource" path="res://fighter/moves/default/down_special.tres" id="7_down_special"]
 [ext_resource type="Resource" path="res://fighter/moves/default/side_special.tres" id="8_side_special"]
 [ext_resource type="Resource" path="res://fighter/moves/default/up_special.tres" id="9_up_special"]
+[ext_resource type="Resource" path="res://fighter/moves/default/neutral_air.tres" id="10_neutral_air"]
+[ext_resource type="Resource" path="res://fighter/moves/default/forward_air.tres" id="11_forward_air"]
+[ext_resource type="Resource" path="res://fighter/moves/default/back_air.tres" id="12_back_air"]
+[ext_resource type="Resource" path="res://fighter/moves/default/up_air.tres" id="13_up_air"]
+[ext_resource type="Resource" path="res://fighter/moves/default/down_air.tres" id="14_down_air"]
+[ext_resource type="Resource" path="res://fighter/moves/default/down_special_dive.tres" id="15_down_special_dive"]
 
 [resource]
 script = ExtResource("1_set")
@@ -20,3 +26,9 @@ neutral_special = ExtResource("6_neutral_special")
 down_special = ExtResource("7_down_special")
 side_special = ExtResource("8_side_special")
 up_special = ExtResource("9_up_special")
+neutral_air = ExtResource("10_neutral_air")
+forward_air = ExtResource("11_forward_air")
+back_air = ExtResource("12_back_air")
+up_air = ExtResource("13_up_air")
+down_air = ExtResource("14_down_air")
+down_special_dive = ExtResource("15_down_special_dive")

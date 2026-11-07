@@ -67,6 +67,34 @@ func test_direction_picks_the_move() -> void:
 		assert_eq(_fighter.move, case[1])
 
 
+## Jumps from the open sky and rises a few ticks: in the air, well above the floor.
+func _start_in_the_air(facing: int = 1) -> void:
+	await _start_at(OPEN_SKY, facing)
+	_run(_make_input(0.0, false, true), 1)
+	_run(_hold_jump(), 5)
+	assert_eq(_fighter.state, Fighter.State.AIR)
+
+
+func test_air_direction_picks_the_aerial() -> void:
+	var cases := [[_attack(), &"neutral_air"], [_attack(0.0, true), &"up_air"],
+			[_attack(0.0, false, true), &"down_air"], [_attack(1.0), &"forward_air"],
+			[_attack(-1.0), &"back_air"], [_attack(-1.0, true), &"up_air"]]
+	for case: Array in cases:
+		await _start_in_the_air(1)
+		_run(case[0], 1)
+		assert_eq(_fighter.state, Fighter.State.ATTACK)
+		assert_eq(_fighter.move, case[1])
+		assert_eq(_fighter.facing, 1, "no turning in the air")
+
+
+func test_back_air_hits_behind_and_launches_backward() -> void:
+	await _start_in_the_air(1)
+	_run(_attack(-1.0), 1)
+	assert_lt(_fighter.get_hitbox_rect().get_center().x, _fighter.global_position.x, "behind")
+	var behind := _fighter.get_center() + Vector2(-16, 0)
+	assert_eq(_fighter.knockback_side(_moves.back_air, behind), -1)
+
+
 func test_side_tilt_on_the_ground_turns_first() -> void:
 	await _start_at(MIDDLE, 1)
 	_run(_attack(-1.0), 1)
@@ -140,7 +168,8 @@ func test_air_move_steers_and_ends_on_landing() -> void:
 		_fighter.tick(_make_input())
 		ticks += 1
 	assert_ne(_fighter.state, Fighter.State.AIR)
-	assert_lt(ticks, _moves.side_tilt.total_frames(), "landed out of it early")
+	assert_eq(_fighter.move, &"", "the forward air ended")
+	assert_lt(ticks, _moves.forward_air.total_frames(), "landed out of it early")
 	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE)
 
 
@@ -171,8 +200,27 @@ func test_knockback_uses_percent_after_damage() -> void:
 	_fighter.take_hit(_moves.jab, 1, MIDDLE.x - 10.0)
 	assert_eq(_fighter.percent, 3.0)
 	var speed := 120.0 + 0.8 * 3.0
-	assert_almost_eq(_fighter.velocity.x, cos(deg_to_rad(40.0)) * speed, 0.01)
-	assert_almost_eq(_fighter.velocity.y, -sin(deg_to_rad(40.0)) * speed, 0.01)
+	assert_almost_eq(_fighter.velocity.x, cos(deg_to_rad(30.0)) * speed, 0.01)
+	assert_almost_eq(_fighter.velocity.y, -sin(deg_to_rad(30.0)) * speed, 0.01)
+
+
+func test_downward_launch_on_the_ground_bounces_up() -> void:
+	var spike := MoveData.new()
+	spike.base_knockback = 200.0
+	spike.angle_deg = -75.0
+	await _start_at(MIDDLE)
+	_fighter.take_hit(spike, 1, MIDDLE.x - 10.0)
+	assert_almost_eq(_fighter.velocity.x, cos(deg_to_rad(75.0)) * 200.0, 0.01)
+	assert_almost_eq(_fighter.velocity.y, -sin(deg_to_rad(75.0)) * 200.0, 0.01, "up, not into the floor")
+
+
+func test_downward_launch_in_the_air_spikes() -> void:
+	var spike := MoveData.new()
+	spike.base_knockback = 200.0
+	spike.angle_deg = -75.0
+	await _start_in_the_air()
+	_fighter.take_hit(spike, 1, _fighter.global_position.x - 10.0)
+	assert_almost_eq(_fighter.velocity.y, sin(deg_to_rad(75.0)) * 200.0, 0.01, "driven down")
 
 
 func test_knockback_grows_with_percent() -> void:

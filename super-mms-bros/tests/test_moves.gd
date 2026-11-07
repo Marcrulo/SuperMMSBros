@@ -1,14 +1,22 @@
 extends GutTest
-## The normal attacks' data matches docs/specs/moves.md.
+## The moves' data matches docs/specs/moves.md.
 
 # name: [startup, active, recovery, center, size, damage, base, growth, angle, direction]
 const NORMALS := {
-	"jab": [4, 3, 12, Vector2(15, -13), Vector2(14, 10), 3.0, 120.0, 0.8, 40.0, MoveData.Direction.FACING],
-	"down_tilt": [5, 3, 12, Vector2(14, -3), Vector2(18, 6), 6.0, 130.0, 1.0, 75.0, MoveData.Direction.FACING],
+	"jab": [4, 3, 12, Vector2(15, -13), Vector2(14, 10), 3.0, 120.0, 0.8, 30.0, MoveData.Direction.FACING],
+	"down_tilt": [5, 3, 12, Vector2(14, -3), Vector2(18, 6), 6.0, 100.0, 0.6, 80.0, MoveData.Direction.FACING],
 	"up_tilt": [5, 4, 14, Vector2(2, -31), Vector2(24, 12), 7.0, 160.0, 1.2, 90.0, MoveData.Direction.AWAY],
 	"side_tilt": [7, 3, 16, Vector2(19, -12), Vector2(18, 8), 9.0, 180.0, 1.6, 35.0, MoveData.Direction.FACING],
+	"neutral_air": [3, 6, 10, Vector2(0, -13), Vector2(28, 26), 5.0, 110.0, 0.9, 45.0, MoveData.Direction.AWAY],
+	"forward_air": [5, 3, 12, Vector2(16, -14), Vector2(16, 12), 7.0, 140.0, 1.2, 40.0, MoveData.Direction.FACING],
+	"back_air": [6, 3, 14, Vector2(-16, -12), Vector2(16, 12), 9.0, 170.0, 1.4, 35.0, MoveData.Direction.AWAY],
+	"up_air": [4, 4, 12, Vector2(2, -32), Vector2(24, 12), 6.0, 140.0, 1.0, 85.0, MoveData.Direction.AWAY],
+	"down_air": [6, 3, 14, Vector2(0, 4), Vector2(18, 10), 6.0, 110.0, 0.6, 75.0, MoveData.Direction.AWAY],
 }
-const TOTALS := {"jab": 19, "down_tilt": 20, "up_tilt": 23, "side_tilt": 26}
+const TOTALS := {
+	"jab": 19, "down_tilt": 20, "up_tilt": 23, "side_tilt": 26,
+	"neutral_air": 19, "forward_air": 20, "back_air": 23, "up_air": 20, "down_air": 23,
+}
 
 
 func test_normals_match_the_spec() -> void:
@@ -55,6 +63,12 @@ func test_specials_match_the_spec() -> void:
 	assert_eq([down.damage, down.base_knockback, down.knockback_growth, down.angle_deg], [10.0, 220.0, 1.5, 80.0])
 	assert_eq(down.direction, MoveData.Direction.AWAY)
 	assert_eq(down.dive_speed, 360.0)
+	var dive := moves.down_special_dive as MoveData
+	assert_eq(dive.startup, 0, "the dive's hitbox is out from its first frame")
+	assert_eq(dive.hitbox_center, Vector2(0, -4))
+	assert_eq(dive.hitbox_size, Vector2(20, 14))
+	assert_eq([dive.damage, dive.base_knockback, dive.knockback_growth, dive.angle_deg], [8.0, 160.0, 1.2, -75.0])
+	assert_eq(dive.direction, MoveData.Direction.AWAY)
 	var side := moves.side_special as MoveData
 	assert_eq([side.startup, side.active, side.recovery], [10, 0, 20])
 	assert_eq(side.hitbox_center, Vector2(16, -13))

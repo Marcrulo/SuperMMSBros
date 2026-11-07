@@ -8,6 +8,7 @@ const FRAMES := {
 	"dizzy": 2, "hurt": 2, "jab": 5, "down_tilt": 5, "up_tilt": 5, "side_tilt": 5,
 	"neutral_special_charge": 2, "neutral_special": 4, "down_special_dive": 1,
 	"down_special": 5, "side_special": 4, "up_special": 3,
+	"neutral_air": 5, "forward_air": 5, "back_air": 5, "up_air": 5, "down_air": 5,
 }
 
 
