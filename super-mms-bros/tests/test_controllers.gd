@@ -3,7 +3,7 @@ extends GutTest
 
 
 func after_each() -> void:
-	for action: String in ["move_left", "move_right", "jump", "down", "attack"]:
+	for action: String in ["move_left", "move_right", "up", "jump", "down", "attack", "special", "shield"]:
 		Input.action_release(action)
 
 
@@ -15,6 +15,10 @@ func test_fighter_input_starts_empty() -> void:
 	assert_false(input.down_pressed)
 	assert_false(input.down_held)
 	assert_false(input.attack_pressed)
+	assert_false(input.up_held)
+	assert_false(input.special_pressed)
+	assert_false(input.special_held)
+	assert_false(input.shield_held)
 
 
 func test_base_controller_returns_empty_input() -> void:
@@ -58,10 +62,16 @@ func test_keyboard_controller_reads_move_and_held_buttons() -> void:
 	Input.action_press("move_left")
 	Input.action_press("jump")
 	Input.action_press("down")
+	Input.action_press("up")
+	Input.action_press("special")
+	Input.action_press("shield")
 	var input := KeyboardController.new().get_input(null)
 	assert_eq(input.move_x, -1.0)
 	assert_true(input.jump_held)
 	assert_true(input.down_held)
+	assert_true(input.up_held)
+	assert_true(input.special_held)
+	assert_true(input.shield_held)
 
 
 func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
@@ -73,6 +83,7 @@ func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
 	Input.action_press("jump")
 	Input.action_press("down")
 	Input.action_press("attack")
+	Input.action_press("special")
 	await get_tree().physics_frame
 	var first := controller.get_input(null)
 	await get_tree().physics_frame
@@ -80,6 +91,9 @@ func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
 	assert_true(first.jump_pressed, "jump pressed on the first tick")
 	assert_true(first.down_pressed, "down pressed on the first tick")
 	assert_true(first.attack_pressed, "attack pressed on the first tick")
+	assert_true(first.special_pressed, "special pressed on the first tick")
+	assert_false(second.special_pressed, "holding special doesn't press it again")
+	assert_true(second.special_held, "special is still held")
 	assert_false(second.jump_pressed, "holding jump doesn't press it again")
 	assert_false(second.down_pressed, "holding down doesn't press it again")
 	assert_false(second.attack_pressed, "holding attack doesn't press it again")

@@ -15,3 +15,11 @@ var down_pressed: bool = false
 var down_held: bool = false
 ## Attack went down this tick.
 var attack_pressed: bool = false
+## Up is held (aims moves; doesn't jump).
+var up_held: bool = false
+## Special ("B") went down this tick.
+var special_pressed: bool = false
+## Special is held (charging).
+var special_held: bool = false
+## Shield is held.
+var shield_held: bool = false

@@ -1,7 +1,7 @@
 extends GutTest
 ## Input Map from docs/specs/controls-and-display.md.
 
-const ACTIONS := ["move_left", "move_right", "jump", "down", "attack", "pause"]
+const ACTIONS := ["move_left", "move_right", "up", "down", "jump", "attack", "special", "shield", "pause"]
 
 
 func test_actions_exist() -> void:
@@ -12,30 +12,44 @@ func test_actions_exist() -> void:
 func test_keyboard_bindings() -> void:
 	_assert_keys("move_left", [KEY_A])
 	_assert_keys("move_right", [KEY_D])
-	_assert_keys("jump", [KEY_W, KEY_SPACE])
+	_assert_keys("up", [KEY_W])
+	_assert_keys("jump", [KEY_SPACE])
 	_assert_keys("down", [KEY_S])
 	_assert_keys("attack", [KEY_J])
+	_assert_keys("special", [KEY_K])
+	_assert_keys("shield", [KEY_L])
 	_assert_keys("pause", [KEY_ESCAPE])
+
+
+func test_w_does_not_jump() -> void:
+	for event: InputEvent in InputMap.action_get_events("jump"):
+		if event is InputEventKey:
+			assert_ne(event.physical_keycode, KEY_W, "W is up, so up + attack doesn't jump")
 
 
 func test_gamepad_buttons() -> void:
 	_assert_buttons("move_left", [JOY_BUTTON_DPAD_LEFT])
 	_assert_buttons("move_right", [JOY_BUTTON_DPAD_RIGHT])
-	_assert_buttons("jump", [JOY_BUTTON_A])
+	_assert_buttons("up", [JOY_BUTTON_DPAD_UP])
+	_assert_buttons("jump", [JOY_BUTTON_A, JOY_BUTTON_Y])
 	_assert_buttons("down", [JOY_BUTTON_DPAD_DOWN])
 	_assert_buttons("attack", [JOY_BUTTON_X])
+	_assert_buttons("special", [JOY_BUTTON_B])
+	_assert_buttons("shield", [JOY_BUTTON_RIGHT_SHOULDER, JOY_BUTTON_LEFT_SHOULDER])
 	_assert_buttons("pause", [JOY_BUTTON_START])
 
 
 func test_gamepad_stick() -> void:
 	_assert_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
 	_assert_axis("move_right", JOY_AXIS_LEFT_X, 1.0)
+	_assert_axis("up", JOY_AXIS_LEFT_Y, -1.0)
 	_assert_axis("down", JOY_AXIS_LEFT_Y, 1.0)
 
 
 func test_deadzones() -> void:
 	assert_almost_eq(InputMap.action_get_deadzone("move_left"), 0.2, 0.001)
 	assert_almost_eq(InputMap.action_get_deadzone("move_right"), 0.2, 0.001)
+	assert_almost_eq(InputMap.action_get_deadzone("up"), 0.5, 0.001)
 	assert_almost_eq(InputMap.action_get_deadzone("down"), 0.5, 0.001)
 
 
