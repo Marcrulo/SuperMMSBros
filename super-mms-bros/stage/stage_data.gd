@@ -1,0 +1,26 @@
+class_name StageData
+extends Resource
+## One stage: its name and look (docs/specs/match-and-stage.md#stages). Every stage shares the
+## Battlefield layout; this only dresses it. One .tres per stage in res://stage/stages/, named
+## after its id.
+
+const STAGES_DIR := "res://stage/stages/"
+const DEFAULT_ID := "mms"
+
+@export var id: String
+@export var display_name: String
+## 528×297: the 480×270 screen plus room for parallax drift.
+@export var background: Texture2D
+@export var style: PlatformStyle
+## The background is mixed toward this color so the stage reads in front of it.
+@export var haze_color: Color
+## Tints everything in front of the background (white = no change).
+@export var light_color: Color = Color.WHITE
+
+
+## Loads the stage with this id, or the default stage if there is none.
+static func load_stage(stage_id: String) -> StageData:
+	var path := STAGES_DIR + stage_id + ".tres"
+	if not ResourceLoader.exists(path):
+		path = STAGES_DIR + DEFAULT_ID + ".tres"
+	return load(path) as StageData

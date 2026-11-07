@@ -1,6 +1,6 @@
 class_name Stage
 extends Node2D
-## A stage: collision geometry and spawn points (docs/specs/match-and-stage.md#stage-battlefield).
+## A stage: collision geometry, spawn points and blast zone, dressed by a StageData (docs/specs/match-and-stage.md#stage-battlefield).
 ## Spawn points are the Marker2D children P1Spawn, P2Spawn, ...
 
 ## Which way each player faces at spawn, by player index: 1 = right, -1 = left.
@@ -18,3 +18,13 @@ func get_spawn_position(player_index: int) -> Vector2:
 
 func get_spawn_facing(player_index: int) -> int:
 	return spawn_facings[player_index]
+
+
+## Dresses the stage as `data`: background, haze, light and platform style. Presentation only:
+## the layout and collision are the same on every stage.
+func apply(data: StageData) -> void:
+	var background := $BackgroundLayer/Background as Sprite2D
+	background.texture = data.background
+	(background.material as ShaderMaterial).set_shader_parameter("haze_color", data.haze_color)
+	($Light as CanvasModulate).color = data.light_color
+	($PlatformLook as PlatformLook).style = data.style

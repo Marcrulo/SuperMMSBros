@@ -16,6 +16,7 @@ var _controllers: Array[Controller] = []
 
 
 func _ready() -> void:
+	_stage.apply(StageData.load_stage(_stage_id_from_command_line()))
 	for child in $Fighters.get_children():
 		var fighter := child as Fighter
 		fighter.player_index = _fighters.size()
@@ -27,6 +28,14 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if auto_step:
 		step()
+
+
+## The stage chosen with `--stage=<id>` (docs/specs/architecture.md#command-line-options).
+func _stage_id_from_command_line() -> String:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--stage="):
+			return arg.trim_prefix("--stage=")
+	return StageData.DEFAULT_ID
 
 
 ## Advances the game by one tick (docs/specs/architecture.md#tick-order).

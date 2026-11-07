@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="PlatformStyle" format=3]
+
+[ext_resource type="Script" path="res://stage/platform_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+top = Color(0.3098, 0.5608, 0.4706, 1)
+top_edge = Color(0.5255, 0.7608, 0.6588, 1)
+shadow = Color(0.2431, 0.451, 0.3843, 1)
+far_shadow = Color(0.2745, 0.498, 0.4196, 1)
+side = Color(0.498, 0.2078, 0.1529, 1)
+under = Color(0.2275, 0.2078, 0.1961, 1)
+main_bands = [["solid", 2, Color(0.851, 0.7725, 0.6078, 1)], ["brick", 4, Color(0.7059, 0.3137, 0.2275, 1), Color(0.5765, 0.2471, 0.1804, 1), Color(0.7882, 0.7059, 0.549, 1)], ["solid", 2, Color(0.851, 0.7725, 0.6078, 1)], ["brick", 8, Color(0.7059, 0.3137, 0.2275, 1), Color(0.5765, 0.2471, 0.1804, 1), Color(0.7882, 0.7059, 0.549, 1)]]
+thin_bands = [["solid", 1, Color(0.851, 0.7725, 0.6078, 1)], ["brick", 4, Color(0.7059, 0.3137, 0.2275, 1), Color(0.5765, 0.2471, 0.1804, 1), Color(0.7882, 0.7059, 0.549, 1)], ["solid", 1, Color(0.851, 0.7725, 0.6078, 1)]]
+has_quoins = true
+quoins = Color(0.851, 0.7725, 0.6078, 1)
