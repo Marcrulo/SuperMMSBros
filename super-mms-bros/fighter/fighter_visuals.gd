@@ -38,6 +38,13 @@ const HITBOX_ACTIVE_COLOR := Color(1.0, 0.15, 0.15, 0.55)
 const HITBOX_IDLE_COLOR := Color(1.0, 0.3, 0.3, 0.5)
 ## Brightness of the hit flash (values above 1 brighten the sprite).
 const FLASH := Color(2.2, 2.2, 2.2)
+## Shield bubble: radius from empty to full, centered on the body; colors per player.
+const SHIELD_MIN_RADIUS := 6.0
+const SHIELD_MAX_RADIUS := 16.0
+const SHIELD_COLORS: Array[Color] = [Color(0.85, 0.3, 0.38, 0.35), Color(0.3, 0.45, 0.95, 0.35)]
+## The neutral special's charge glow, at the fists (relative to the feet, facing right).
+const CHARGE_GLOW := Color(0.45, 0.94, 0.97, 0.8)
+const FIST := Vector2(7, -14)
 
 ## Debug view of hurtboxes and hitboxes: F1 toggles it, `--hitboxes` turns it on at start.
 static var show_boxes := "--hitboxes" in OS.get_cmdline_user_args()
@@ -69,6 +76,12 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 			return String(move) if ANIMATIONS.has(String(move)) else "jab"
 		Fighter.State.HITSTUN:
 			return "hurt"
+		Fighter.State.SHIELD, Fighter.State.SHIELD_DROP:
+			return "shield"
+		Fighter.State.SHIELD_BREAK:
+			return "dizzy"
+		Fighter.State.HELPLESS:
+			return "helpless"
 		Fighter.State.RUN:
 			return "run"
 		Fighter.State.CROUCH:
@@ -76,6 +89,11 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 		Fighter.State.AIR:
 			return "jump" if velocity_y < 0.0 else "fall"
 	return "idle"
+
+
+## The shield bubble's radius for a given shield health.
+static func shield_radius(health: float, max_health: float) -> float:
+	return lerpf(SHIELD_MIN_RADIUS, SHIELD_MAX_RADIUS, clampf(health / max_health, 0.0, 1.0))
 
 
 ## Loads every strip; with `shirt` colors given, repaints the shirt's shades in them.
@@ -122,8 +140,28 @@ func _draw() -> void:
 	draw_texture_rect_region(texture, Rect2(-FRAME / 2.0, -FRAME, FRAME, FRAME),
 		Rect2(frame * FRAME, 0, FRAME, FRAME), _flash())
 	draw_set_transform(Vector2.ZERO)
+	if _fighter.state == Fighter.State.ATTACK and _fighter.move == &"neutral_special_charge":
+		_draw_charge_glow()
+	if _fighter.state == Fighter.State.SHIELD:
+		_draw_shield()
 	if show_boxes:
 		_draw_boxes()
+
+
+## A translucent bubble in the player's color around the body, shrinking as the shield weakens.
+func _draw_shield() -> void:
+	var color := SHIELD_COLORS[mini(_fighter.player_index, 1)]
+	var center := _fighter.get_center() - _fighter.global_position
+	var radius := shield_radius(_fighter.shield_health, _fighter.stats.shield_max)
+	draw_circle(center, radius, color)
+	draw_arc(center, radius, 0.0, TAU, 24, color.lightened(0.5), 1.0)
+
+
+## A glow on the fists that grows as the neutral special charges.
+func _draw_charge_glow() -> void:
+	var charge := clampf(_fighter.state_frame / float(_fighter.stats.moveset.neutral_special.charge_frames), 0.0, 1.0)
+	var fist := Vector2(FIST.x * _fighter.facing, FIST.y)
+	draw_circle(fist, 1.0 + 3.0 * charge, CHARGE_GLOW)
 
 
 ## Brightens the sprite on alternate pairs of hitstun ticks (1–2, 5–6, …), so a hit flashes.

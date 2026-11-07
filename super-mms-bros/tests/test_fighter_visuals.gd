@@ -62,3 +62,30 @@ func test_strike_drawing_matches_each_moves_active_frames() -> void:
 		for frame in range(1, data.total_frames() + 1):
 			var strike := FighterVisuals.frame_index(timing.ticks, timing.loop, frame) == 2
 			assert_eq(strike, data.is_active_frame(frame), "%s frame %d" % [name, frame])
+
+
+func test_animation_for_shield_helpless_and_specials() -> void:
+	assert_eq(FighterVisuals.animation_for(Fighter.State.SHIELD, 0.0), "shield")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.SHIELD_DROP, 0.0), "shield")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.SHIELD_BREAK, 0.0), "dizzy")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.HELPLESS, 50.0), "helpless")
+	for name in ["neutral_special_charge", "neutral_special", "down_special_dive", "down_special", "side_special", "up_special"]:
+		assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, StringName(name)), name)
+
+
+## Specials' strike drawings: neutral's punch is drawing 1, down's burst drawing 2, up's boost
+## drawing 1 (art guide).
+func test_strike_drawing_matches_each_specials_active_frames() -> void:
+	var moves := (load("res://fighter/default_stats.tres") as FighterStats).moveset
+	for case in [["neutral_special", 1], ["down_special", 2], ["up_special", 1]]:
+		var data := moves.get(case[0]) as MoveData
+		var timing: Dictionary = FighterVisuals.ANIMATIONS[case[0]]
+		for frame in range(1, data.total_frames() + 1):
+			var strike: bool = FighterVisuals.frame_index(timing.ticks, timing.loop, frame) == case[1]
+			assert_eq(strike, data.is_active_frame(frame), "%s frame %d" % [case[0], frame])
+
+
+func test_shield_bubble_shrinks_with_health() -> void:
+	assert_almost_eq(FighterVisuals.shield_radius(100.0, 100.0), 16.0, 0.001)
+	assert_almost_eq(FighterVisuals.shield_radius(0.0, 100.0), 6.0, 0.001)
+	assert_almost_eq(FighterVisuals.shield_radius(50.0, 100.0), 11.0, 0.001)
