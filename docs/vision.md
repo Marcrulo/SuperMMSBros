@@ -4,10 +4,12 @@ A small 2D platform fighter in the spirit of *Super Smash Bros*, with a pixel-ar
 
 ## The game in one paragraph
 
-Two fighters on a floating stage try to knock each other off. You lose a stock when you leave the
-screen; lose all three and the match is over. The first version is deliberately tiny: one fighter
-design, one stage, one attack, and a CPU opponent — just enough to be a real, playable game that
-everything else can grow from.
+Two fighters on a floating stage try to knock each other off. Every hit adds damage %, and the
+higher your %, the farther hits launch you. You lose a stock when you're launched out of the blast
+zone; lose all three and the match is over. The stages are real places in Denmark — Marie Mørks
+Skole, Frederiksborgcenteret and Frederiksborg Slot — drawn as pixel-art backdrops behind
+perspective platforms. v1 has one fighter design with a full Smash-style move set, and a CPU
+opponent.
 
 ## Pillars
 
@@ -15,45 +17,56 @@ everything else can grow from.
    earn its place.
 2. **Feels good to control.** Tight movement and clear hits beat feature count. Numbers live in data
    files and get tuned by playtesting.
-3. **Built to grow.** Local multiplayer, a trained AI opponent, online play, more depth and hand-drawn
-   art are all planned for later — the first version is structured so they can be added without
-   rewrites.
-4. **Hand-made pixel art (later).** The game ships with placeholder shapes first; the final art will be
-   drawn by hand in Pixelorama, following [the art guide](specs/art-guide.md).
+3. **Built to grow.** More characters, local multiplayer (up to 4 players), a trained AI opponent,
+   online play and hand-drawn art are all planned for later — v1 is structured so they can be added
+   without rewrites. Characters, moves and stages are data.
+4. **Hand-made pixel art (later).** v1 ships with generated placeholder sprites; the final art will
+   be drawn by hand in Pixelorama, following [the art guide](specs/art-guide.md).
 
 ## First version (v1) — in scope
 
 - Single player: you vs one CPU opponent, 1v1, 3 stocks each.
-- One fighter design, used by both players (red for you, blue for the CPU).
-- Movement: run, jump, short hop, one double jump, drop through platforms.
-- One attack button with fixed knockback and hitstun.
+- One fighter design ("default"), used by both players (red shirt for P1, blue for P2), drawn as
+  big-headed pixel-art sprites (generated placeholders).
+- Movement: run, jump, short hop, one double jump, crouch, drop through platforms, shield.
+- Damage % and knockback that grows with it.
+- Attacks (Smash terms): jab (A), down tilt (Down+A), up tilt (Up+A), side tilt (Side+A); the same
+  moves in the air.
+- Default specials: neutral B (charged punch), down B (ground energy burst), side B (projectile),
+  up B (jump boost, then helpless until landing).
 - KOs by leaving the blast zone; respawn with brief invulnerability.
-- One stage: a Battlefield-style layout (main platform plus three pass-through platforms).
+- Four stages sharing a Battlefield-style layout (main platform plus three pass-through platforms),
+  each with its own background, platform style and light: **Marie Mørks Skole**,
+  **Frederiksborgcenteret**, **Frederiksborg Slot (Dag)**, **Frederiksborg Slot (Solnedgang)**.
+  Chosen with a command-line option in v1.
+- 480×270 pixel-art rendering, smooth-zooming camera that frames the fighters.
 - Match flow: countdown → match → result screen (Restart / Quit). Pause menu on Esc.
 - Keyboard and gamepad controls.
-- Placeholder art (colored rectangles), rendered at 320×180 and scaled up pixel-perfectly.
 - CPU vs CPU mode, including headless (no window) for automated testing.
 
 ## Explicitly out of scope for v1
 
-- Damage % and knockback that scales with damage
-- Directional attacks, special moves, shield, dodge, grabs, ledge grabbing
-- More than one fighter design or stage
+- More than one fighter design; separate air attacks (aerials); smash attacks; dodges, grabs,
+  ledge grabbing
+- Different stage layouts
 - Menus beyond pause and results (title screen, character/stage select, settings)
 - Sound and music
 - Local multiplayer, online play
 - Trained (machine-learning) AI
-- Final pixel art
+- Final hand-drawn pixel art
 - Match time limit
 
 ## Later — ideas, in no particular order
 
-- **Hand-drawn pixel art** for fighters and stage (the code is already structured for it).
-- **Damage %**: hits add damage and knockback grows with it — the classic Smash rule.
-- **Deeper combat**: directional attacks (up/down/side/neutral), a special-move button, shield and dodge.
+- **More characters**, each with their own sprites, stats and special moves (the default set is
+  the template).
+- **Character and stage select screens** (the stage list already exists as data).
+- **Hand-drawn pixel art** for fighters and platforms (the code already loads sprite strips).
+- **Deeper combat**: aerials, smash attacks, dodges, grabs, ledges.
+- **Local multiplayer with up to 4 players** (stages are already sized for it).
+- **Different stage layouts.**
 - **Trained AI opponent**: reinforcement learning via the Godot RL Agents plugin and Python libraries
   such as Stable-Baselines3, trained headless against the hand-written CPU.
-- **Smarter hand-written CPU**: difficulty levels, edge-guarding (chasing opponents off stage).
-- **Local multiplayer**: more human players via more input devices.
+- **Smarter hand-written CPU**: difficulty levels, edge-guarding.
 - **Online multiplayer**: would need rollback netcode.
-- **Sound, menus, more fighters and stages.**
+- **Sound and menus.**

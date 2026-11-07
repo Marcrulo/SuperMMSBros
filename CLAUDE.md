@@ -1,8 +1,9 @@
 # Super MMS Bros
 
 A small 2D Smash-Bros-style platform fighter with a pixel-art look, built in Godot 4.7 with
-GDScript. v1: you vs one CPU, 1v1, 3 stocks, one fighter, one Battlefield-style stage, placeholder
-art.
+GDScript. v1: you vs one CPU, 1v1, 3 stocks, damage %, one big-headed fighter design with a full
+Smash-style move set, four themed stages sharing one layout, a zooming camera, generated
+placeholder sprites. See `docs/vision.md`.
 
 ## Talking to the user
 

@@ -31,14 +31,18 @@ terminal and in the editor's GUT panel.
 
 | Area | Examples | Milestone |
 |---|---|---|
-| Setup | the suite runs; project settings are as specified | M1 |
+| Setup | the suite runs; project settings are as specified | M1, M3 |
 | Movement | ground jump peaks at ≈48 px; short hop is lower; double jump works once and is restored on landing; walking off a ledge keeps the double jump; dropping through a pass-through platform; facing only changes on the ground | M2 |
-| Attack | hitbox active exactly on frames 5–7; total 19 frames; ground attack doesn't steer; air attack ends on landing | M3 |
-| Hits | knockback velocity and direction; hitstun length; one hit per attack; trades; jumps restored when hit; invulnerable fighters can't be hit | M3–M4 |
-| Match rules | KO when center leaves the blast zone; stocks go down; respawn after 60 ticks with 120 ticks of invulnerability; win; draw; countdown blocks input | M4 |
-| Reset & repeatability | `reset()` restores the full start state; same seed + same scripted inputs ⇒ identical snapshots every tick | M4 |
-| CPU | uses only the snapshot; reaction delay; recovers when off stage; doesn't walk off the edge; repeatable with a fixed seed | M5 |
-| End-to-end | headless CPU vs CPU match with `--autoquit --max-ticks` ends with a winner or draw and exit code 0 | M5 |
+| Stages | layout and blast zone; every `StageData` loads with its background and style; `--stage` picks it; instant respawn outside the blast zone | M3 |
+| Camera & drawing (logic only) | camera framing box and zoom clamp for given fighter positions; perspective x formula; collapsed shapes are skipped (camera sweep near platform ends) | M3 |
+| Controls & crouch | new actions read into `FighterInput`; crouch hurtbox; double-tap drop-through and a single press not dropping; animation frame for a given state and `state_frame` | M4 |
+| Moves | each move picked by direction; hitbox active exactly on its frames; total frames; ground moves don't steer; air moves end on landing | M5 |
+| Hits & damage | % added; knockback speed = base + growth × %; angle and direction (FACING / AWAY); hitstun from speed; one hit per move; trades; jumps restored when hit | M5 |
+| Shield & specials | blocked hit costs shield health and pushes back, no damage; shield break and reset; jump out of shield; charge scales the punch; burst hits both sides; air dive; one projectile at a time, its lifetime and hits; up special launches, then helpless until landing, once per air time | M6 |
+| Match rules | KO when center leaves the blast zone; stocks go down; respawn after 60 ticks at 0 % with 120 ticks of invulnerability; invulnerable fighters can't be hit; win; draw; countdown blocks input | M7 |
+| Reset & repeatability | `reset()` restores the full start state; same seed + same scripted inputs ⇒ identical snapshots every tick | M7 |
+| CPU | uses only the snapshot; reaction delay; recovers when off stage (double jump, then up special); doesn't walk off the edge; repeatable with a fixed seed | M8 |
+| End-to-end | headless CPU vs CPU match with `--autoquit --max-ticks` ends with a winner or draw and exit code 0 | M8 |
 
 Every milestone's plan lists the tests to write first; a milestone is done only when its tests
 pass headless.

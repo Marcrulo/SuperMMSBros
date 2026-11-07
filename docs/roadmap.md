@@ -3,44 +3,68 @@
 Each milestone ends with something you can run and try. Each gets its own implementation plan in
 [`plans/`](plans/) before work starts. Specs live in [`specs/`](specs/).
 
+The design was reworked after M2 (bigger resolution, moving camera, four stages, sprites, a full
+move set, damage %). The look was explored first in throwaway spike branches
+(`spike-stage-look`, `spike-fighter-body`); the milestones below build it properly, with tests.
+The parked `m3-attack` branch (one attack, fixed knockback, dummy) is reused inside M5.
+
 | # | Milestone | Done when you can… | Main specs |
 |---|---|---|---|
-| M1 | Project setup | open the project, run it (empty screen at 320×180, scaled), and run the (empty) test suite from the terminal | [architecture](specs/architecture.md), [controls & display](specs/controls-and-display.md), [testing](specs/testing.md) |
-| M2 | Movement on the stage | run, jump, short hop, double jump and drop through platforms on the Battlefield stage | [fighter](specs/fighter.md), [match & stage](specs/match-and-stage.md) |
-| M3 | Attack, knockback, hitstun | hit a standing dummy fighter and knock it off the stage | [fighter](specs/fighter.md) |
-| M4 | Match rules | play a full match against the dummy: countdown, KOs, stocks, respawn, win/draw, results, pause, restart | [match & stage](specs/match-and-stage.md) |
-| M5 | CPU opponent | play a real match against the CPU; watch CPU vs CPU; run a headless CPU vs CPU match to completion | [cpu](specs/cpu.md), [architecture](specs/architecture.md) |
-| M6 | Tuning and polish | play a match that feels good — **v1 done** | all |
+| M1 | Project setup ✅ | open the project, run it, and run the test suite from the terminal | [architecture](specs/architecture.md), [controls & display](specs/controls-and-display.md), [testing](specs/testing.md) |
+| M2 | Movement on the stage ✅ | run, jump, short hop, double jump and drop through platforms | [fighter](specs/fighter.md), [match & stage](specs/match-and-stage.md) |
+| M3 | Stages and camera | play M2's movement at 480×270 on any of the four themed stages, with the zooming camera | [match & stage](specs/match-and-stage.md), [controls & display](specs/controls-and-display.md) |
+| M4 | Sprites, crouch and new controls | move a big-headed sprite fighter with the new key layout, crouch, and drop through platforms with a double tap | [fighter](specs/fighter.md), [art guide](specs/art-guide.md), [controls & display](specs/controls-and-display.md) |
+| M5 | Attacks and damage % | hit a dummy with jab and the three tilts (on the ground and in the air), see its % rise and knock it off the stage | [fighter](specs/fighter.md), [moves](specs/moves.md) |
+| M6 | Shield and specials | shield, break a shield, and use all four specials, including the projectile and the up B recovery | [fighter](specs/fighter.md), [moves](specs/moves.md) |
+| M7 | Match rules | play a full match against the dummy: countdown, KOs, stocks, respawn, damage HUD, win/draw, results, pause, restart | [match & stage](specs/match-and-stage.md) |
+| M8 | CPU opponent | play a real match against the CPU; watch CPU vs CPU; run a headless CPU vs CPU match to completion | [cpu](specs/cpu.md), [architecture](specs/architecture.md) |
+| M9 | Tuning and polish | play a match that feels good — **v1 done** | all |
 
 ## Milestone details
 
-### M1 — Project setup
-- Display settings (320×180, integer scaling, nearest filtering) and the Input Map actions.
-- Folder structure from the architecture spec.
-- GUT test framework installed; one trivial test passes headless.
-- A pixel font in `assets/fonts/`.
+### M1 — Project setup ✅
+- Display settings and the Input Map actions, folder structure, GUT, a pixel font.
 
-### M2 — Movement on the stage
-- `FighterStats` resource, `FighterInput`, `Controller` base class, `KeyboardController`,
-  `ScriptedController` (used by the tests).
-- Fighter scene with movement states (`IDLE`, `RUN`, `AIR`) and placeholder visuals.
-- Battlefield stage scene with solid ground and one-way platforms.
-- Match scene that drives the tick (no rules yet) with one keyboard-controlled fighter.
+### M2 — Movement on the stage ✅
+- `FighterStats`, `FighterInput`, controllers, the fighter's movement states, the Battlefield
+  stage, the Match tick loop.
 
-### M3 — Attack, knockback, hitstun
-- `ATTACK` and `HITSTUN` states, hitboxes and hurtboxes, hit resolution in the Match.
-- A second fighter driven by a `ScriptedController` that does nothing (the dummy).
+### M3 — Stages and camera
+- 480×270 display with `canvas_items` stretch; the Battlefield layout scaled to the new size.
+- `StageData` resources for the four stages (name, background, platform style, haze, light) and
+  `--stage=<id>`.
+- Perspective platform drawing in each stage's style, with shadows and side faces; hazed
+  background with slight parallax; per-stage light.
+- The smash-style camera.
+- Blast zone and instant respawn (the M7 KO rule replaces it).
 
-### M4 — Match rules
-- Blast zone and `KO` state, stocks, respawn with invulnerability, win/draw detection.
-- Match phases, countdown, `reset()`, seeded RNG, game-state snapshot.
-- HUD: stock icons, countdown, off-screen arrows, result screen, pause menu.
+### M4 — Sprites, crouch and new controls
+- New Input Map: `up`, `special`, `shield`; W is `up`, Space jumps.
+- Placeholder sprite generator (`tools/gen_placeholder_sprites.py`) and the sprite-based
+  `FighterVisuals`, with the P2 shirt recolor.
+- Hurtbox that covers the head; `CROUCH` with its smaller hurtbox; double-tap drop-through.
+- Hitbox/hurtbox debug view (F1).
 
-### M5 — CPU opponent
-- `CpuController` and `CpuSettings`.
+### M5 — Attacks and damage %
+- `MoveData` resources and the move table; jab, down tilt, up tilt, side tilt, in the air too.
+- Damage %, scaling knockback and hitstun; hit resolution in the Match (from `m3-attack`).
+- A dummy P2.
+
+### M6 — Shield and specials
+- `SHIELD`, shield health, block stun, shield break.
+- Neutral B (charge), down B (burst, with the air dive), side B (projectile, owned by the Match),
+  up B (boost, then `HELPLESS`).
+
+### M7 — Match rules
+- `KO` state, stocks, respawn with invulnerability, win/draw.
+- Phases, countdown, `reset()`, seeded RNG, game-state snapshot.
+- HUD: damage % and stock icons, countdown, off-screen arrows, result screen, pause menu.
+
+### M8 — CPU opponent
+- `CpuController` and `CpuSettings`, using the move set.
 - Command-line options (`--p1`, `--p2`, `--seed`, `--autoquit`, `--speed`, `--max-ticks`).
 - Headless end-to-end test.
 
-### M6 — Tuning and polish
-- Playtest and tune movement, knockback, stage layout and CPU settings.
+### M9 — Tuning and polish
+- Playtest and tune movement, moves, knockback, stages, camera and CPU.
 - Fix whatever feels wrong. Update specs with the final numbers.

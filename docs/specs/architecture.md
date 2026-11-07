@@ -34,7 +34,8 @@ Match                  (match/match.tscn, match.gd)
 ├── Fighters           (Node2D container)
 │   ├── Fighter P1     (fighter/fighter.tscn)
 │   └── Fighter P2     (fighter/fighter.tscn)
-├── Camera2D           (fixed, centered on the screen)
+├── Projectiles        (Node2D container; projectiles are added and removed by the Match)
+├── Camera2D           (match/match_camera.gd — follows and zooms; presentation only)
 └── HUD                (ui/hud.tscn — CanvasLayer)
 ```
 
@@ -46,16 +47,21 @@ the Match and assigned one per fighter.
 | Type | Kind | Responsibility |
 |---|---|---|
 | `Match` | `Node2D` | Owns the tick loop (`step()`), rules, phases, RNG, snapshot, `reset()`. Emits signals for the HUD. |
-| `Fighter` | `CharacterBody2D` | Movement, state machine, owns its hitbox and hurtbox. Advanced by `tick(input)`. |
-| `FighterStats` | `Resource` | All fighter tuning numbers. One `.tres` file per fighter design. |
-| `FighterVisuals` | `Node2D` (child of Fighter) | Draws the fighter from its state. Placeholder rectangles now, sprites later. |
-| `FighterInput` | `RefCounted` | One tick of input: `move_x`, `jump_pressed`, `jump_held`, `down_pressed`, `attack_pressed`. |
+| `Fighter` | `CharacterBody2D` | Movement, state machine, moves, damage %, shield; owns its hurtbox. Advanced by `tick(input)`. |
+| `FighterStats` | `Resource` | All fighter tuning numbers and its `MoveSet`. One `.tres` file per fighter design. |
+| `MoveSet` / `MoveData` | `Resource` | The eight moves of a design and each move's frame data, hitbox and knockback (see [moves](moves.md)). |
+| `Projectile` | `Node2D` | The side special's projectile: position, direction, owner, age; advanced by the Match. |
+| `FighterVisuals` | `Node2D` (child of Fighter) | Draws the fighter's sprite from its state, plus shield, charge glow and the debug view. |
+| `FighterInput` | `RefCounted` | One tick of input (see [fighter](fighter.md#input)). |
 | `Controller` | `RefCounted` (base class) | `get_input(state) -> FighterInput`, `reset()`. |
 | `KeyboardController` | `Controller` | Reads Input Map actions (keyboard and gamepad). |
 | `CpuController` | `Controller` | Hand-written AI; see [cpu](cpu.md). |
 | `ScriptedController` | `Controller` | Plays back a fixed list of inputs; with an empty list it does nothing (the training dummy). Used in tests. |
 | `MatchSnapshot` / `FighterSnapshot` | `RefCounted` | Plain read-only copy of the game state; see [Game state snapshot](#game-state-snapshot). |
-| `Stage` | `Node2D` | Collision geometry, spawn points, blast zone rectangle. |
+| `Stage` | `Node2D` | Collision geometry, spawn points, blast zone rectangle; applies a `StageData`. |
+| `StageData` / `PlatformStyle` | `Resource` | A stage's name, background, haze, light and platform style (see [match & stage](match-and-stage.md#stages)). |
+| `PlatformLook` | `Node2D` (child of Stage) | Draws the platforms in perspective from the style. Presentation only. |
+| `MatchCamera` | `Camera2D` | Frames the fighters and zooms. Presentation only. |
 | `Hud` | `CanvasLayer` | Stock icons, countdown, off-screen arrows, pause menu, result screen. |
 
 ## Tick order
@@ -68,11 +74,16 @@ Every tick, `step()` does, in this order:
 2. Build the snapshot for this tick.
 3. Ask each fighter's controller for input, P1 then P2. During `COUNTDOWN` the inputs are replaced
    with empty input (controllers are still asked, so the CPU's reaction buffer fills).
-4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2.
-5. Resolve hits: first collect every hit (hitbox vs hurtbox) for this tick, then apply them all. Two
-   fighters can hit each other on the same tick (a trade).
-6. Check KOs (fighter center outside the blast zone), stocks, respawns and the win condition.
-7. Advance timers (countdown, respawn, invulnerability) and the tick counter.
+4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2. A fighter whose side
+   special reaches its spawn frame asks the Match for a projectile; the Match adds it (in P1, P2
+   order).
+5. Advance each projectile (in the order they were created) and remove those past their lifetime or
+   outside the blast zone.
+6. Resolve hits: first collect every hit for this tick — move hitboxes and projectiles against
+   hurtboxes — then apply them all (blocked by a shield, or damage + knockback). Two fighters can
+   hit each other on the same tick (a trade).
+7. Check KOs (fighter center outside the blast zone), stocks, respawns and the win condition.
+8. Advance timers (countdown, respawn, invulnerability) and the tick counter.
 
 The order is always the same, which is what makes matches repeatable.
 
@@ -83,12 +94,13 @@ asserts this.
 
 ## Hit detection
 
-Hitboxes and hurtboxes are `Area2D` nodes with `RectangleShape2D` collision shapes, so they can be
-edited in the editor and seen in-game with **Debug → Visible Collision Shapes**. However, the Match
-does **not** use Godot's area overlap signals or `get_overlapping_areas()` — those update one physics
+Hurtboxes are `Area2D` nodes with `RectangleShape2D` collision shapes (standing and crouching), so
+they can be edited in the editor. Move hitboxes come from the `MoveData` resources. The Match does
+**not** use Godot's area overlap signals or `get_overlapping_areas()` — those update one physics
 step late and in no guaranteed order. Instead, each tick the Match computes the global rectangles of
-active hitboxes and hurtboxes and tests them with `Rect2.intersects()`. Areas have `monitoring` and
-`monitorable` turned off.
+active hitboxes, projectiles and hurtboxes and tests them with `Rect2.intersects()`. Areas have
+`monitoring` and `monitorable` turned off. The F1 debug view draws the same rectangles the Match
+uses.
 
 ## Game state snapshot
 
@@ -97,8 +109,10 @@ active hitboxes and hurtboxes and tests them with `Rect2.intersects()`. Areas ha
 - `tick: int`, `phase: Phase` (`COUNTDOWN`, `PLAYING`, `ENDED`)
 - `stage`: platform rectangles (solid and pass-through) and the blast zone `Rect2`
 - `fighters: Array[FighterSnapshot]`, each with `index`, `position`, `velocity`, `facing` (−1 or 1),
-  `state`, `state_frame` (ticks spent in the current state), `on_floor`, `jumps_left`, `stocks`,
+  `state`, `move` (the move in progress, or none), `state_frame` (ticks spent in the current
+  state), `on_floor`, `jumps_left`, `up_special_available`, `percent`, `shield_health`, `stocks`,
   `invulnerable_frames`
+- `projectiles`: each with `owner`, `position`, `direction`
 
 The snapshot never includes controller input or references to nodes.
 
@@ -109,7 +123,7 @@ The snapshot never includes controller input or references to nodes.
 | 1 | `stage_solid` | Main platform |
 | 2 | `stage_platform` | Pass-through (one-way) platforms |
 | 3 | `fighter` | Fighter bodies |
-| 4 | `hitbox` | Attack hitboxes (for editor display only) |
+| 4 | `hitbox` | Reserved (move hitboxes are data in `MoveData`, not nodes) |
 | 5 | `hurtbox` | Fighter hurtboxes (for editor display only) |
 
 Fighters are on layer 3 and collide with layers 1 and 2. They do not collide with each other.
@@ -121,6 +135,8 @@ Read from `OS.get_cmdline_user_args()` (arguments after `--`):
 
 | Option | Default | Meaning |
 |---|---|---|
+| `--stage=<id>` | `mms` | Stage to play (`mms`, `fc`, `slot_day`, `slot_sunset`) |
+| `--hitboxes` | off | Start with the hitbox debug view on (F1 toggles it) |
 | `--p1=human\|cpu` | `human` | Controller for P1 |
 | `--p2=human\|cpu` | `cpu` | Controller for P2 |
 | `--seed=N` | random | RNG seed (printed at match start) |
@@ -143,16 +159,22 @@ godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-t
 ```
 super-mms-bros/
 ├── project.godot
-├── match/         match.tscn, match.gd, match_snapshot.gd, fighter_snapshot.gd
-├── fighter/       fighter.tscn, fighter.gd, fighter_stats.gd, default_stats.tres, fighter_visuals.gd
+├── match/         match.tscn, match.gd, match_camera.gd, projectile.gd, match_snapshot.gd,
+│                  fighter_snapshot.gd
+├── fighter/       fighter.tscn, fighter.gd, fighter_stats.gd, default_stats.tres, fighter_visuals.gd,
+│                  move_data.gd, move_set.gd, moves/default/*.tres
 ├── controllers/   controller.gd, fighter_input.gd, keyboard_controller.gd, cpu_controller.gd,
 │                  cpu_settings.gd, default_cpu.tres, scripted_controller.gd
-├── stage/         battlefield.tscn, stage.gd
+├── stage/         battlefield.tscn, stage.gd, platform_look.gd, background.gdshader,
+│                  stage_data.gd, platform_style.gd, stages/*.tres, styles/*.tres
 ├── ui/            hud.tscn, hud.gd, pause_menu.tscn, result_screen.tscn
-├── assets/        fonts/ (sprites later)
+├── assets/        fonts/, fighters/default/ (sprite strips), stage/backgrounds/
 ├── tests/         test_*.gd
 └── addons/gut/    test framework
 ```
+
+Outside the Godot project, `tools/` holds helper scripts that aren't part of the game, such as
+`tools/gen_placeholder_sprites.py` (generates the placeholder sprite strips).
 
 Group by feature: a scene lives next to its scripts.
 

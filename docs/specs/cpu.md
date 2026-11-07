@@ -23,6 +23,10 @@ later, so it plays by the same rules a trained agent would.
 | `chase_dead_zone` | 8 | Don't move if horizontally closer than this |
 | `height_threshold` | 20 | Vertical difference that counts as "above" or "below" |
 | `edge_margin` | 8 | How close to the main platform edge the CPU is willing to walk |
+| `side_tilt_chance` | 0.3 | When attacking an opponent in front, chance to use side tilt instead of jab |
+| `up_tilt_range_y` | 32 | Opponent feet up to this many px above self's feet (and horizontally within `attack_range_x` on either side) → up tilt |
+| `projectile_range` | 80–220 | Horizontal distance at which the CPU may fire its projectile (same height ± `height_threshold`) |
+| `projectile_chance` | 0.02 | Chance per tick to fire when the opponent is at projectile range |
 
 ## Reaction delay
 
@@ -39,12 +43,20 @@ opponent is `KO`.
 
 1. **Recover.** If self is airborne and off stage (center x outside the main platform, or feet below
    the main platform top):
-   - hold toward the stage center;
-   - press jump if `jumps_left > 0`, falling (velocity y > 0) and feet below the main platform top.
-2. **Attack.** If self can act (`IDLE`, `RUN`, `AIR`), the opponent isn't invulnerable, and the
-   opponent is in range in front of self:
-   - roll the RNG against `attack_chance` (only if not hesitating);
-   - success → press attack; failure → hesitate for `hesitation_frames`.
+   - hold toward the stage center (also while `HELPLESS`);
+   - press jump if `jumps_left > 0`, falling (velocity y > 0) and feet below the main platform top;
+   - with no jumps left, falling and feet below the main platform top: press special while
+     holding up (up special), if it's available.
+2. **Attack.** If self can act (`IDLE`, `RUN`, `CROUCH`, `AIR`) and the opponent isn't invulnerable,
+   roll the RNG against `attack_chance` (only if not hesitating; on failure hesitate for
+   `hesitation_frames`) when one of these applies, and on success press:
+   - opponent above self within `up_tilt_range_y` and horizontally within `attack_range_x` → hold
+     up + attack (up tilt);
+   - opponent in range in front of self → attack (jab), or with `side_tilt_chance` hold toward the
+     opponent + attack (side tilt);
+   - opponent at `projectile_range` in front, at about the same height, and self's projectile not
+     out → with `projectile_chance` per tick (no hesitation roll) hold toward the opponent +
+     special (side special).
 3. **Turn around.** If self is on the ground and the opponent is in range but *behind* self: tap
    toward the opponent to turn.
 4. **Chase.**
@@ -65,5 +77,5 @@ again, the CPU must release it for at least one tick first (like a human).
 
 - Difficulty levels (tune `reaction_delay_frames`, `attack_chance`, `hesitation_frames`).
 - Edge-guarding: following opponents off stage.
-- Using platforms tactically, spacing, shielding once shields exist.
+- Using platforms tactically, spacing; shielding, neutral and down specials.
 - A trained agent (`AgentController`) plugging into the same slot, trained against this CPU.
