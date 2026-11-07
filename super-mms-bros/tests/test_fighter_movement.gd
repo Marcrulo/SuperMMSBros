@@ -262,9 +262,9 @@ func test_jumps_up_through_a_platform_and_lands_on_it() -> void:
 	assert_almost_eq(_fighter.position.y, PLATFORM_Y, TOLERANCE)
 
 
-func test_down_drops_through_a_platform() -> void:
+func test_double_tapping_down_drops_through_a_platform() -> void:
 	await _land_on_left_platform()
-	_run(_down(), 1)
+	_double_tap_down()
 	assert_eq(_fighter.state, Fighter.State.AIR)
 	assert_false(_fighter.get_collision_mask_value(2), "ignoring pass-through platforms")
 	_run_until_landed(_idle())
@@ -275,18 +275,17 @@ func test_down_drops_through_a_platform() -> void:
 
 func test_platforms_are_ignored_for_drop_through_frames_ticks() -> void:
 	await _land_on_left_platform()
-	_run(_down(), 1)
+	_double_tap_down()
 	_run(_idle(), _stats.drop_through_frames - 2)
 	assert_false(_fighter.get_collision_mask_value(2), "still ignored after %d ticks" % (_stats.drop_through_frames - 1))
 	_run(_idle(), 1)
 	assert_true(_fighter.get_collision_mask_value(2), "solid again after %d ticks" % _stats.drop_through_frames)
 
 
-func test_down_on_the_main_platform_does_nothing() -> void:
+func test_double_tap_on_the_main_platform_does_not_drop() -> void:
 	await _start_at(Vector2(240, 192))
 	_run(_idle(), 1)
-	_run(_down(), 1)
-	assert_eq(_fighter.state, Fighter.State.IDLE)
+	_double_tap_down()
 	assert_true(_fighter.get_collision_mask_value(2))
 	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE)
 
@@ -296,7 +295,7 @@ func test_holding_down_while_falling_passes_through_a_platform() -> void:
 	_run(_jump(), 1)
 	_run_until_falling(_hold_jump())
 	_run_until_landed(_hold_down())
-	assert_eq(_fighter.state, Fighter.State.IDLE)
+	assert_eq(_fighter.state, Fighter.State.CROUCH, "landed still holding down")
 	assert_almost_eq(_fighter.position.y, FLOOR_Y, TOLERANCE, "fell past the platform to the main one")
 	assert_true(_fighter.get_collision_mask_value(2), "pass-through platforms are solid again")
 
@@ -313,7 +312,7 @@ func test_letting_go_of_down_in_the_air_lands_on_the_platform() -> void:
 func test_holding_down_on_a_platform_does_not_drop() -> void:
 	await _land_on_left_platform()
 	_run(_hold_down(), 10)
-	assert_eq(_fighter.state, Fighter.State.IDLE, "dropping needs a press, not a hold")
+	assert_eq(_fighter.state, Fighter.State.CROUCH, "holding down crouches; dropping needs a double tap")
 	assert_almost_eq(_fighter.position.y, PLATFORM_Y, TOLERANCE)
 
 
@@ -324,10 +323,19 @@ func _hold_down() -> FighterInput:
 	return input
 
 
+## Down goes down this tick (and is held).
 func _down() -> FighterInput:
 	var input := FighterInput.new()
 	input.down_pressed = true
+	input.down_held = true
 	return input
+
+
+## Press down, let go for a tick, press again: the drop happens on the second press.
+func _double_tap_down() -> void:
+	_run(_down(), 1)
+	_run(_idle(), 1)
+	_run(_down(), 1)
 
 
 func _land_on_left_platform() -> void:

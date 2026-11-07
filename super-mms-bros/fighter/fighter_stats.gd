@@ -32,3 +32,5 @@ extends Resource
 @export_group("Platforms")
 ## How long pass-through platforms are ignored after dropping through one.
 @export var drop_through_frames: int
+## Max ticks between the two down presses of a drop-through.
+@export var drop_double_tap_frames: int

@@ -17,4 +17,5 @@ double_jump_velocity = 219.0
 short_hop_cut = 0.5
 max_air_jumps = 1
 drop_through_frames = 10
+drop_double_tap_frames = 12
 metadata/_custom_type_script = "uid://vkponc2ve5t6"

@@ -3,7 +3,7 @@ extends CharacterBody2D
 ## A fighter: body, movement and state machine (docs/specs/fighter.md).
 ## The Match advances it one tick at a time with tick(); it has no _physics_process of its own.
 
-enum State { IDLE, RUN, AIR }
+enum State { IDLE, RUN, CROUCH, AIR }
 
 ## One tick of game time, in seconds (the game runs at 60 ticks per second).
 const DELTA := 1.0 / 60.0
@@ -25,11 +25,23 @@ var jumps_left: int = 0
 var _can_short_hop: bool = false
 ## Ticks left before pass-through platforms become solid again after dropping through one.
 var _drop_through_frames_left: int = 0
+## Ticks since down was last pressed (a second press soon after drops through a platform).
+var _ticks_since_down_press: int = 1000
+
+@onready var _standing_hurtbox := $Hurtbox/Standing as CollisionShape2D
+@onready var _crouching_hurtbox := $Hurtbox/Crouching as CollisionShape2D
 
 
 ## The middle of the body, in world coordinates (KO checks, the camera, the CPU).
 func get_center() -> Vector2:
 	return global_position + ($BodyShape as CollisionShape2D).position
+
+
+## Where this fighter can be hit, in world coordinates: smaller while crouching.
+func get_hurtbox_rect() -> Rect2:
+	var shape := _crouching_hurtbox if state == State.CROUCH else _standing_hurtbox
+	var size := (shape.shape as RectangleShape2D).size
+	return Rect2(shape.global_position - size / 2.0, size)
 
 
 ## Puts the fighter at a spawn point, standing still: IDLE, jumps restored, platforms solid.
@@ -42,6 +54,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	jumps_left = stats.max_air_jumps
 	_can_short_hop = false
 	_drop_through_frames_left = 0
+	_ticks_since_down_press = 1000
 	set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
 
 
@@ -56,6 +69,9 @@ func tick(input: FighterInput) -> void:
 
 	if state == State.AIR:
 		_steer(input.move_x, stats.air_speed, stats.air_accel, stats.air_friction)
+	elif state == State.CROUCH:
+		# Crouching doesn't walk: slide to a stop.
+		_steer(0.0, 0.0, 0.0, stats.ground_friction)
 	else:
 		_steer(input.move_x, stats.run_speed, stats.ground_accel, stats.ground_friction)
 	if state == State.AIR or not is_on_floor():
@@ -67,23 +83,35 @@ func tick(input: FighterInput) -> void:
 	_after_move(input)
 	_count_down_drop_through()
 	_update_platform_collision(input)
+	if input.down_pressed:
+		_ticks_since_down_press = 0
+	_ticks_since_down_press += 1
 	state_frame += 1
 
 
-## IDLE/RUN: jump, drop through a platform, or run/stand.
+## IDLE/RUN/CROUCH: jump, drop through a platform (down pressed twice), crouch, or run/stand.
 func _ground_actions(input: FighterInput) -> void:
 	if input.jump_pressed:
 		velocity.y = -stats.jump_velocity
 		_can_short_hop = true
 		_set_state(State.AIR)
-	elif input.down_pressed and _is_on_pass_through_platform():
+	elif _is_double_tap(input) and _is_on_pass_through_platform():
 		_drop_through_frames_left = stats.drop_through_frames
 		_set_state(State.AIR)
+	elif input.down_held:
+		if input.move_x != 0.0:
+			facing = 1 if input.move_x > 0.0 else -1
+		_set_state(State.CROUCH)
 	elif input.move_x != 0.0:
 		facing = 1 if input.move_x > 0.0 else -1
 		_set_state(State.RUN)
 	else:
 		_set_state(State.IDLE)
+
+
+## Down pressed again within drop_double_tap_frames of the last press.
+func _is_double_tap(input: FighterInput) -> bool:
+	return input.down_pressed and _ticks_since_down_press <= stats.drop_double_tap_frames
 
 
 ## AIR: double jump, or cut a ground jump short.
@@ -115,7 +143,10 @@ func _after_move(input: FighterInput) -> void:
 		if is_on_floor():
 			jumps_left = stats.max_air_jumps
 			_can_short_hop = false
-			_set_state(State.RUN if input.move_x != 0.0 else State.IDLE)
+			if input.down_held:
+				_set_state(State.CROUCH)
+			else:
+				_set_state(State.RUN if input.move_x != 0.0 else State.IDLE)
 	elif not is_on_floor():
 		# Walked off a ledge: the double jump is still there.
 		_set_state(State.AIR)
