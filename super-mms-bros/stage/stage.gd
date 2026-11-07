@@ -5,6 +5,9 @@ extends Node2D
 
 ## Which way each player faces at spawn, by player index: 1 = right, -1 = left.
 @export var spawn_facings: Array[int] = [1, -1]
+## A fighter whose center leaves this rectangle is knocked out. It sits just outside the screen
+## on the left, right and bottom, and far above the top.
+@export var blast_zone: Rect2 = Rect2(-24, -180, 528, 474)
 
 
 ## Where player `player_index` (0 = P1) spawns, in world coordinates.

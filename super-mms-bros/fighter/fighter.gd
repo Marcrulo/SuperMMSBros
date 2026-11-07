@@ -27,6 +27,11 @@ var _can_short_hop: bool = false
 var _drop_through_frames_left: int = 0
 
 
+## The middle of the body, in world coordinates (used for KO checks).
+func get_center() -> Vector2:
+	return global_position + ($BodyShape as CollisionShape2D).position
+
+
 ## Puts the fighter at a spawn point, standing still: IDLE, jumps restored, platforms solid.
 func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	global_position = spawn_position
