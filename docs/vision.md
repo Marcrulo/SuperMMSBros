@@ -35,21 +35,25 @@ opponent.
 - Default specials: neutral B (charged punch), down B (ground energy burst), side B (projectile),
   up B (jump boost, then helpless until landing).
 - KOs by leaving the blast zone; respawn with brief invulnerability.
-- Four stages sharing a Battlefield-style layout (main platform plus three pass-through platforms),
+- Three stages sharing a Battlefield-style layout (main platform plus three pass-through platforms),
   each with its own background, platform style and light: **Marie Mørks Skole**,
-  **Frederiksborgcenteret**, **Frederiksborg Slot (Dag)**, **Frederiksborg Slot (Solnedgang)**.
-  Chosen with a command-line option in v1.
+  **Frederiksborgcenteret** and **Frederiksborg Castle (sunset)**.
+  Chosen on a stage select screen (or with a command-line option).
 - 480×270 pixel-art rendering, smooth-zooming camera that frames the fighters.
+- Five air attacks (neutral, forward, back, up, down) next to the four ground attacks.
+- Character select (one playable character, the rest locked) and stage select before the match
+  (see [menus](specs/menus.md)).
 - Match flow: countdown → match → result screen (Restart / Quit). Pause menu on Esc.
 - Keyboard and gamepad controls.
 - CPU vs CPU mode, including headless (no window) for automated testing.
 
 ## Explicitly out of scope for v1
 
-- More than one fighter design; separate air attacks (aerials); smash attacks; dodges, grabs,
+- More than one fighter design (the character select shows locked slots for later ones); smash
+  attacks; dodges, grabs,
   ledge grabbing
 - Different stage layouts
-- Menus beyond pause and results (title screen, character/stage select, settings)
+- Menus beyond character select, stage select, pause and results (title screen, settings)
 - Sound and music
 - Local multiplayer, online play
 - Trained (machine-learning) AI
@@ -60,9 +64,8 @@ opponent.
 
 - **More characters**, each with their own sprites, stats and special moves (the default set is
   the template).
-- **Character and stage select screens** (the stage list already exists as data).
 - **Hand-drawn pixel art** for fighters and platforms (the code already loads sprite strips).
-- **Deeper combat**: aerials, smash attacks, dodges, grabs, ledges.
+- **Deeper combat**: smash attacks, dodges, grabs, ledges.
 - **Local multiplayer with up to 4 players** (stages are already sized for it).
 - **Different stage layouts.**
 - **Trained AI opponent**: reinforcement learning via the Godot RL Agents plugin and Python libraries

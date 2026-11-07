@@ -39,7 +39,9 @@ Match                  (match/match.tscn, match.gd)
 └── HUD                (ui/hud.tscn — CanvasLayer)
 ```
 
-`match/match.tscn` is the project's main scene. Controllers are plain objects (not nodes) created by
+The project's main scene is the character select (`ui/character_select.tscn`, see
+[menus](menus.md)), which leads to `match/match.tscn`. The `Game` autoload (`game/game.gd`) keeps the
+chosen character and stage between scenes. Controllers are plain objects (not nodes) created by
 the Match and assigned one per fighter.
 
 ## Main types
@@ -134,7 +136,7 @@ Read from `OS.get_cmdline_user_args()` (arguments after `--`):
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--stage=<id>` | `mms` | Stage to play (`mms`, `fc`, `slot_day`, `slot_sunset`) |
+| `--stage=<id>` | `mms` | Stage to play (`mms`, `fc`, `slot_sunset`) |
 | `--hitboxes` | off | Start with the hitbox debug view on (F1 toggles it) |
 | `--p1=human\|cpu` | `human` | Controller for P1 |
 | `--p2=human\|cpu` | `cpu` | Controller for P2 |
@@ -161,12 +163,16 @@ super-mms-bros/
 ├── match/         match.tscn, match.gd, match_camera.gd, projectile.gd, match_snapshot.gd,
 │                  fighter_snapshot.gd
 ├── fighter/       fighter.tscn, fighter.gd, fighter_stats.gd, default_stats.tres, fighter_visuals.gd,
-│                  move_data.gd, move_set.gd, moves/default/*.tres
+│                  move_data.gd, move_set.gd, moves/default/*.tres, character_data.gd, roster.gd,
+│                  characters/*.tres
 ├── controllers/   controller.gd, fighter_input.gd, keyboard_controller.gd, cpu_controller.gd,
 │                  cpu_settings.gd, default_cpu.tres, scripted_controller.gd
 ├── stage/         battlefield.tscn, stage.gd, platform_look.gd, background.gdshader,
 │                  stage_data.gd, platform_style.gd, stages/*.tres, styles/*.tres
-├── ui/            hud.tscn, hud.gd, pause_menu.tscn, result_screen.tscn
+├── game/          game.gd (the Game autoload: choices, scene changes, menu keys)
+├── ui/            hud.tscn, hud.gd, player_card.tscn, player_card.gd, character_select.tscn,
+│                  character_select.gd, stage_select.tscn, stage_select.gd, select_tile.gd,
+│                  pause_menu.tscn, result_screen.tscn
 ├── assets/        fonts/, fighters/default/ (sprite strips), stage/backgrounds/
 ├── tests/         test_*.gd
 └── addons/gut/    test framework

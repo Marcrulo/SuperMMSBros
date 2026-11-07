@@ -147,6 +147,26 @@ func test_side_special_asks_for_a_projectile_on_frame_10() -> void:
 	assert_eq(asked, [10] as Array[int])
 
 
+func test_side_special_in_the_air_turns_toward_the_held_side() -> void:
+	await _start(MIDDLE, 1)
+	_jump_up(5)
+	assert_eq(_fighter.state, Fighter.State.AIR)
+	_run(_special(-1.0), 1)
+	assert_eq(_fighter.move, &"side_special")
+	assert_eq(_fighter.facing, -1, "turned around in the air")
+
+
+func test_other_air_moves_still_keep_the_facing() -> void:
+	await _start(MIDDLE, 1)
+	_jump_up(5)
+	var attack := FighterInput.new()
+	attack.attack_pressed = true
+	attack.move_x = -1.0
+	_run(attack, 1)
+	assert_eq(_fighter.move, &"back_air")
+	assert_eq(_fighter.facing, 1)
+
+
 func test_side_special_waits_for_the_last_projectile() -> void:
 	await _start()
 	_fighter.has_projectile = true

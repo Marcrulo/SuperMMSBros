@@ -1,7 +1,20 @@
 class_name Match
 extends Node2D
 ## Runs a match: owns the tick loop and drives every fighter (docs/specs/architecture.md).
-## P1 (keyboard) and a dummy; hits are resolved here. Rules (stocks, KOs, phases) come in M7.
+## P1 (keyboard) and a dummy; hits, KOs, stocks and respawns are resolved here. Phases, the win
+## condition and the result come in M7.
+
+## A fighter took a hit (not a blocked one). The HUD bumps its card.
+signal fighter_hit(player_index: int)
+## A fighter left the blast zone and lost a stock.
+signal fighter_ko(player_index: int)
+## A KO'd fighter with stocks left came back at its spawn point.
+signal fighter_respawned(player_index: int)
+
+## Match rules (docs/specs/match-and-stage.md#kos-stocks-and-respawn), in ticks.
+const STOCKS := 3
+const RESPAWN_FRAMES := 60
+const INVULNERABLE_FRAMES := 120
 
 ## When on, the Match steps once per physics frame. Tests turn it off and call step() themselves.
 @export var auto_step: bool = true
@@ -13,15 +26,20 @@ var _fighters: Array[Fighter] = []
 var _controllers: Array[Controller] = []
 ## Projectiles in flight, in the order they were fired.
 var _projectiles: Array[Projectile] = []
+## Per fighter: ticks until a KO'd fighter respawns (0 = not waiting).
+var _respawn_frames_left: Array[int] = []
 
 @onready var _stage := $Stage as Stage
 
 
 func _ready() -> void:
-	_stage.apply(StageData.load_stage(_stage_id_from_command_line()))
+	_stage.apply(StageData.load_stage(_chosen_stage_id()))
 	for child in $Fighters.get_children():
 		var fighter := child as Fighter
 		fighter.player_index = _fighters.size()
+		# P1 plays the character chosen in the menus; P2 the default one.
+		if fighter.player_index == 0:
+			fighter.stats = Game.character().stats
 		_fighters.append(fighter)
 		# P1 plays from the keyboard; everyone else is the dummy until the CPU arrives (M8).
 		if fighter.player_index == 0:
@@ -29,6 +47,7 @@ func _ready() -> void:
 		else:
 			_controllers.append(ScriptedController.new())
 	reset()
+	($HUD as Hud).setup(self, _fighters)
 
 
 func _physics_process(_delta: float) -> void:
@@ -36,12 +55,13 @@ func _physics_process(_delta: float) -> void:
 		step()
 
 
-## The stage chosen with `--stage=<id>` (docs/specs/architecture.md#command-line-options).
-func _stage_id_from_command_line() -> String:
+## The stage to play: `--stage=<id>` (docs/specs/architecture.md#command-line-options), else the
+## one chosen on the stage select (docs/specs/menus.md), else the default.
+func _chosen_stage_id() -> String:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--stage="):
 			return arg.trim_prefix("--stage=")
-	return StageData.DEFAULT_ID
+	return Game.stage_id if Game.stage_id != "" else StageData.DEFAULT_ID
 
 
 ## Advances the game by one tick (docs/specs/architecture.md#tick-order).
@@ -57,7 +77,8 @@ func step() -> void:
 	_advance_projectiles()
 	_spawn_projectiles()
 	_resolve_hits()
-	_respawn_fighters_out_of_bounds()
+	_check_kos_and_respawns()
+	_advance_timers()
 	tick += 1
 
 
@@ -110,7 +131,7 @@ func _resolve_hits() -> void:
 		var hitbox := attacker.get_hitbox_rect()
 		var data := attacker.current_move()
 		for victim in _fighters:
-			if victim == attacker or attacker.has_hit(victim.player_index):
+			if victim == attacker or not victim.can_be_hit() or attacker.has_hit(victim.player_index):
 				continue
 			if hitbox.intersects(victim.get_hurtbox_rect()):
 				hits.append({
@@ -122,7 +143,7 @@ func _resolve_hits() -> void:
 				})
 	for projectile in _projectiles:
 		for victim in _fighters:
-			if victim.player_index == projectile.owner_index:
+			if victim.player_index == projectile.owner_index or not victim.can_be_hit():
 				continue
 			if projectile.get_hitbox_rect().intersects(victim.get_hurtbox_rect()):
 				hits.append({
@@ -143,21 +164,45 @@ func _resolve_hits() -> void:
 			victim.block_hit(hit.move, hit.side)
 		else:
 			victim.take_hit(hit.move, hit.side, hit.attacker_x)
+			fighter_hit.emit(victim.player_index)
 
 
-## For now a fighter that leaves the blast zone is put straight back at its spawn point.
-## M7 turns this into the full KO rule: stocks, a 60-tick wait and invulnerability.
-func _respawn_fighters_out_of_bounds() -> void:
+## A fighter whose center leaves the blast zone is KO'd: one stock less, its projectile gone, and
+## (with stocks left) back at its spawn point RESPAWN_FRAMES ticks later, invulnerable for a while.
+func _check_kos_and_respawns() -> void:
 	for i in _fighters.size():
-		if not _stage.blast_zone.has_point(_fighters[i].get_center()):
-			_fighters[i].spawn_at(_stage.get_spawn_position(i), _stage.get_spawn_facing(i))
+		var fighter := _fighters[i]
+		if fighter.state == Fighter.State.KO:
+			if _respawn_frames_left[i] == 0 and fighter.stocks > 0:
+				fighter.spawn_at(_stage.get_spawn_position(i), _stage.get_spawn_facing(i))
+				fighter.invulnerable_frames = INVULNERABLE_FRAMES
+				fighter_respawned.emit(i)
+		elif not _stage.blast_zone.has_point(fighter.get_center()):
+			fighter.stocks -= 1
+			fighter.knock_out()
+			var projectile := _projectile_of(i)
+			if projectile != null:
+				_remove_projectile(projectile)
+			_respawn_frames_left[i] = RESPAWN_FRAMES
+			fighter_ko.emit(i)
+
+
+func _advance_timers() -> void:
+	for i in _fighters.size():
+		_respawn_frames_left[i] = maxi(_respawn_frames_left[i] - 1, 0)
+		_fighters[i].invulnerable_frames = maxi(_fighters[i].invulnerable_frames - 1, 0)
 
 
 ## Puts everything back to the start of a match, without reloading the scene.
 func reset() -> void:
 	tick = 0
+	for projectile in _projectiles.duplicate():
+		_remove_projectile(projectile)
+	_respawn_frames_left.clear()
 	for i in _fighters.size():
 		_fighters[i].spawn_at(_stage.get_spawn_position(i), _stage.get_spawn_facing(i))
+		_fighters[i].stocks = STOCKS
+		_respawn_frames_left.append(0)
 		_controllers[i].reset()
 
 

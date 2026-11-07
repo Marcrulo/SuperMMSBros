@@ -85,6 +85,17 @@ func test_strike_drawing_matches_each_specials_active_frames() -> void:
 			assert_eq(strike, data.is_active_frame(frame), "%s frame %d" % [case[0], frame])
 
 
+func test_ko_is_hidden_and_invulnerability_blinks() -> void:
+	assert_true(FighterVisuals.is_hidden(Fighter.State.KO, 0))
+	assert_false(FighterVisuals.is_hidden(Fighter.State.IDLE, 0))
+	# Hidden 4 ticks, shown 4 ticks, while invulnerable.
+	var hidden: Array[bool] = []
+	for frames in range(120, 104, -1):
+		hidden.append(FighterVisuals.is_hidden(Fighter.State.IDLE, frames))
+	assert_eq(hidden, [true, true, true, true, false, false, false, false,
+			true, true, true, true, false, false, false, false])
+
+
 func test_shield_bubble_shrinks_with_health() -> void:
 	assert_almost_eq(FighterVisuals.shield_radius(100.0, 100.0), 16.0, 0.001)
 	assert_almost_eq(FighterVisuals.shield_radius(0.0, 100.0), 6.0, 0.001)

@@ -17,6 +17,7 @@ The parked `m3-attack` branch (one attack, fixed knockback, dummy) is reused ins
 | M5 | Attacks and damage % | hit a dummy with jab and the three tilts (on the ground and in the air), see its % rise and knock it off the stage | [fighter](specs/fighter.md), [moves](specs/moves.md) |
 | M6 | Shield and specials | shield, break a shield, and use all four specials, including the projectile and the up B recovery | [fighter](specs/fighter.md), [moves](specs/moves.md) |
 | M6b | Launch angles and aerials | feel each move launch along its own angle, use five air attacks, and spike with the Down B dive | [moves](specs/moves.md) |
+| M6c | Select screens | pick your fighter (nine more slots locked) and a stage before the match | [menus](specs/menus.md) |
 | M7 | Match rules | play a full match against the dummy: countdown, KOs, stocks, respawn, damage HUD, win/draw, results, pause, restart | [match & stage](specs/match-and-stage.md) |
 | M8 | CPU opponent | play a real match against the CPU; watch CPU vs CPU; run a headless CPU vs CPU match to completion | [cpu](specs/cpu.md), [architecture](specs/architecture.md) |
 | M9 | Tuning and polish | play a match that feels good — **v1 done** | all |
@@ -57,6 +58,8 @@ The parked `m3-attack` branch (one attack, fixed knockback, dummy) is reused ins
   up B (boost, then `HELPLESS`).
 
 ### M7 — Match rules
+- Done early, from playtest feedback: `KO` state, stocks, respawn with invulnerability, the
+  smaller blast zone, and the HUD's player cards (portrait, name, stocks, damage %).
 - `KO` state, stocks, respawn with invulnerability, win/draw.
 - Phases, countdown, `reset()`, seeded RNG, game-state snapshot.
 - HUD: damage % and stock icons, countdown, off-screen arrows, result screen, pause menu.

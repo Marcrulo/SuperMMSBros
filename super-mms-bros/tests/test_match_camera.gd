@@ -1,7 +1,7 @@
 extends GutTest
 ## The smash-style camera's framing (docs/specs/match-and-stage.md#camera).
 
-const BLAST_ZONE := Rect2(-120, -200, 720, 520)
+const BLAST_ZONE := Rect2(-72, -160, 624, 464)
 
 
 func _frame(points: Array[Vector2]) -> Dictionary:
@@ -21,12 +21,13 @@ func test_a_lone_point_at_the_focus_zooms_in_fully() -> void:
 
 
 func test_zoom_is_clamped() -> void:
-	var framing := _frame([Vector2(-100, 180), Vector2(580, 180)])
+	var framing := _frame([Vector2(-60, 180), Vector2(540, 180)])
+	assert_almost_eq(MatchCamera.MIN_ZOOM, 0.77, 0.0001)
 	assert_almost_eq(framing.zoom, MatchCamera.MIN_ZOOM, 0.001)
 
 
 func test_view_stays_inside_the_blast_zone() -> void:
-	for corner in [Vector2(-110, -190), Vector2(590, 310), Vector2(-110, 310), Vector2(590, -190)]:
+	for corner in [Vector2(-70, -150), Vector2(550, 300), Vector2(-70, 300), Vector2(550, -150)]:
 		var framing := _frame([corner])
 		var zoom: float = framing.zoom
 		var center: Vector2 = framing.position

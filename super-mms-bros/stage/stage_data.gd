@@ -6,6 +6,8 @@ extends Resource
 
 const STAGES_DIR := "res://stage/stages/"
 const DEFAULT_ID := "mms"
+## Every stage, in stage-select order.
+const ALL_IDS: Array[String] = ["mms", "fc", "slot_sunset"]
 
 @export var id: String
 @export var display_name: String

@@ -29,13 +29,13 @@ func test_physics_runs_at_60_ticks() -> void:
 func test_main_scene_loads() -> void:
 	# The editor stores the main scene as a "uid://..." reference; ensure_path turns it into a file path.
 	var path := ResourceUID.ensure_path(ProjectSettings.get_setting("application/run/main_scene"))
-	assert_eq(path, "res://match/match.tscn")
+	assert_eq(path, "res://ui/character_select.tscn")
 	var scene := load(path) as PackedScene
 	assert_not_null(scene, "main scene should load")
 	if scene == null:
 		return
 	var root := scene.instantiate()
-	assert_eq(root.name, &"Match")
+	assert_eq(root.name, &"CharacterSelect")
 	root.free()
 
 

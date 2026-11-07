@@ -17,12 +17,16 @@ The move is decided on the tick the button goes down, from the direction held on
 | up (`up_held`) | up tilt | up air | up special |
 | down (`down_held`) | down tilt | down air | down special |
 | toward the facing side | side tilt | forward air | side special |
-| away from the facing side | side tilt (turns first) | back air | side special (turns first on the ground) |
+| away from the facing side | side tilt (turns first) | back air | side special (turns first, also in the air) |
 | nothing | jab | neutral air | neutral special |
 
 Up wins over down, and both win over sideways. A side move on the ground turns the fighter toward
 the held direction first; in the air the fighter keeps facing where it faced (so holding back
-gives the back air).
+gives the back air) — except the side special, which turns toward the held direction in the air
+too, so it always fires where you hold.
+
+Recovery (the frames after the hit when the fighter can't act) is kept short on every move, so
+the fighter is free again soon after the strike.
 
 A normal attack (ground or air) started in the air
 ends immediately when the fighter lands (no landing lag). Specials keep going when they land
@@ -48,10 +52,10 @@ A move hits each fighter at most once.
 
 | Move | Frames (startup / active / recovery, total) | Hitbox center, size | Damage | Base, growth | Angle | Direction | Idea |
 |---|---|---|---|---|---|---|---|
-| Jab | 4 / 3 / 12 (19) | (15, −13), 14×10 | 3 | 120, 0.8 | 30° | FACING | Quick punch, sends slightly up |
-| Down tilt | 5 / 3 / 12 (20) | (14, −3), 18×6 | 6 | 100, 0.6 | 80° | FACING | Low kick that pops them a little up, for combos |
-| Up tilt | 5 / 4 / 14 (23) | (2, −31), 24×12 | 7 | 160, 1.2 | 90° | AWAY | Swipe over the head, launches straight up |
-| Side tilt | 7 / 3 / 16 (26) | (19, −12), 18×8 | 9 | 180, 1.6 | 35° | FACING | Slower kick with reach and power |
+| Jab | 4 / 3 / 7 (14) | (15, −13), 14×10 | 3 | 120, 0.8 | 30° | FACING | Quick punch, sends slightly up |
+| Down tilt | 5 / 3 / 7 (15) | (14, −3), 18×6 | 6 | 100, 0.6 | 80° | FACING | Low kick that pops them a little up, for combos |
+| Up tilt | 5 / 4 / 8 (17) | (2, −31), 24×12 | 7 | 160, 1.2 | 90° | AWAY | Swipe over the head, launches straight up |
+| Side tilt | 7 / 3 / 10 (20) | (19, −12), 18×8 | 9 | 180, 1.6 | 35° | FACING | Slower kick with reach and power |
 
 On the ground the fighter can't steer during an attack (speed moves toward 0 at
 `ground_friction`). In the air it keeps air steering and gravity.
@@ -62,11 +66,11 @@ Hitboxes are relative to the feet, facing right, like the ground attacks.
 
 | Move | Frames (startup / active / recovery, total) | Hitbox center, size | Damage | Base, growth | Angle | Direction | Idea |
 |---|---|---|---|---|---|---|---|
-| Neutral air | 3 / 6 / 10 (19) | (0, −13), 28×26 | 5 | 110, 0.9 | 45° | AWAY | Spin that hits all around the body |
-| Forward air | 5 / 3 / 12 (20) | (16, −14), 16×12 | 7 | 140, 1.2 | 40° | FACING | Punch in front |
-| Back air | 6 / 3 / 14 (23) | (−16, −12), 16×12 | 9 | 170, 1.4 | 35° | AWAY | Kick behind, a bit stronger |
-| Up air | 4 / 4 / 12 (20) | (2, −32), 24×12 | 6 | 140, 1.0 | 85° | AWAY | Swipe overhead, for juggling |
-| Down air | 6 / 3 / 14 (23) | (0, 4), 18×10 | 6 | 110, 0.6 | 75° | AWAY | Stomp under the feet that pops them a little up, a combo starter (not a spike) |
+| Neutral air | 3 / 6 / 6 (15) | (0, −13), 28×26 | 5 | 110, 0.9 | 45° | AWAY | Spin that hits all around the body |
+| Forward air | 5 / 3 / 7 (15) | (16, −14), 16×12 | 7 | 140, 1.2 | 40° | FACING | Punch in front |
+| Back air | 6 / 3 / 8 (17) | (−16, −12), 16×12 | 9 | 170, 1.4 | 35° | AWAY | Kick behind, a bit stronger |
+| Up air | 4 / 4 / 7 (15) | (2, −32), 24×12 | 6 | 140, 1.0 | 85° | AWAY | Swipe overhead, for juggling |
+| Down air | 6 / 3 / 8 (17) | (0, 4), 18×10 | 6 | 110, 0.6 | 75° | AWAY | Stomp under the feet that pops them a little up, a combo starter (not a spike) |
 
 ## Specials (K)
 
@@ -76,14 +80,14 @@ Hitboxes are relative to the feet, facing right, like the ground attacks.
    ground it slides to a stop; in the air it keeps falling and steering normally. The fists glow
    brighter as the charge grows.
 2. **Punch:** releasing K, or reaching the full charge, starts the punch with
-   `charge = ticks charged / 60` (0…1): 3 / 4 / 18 (25) frames, hitbox (16, −13), 16×12,
+   `charge = ticks charged / 60` (0…1): 3 / 4 / 10 (17) frames, hitbox (16, −13), 16×12,
    damage 8 + 14 × charge, base knockback 200 + 200 × charge, growth 2.0, angle 38°, FACING.
 
 Getting hit while charging loses the charge.
 
 ### Down special — ground energy burst
 
-- **On the ground:** 10 / 6 / 20 (36) frames. The burst erupts on both sides: hitbox (0, −9),
+- **On the ground:** 10 / 6 / 12 (28) frames. The burst erupts on both sides: hitbox (0, −9),
   56×18, damage 10, base 220, growth 1.5, angle 80°, AWAY.
 - **In the air:** the fighter dives straight down at 360 px/s (no steering, no hitbox) until it
   lands, then the ground version starts at frame 1. Diving off the stage is a risk the player takes.
@@ -93,7 +97,7 @@ Getting hit while charging loses the charge.
 
 ### Side special — projectile
 
-- 10 / 0 / 20 (30) frames; the projectile appears on frame 10 at (16, −13), flying toward the
+- 10 / 0 / 12 (22) frames; the projectile appears on frame 10 at (16, −13), flying toward the
   fighter's facing side. Usable on the ground and in the air (gravity keeps working in the air).
 - **One projectile per fighter:** while the fighter's projectile is still out, side special can't be
   started (the K press does nothing).

@@ -1,4 +1,4 @@
-"""Generates the placeholder pixel-art fighter strips and projectile (docs/specs/art-guide.md).
+"""Generates the placeholder pixel-art fighter strips, projectile and stock icon (docs/specs/art-guide.md).
 
 Each frame is 48x48, figure facing right, feet on the bottom row centered at x=24, body inside
 x 16-31 / y 24-47. Big head (~10 px of the 24 px height). Output: one PNG strip per animation.
@@ -274,6 +274,29 @@ def projectile_frame(i):
     return img
 
 
+# Stock icon, 8x8: the head facing right, with a collar in the shirt shades (recolored for P2).
+STOCK_ICON = [
+    "..hhhh..",
+    ".hhHHhh.",
+    "hhhhsss.",
+    "hhsssese",
+    ".hsssss.",
+    "..ssss..",
+    ".rRRRRr.",
+    "rrRRRRrr",
+]
+STOCK_COLORS = {"h": HAIR, "H": HAIR_LIGHT, "s": SKIN, "e": EYE, "r": SHIRT_SHADE, "R": SHIRT}
+
+
+def stock_icon():
+    img = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
+    for y, row in enumerate(STOCK_ICON):
+        for x, key in enumerate(row):
+            if key in STOCK_COLORS:
+                img.putpixel((x, y), STOCK_COLORS[key] + (255,))
+    return img
+
+
 def main(out_dir):
     # Brawlhalla-like: a head about 13 px tall, poking 3 px above the 24 px body box.
     HEAD.update(rx=6.4, ry=6.4, cy=27.0)
@@ -289,6 +312,7 @@ def main(out_dir):
     for i in range(3):
         strip.paste(projectile_frame(i), (i * PROJECTILE, 0))
     strip.save(out / "projectile.png")
+    stock_icon().save(out / "stock_icon.png")
     print("projectile", 3)
 
 

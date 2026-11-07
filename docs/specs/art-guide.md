@@ -49,20 +49,20 @@ when the move can hit, and what players read.
 | `shield` | `SHIELD`, `SHIELD_DROP` | 1 | hold (the bubble is drawn by the game) | — |
 | `dizzy` | `SHIELD_BREAK` | 2 | 10 each | yes |
 | `hurt` | `HITSTUN` | 2 | 4 each | yes |
-| `jab` | jab (19 ticks) | 5 | 2, 2 · **3** · 6, 6 | no |
-| `down_tilt` | down tilt (20) | 5 | 3, 2 · **3** · 6, 6 | no |
-| `up_tilt` | up tilt (23) | 5 | 3, 2 · **4** · 7, 7 | no |
-| `side_tilt` | side tilt (26) | 5 | 4, 3 · **3** · 8, 8 | no |
-| `neutral_air` | neutral air (19) | 5 | 2, 1 · **6** · 5, 5 | no |
-| `forward_air` | forward air (20) | 5 | 3, 2 · **3** · 6, 6 | no |
-| `back_air` | back air (23), kicking behind | 5 | 3, 3 · **3** · 7, 7 | no |
-| `up_air` | up air (20) | 5 | 2, 2 · **4** · 6, 6 | no |
-| `down_air` | down air (23), stomping down | 5 | 3, 3 · **3** · 7, 7 | no |
+| `jab` | jab (14 ticks) | 5 | 2, 2 · **3** · 4, 3 | no |
+| `down_tilt` | down tilt (15) | 5 | 3, 2 · **3** · 4, 3 | no |
+| `up_tilt` | up tilt (17) | 5 | 3, 2 · **4** · 4, 4 | no |
+| `side_tilt` | side tilt (20) | 5 | 4, 3 · **3** · 5, 5 | no |
+| `neutral_air` | neutral air (15) | 5 | 2, 1 · **6** · 3, 3 | no |
+| `forward_air` | forward air (15) | 5 | 3, 2 · **3** · 4, 3 | no |
+| `back_air` | back air (17), kicking behind | 5 | 3, 3 · **3** · 4, 4 | no |
+| `up_air` | up air (15) | 5 | 2, 2 · **4** · 4, 3 | no |
+| `down_air` | down air (17), stomping down | 5 | 3, 3 · **3** · 4, 4 | no |
 | `neutral_special_charge` | neutral special, charging | 2 | 6 each (the game adds a growing glow on the fists) | yes |
-| `neutral_special` | the charged punch (25) | 4 | 3 · **4** · 9, 9 | no |
+| `neutral_special` | the charged punch (17) | 4 | 3 · **4** · 5, 5 | no |
 | `down_special_dive` | down special, diving in the air | 1 | hold | — |
-| `down_special` | the burst (36) | 5 | 5, 5 · **6** · 10, 10 | no |
-| `side_special` | firing the projectile (30) | 4 | 5, 5 · 10, 10 (the projectile appears at the start of drawing 3) | no |
+| `down_special` | the burst (28) | 5 | 5, 5 · **6** · 6, 6 | no |
+| `side_special` | firing the projectile (22) | 4 | 5, 5 · 6, 6 (the projectile appears at the start of drawing 3) | no |
 | `up_special` | the boost (startup 4, rising) | 3 | 4 · **12** · hold the last while rising | no |
 
 Bold numbers are the drawings shown on the active frames.
@@ -88,7 +88,7 @@ color. The game swaps exactly those shades to blue for P2 when it loads the stri
 
 - **Backgrounds:** one image per stage, **528×297** (the 480×270 screen plus 10% for parallax
   drift), in `super-mms-bros/assets/stage/backgrounds/`, named after the stage id
-  (`mms.png`, `fc.png`, `slot_day.png`, `slot_sunset.png`). Paint at full brightness: the game tones
+  (`mms.png`, `fc.png`, `slot_sunset.png`). Paint at full brightness: the game tones
   backgrounds down with a haze.
 - **Platforms:** drawn by the game in code, in perspective, from each stage's platform style (colors
   and front-face bands; see [match & stage](match-and-stage.md#platform-look-perspective)). New
@@ -96,6 +96,7 @@ color. The game swaps exactly those shades to blue for P2 when it loads the stri
 
 ## HUD
 
-- **Stock icon:** 8×8 px (a tiny fighter head works well).
+- **Stock icon:** `stock_icon.png`, 8×8 px: a tiny fighter head with a shirt collar in the team
+  color shades (so P2's is recolored blue like the strips).
 - **Off-screen arrow:** 8×8 px, pointing right (the game rotates it).
 - **Damage digits:** drawn with the game's pixel font.

@@ -84,6 +84,15 @@ func test_projectile_hits_and_disappears() -> void:
 	assert_eq(_match.get_projectiles().size(), 0)
 
 
+func test_a_ko_removes_the_fighters_projectile() -> void:
+	await _place(Vector2(168, 192), Vector2(400, 100), _fire())
+	_steps(11)
+	assert_eq(_match.get_projectiles().size(), 1)
+	_p1.global_position = Vector2(-100, 150)
+	_steps(1)
+	assert_eq(_match.get_projectiles().size(), 0)
+
+
 func test_projectile_never_hits_its_owner() -> void:
 	await _place(Vector2(150, 192), Vector2(450, 192), _fire())
 	_steps(11)
@@ -92,16 +101,26 @@ func test_projectile_never_hits_its_owner() -> void:
 	assert_eq(_p1.percent, 0.0)
 
 
-## P2 stands on the top platform, out of the line of fire; fired from x 100, the projectile is still
-## inside the blast zone (x < 600) after 120 ticks of flight.
-func test_projectile_expires() -> void:
+## A fired projectile flies 480 px in its lifetime, wider than the stage's blast zone leaves room
+## for, so the lifetime is checked on a lone projectile with a big zone.
+func test_projectile_expires_after_its_lifetime() -> void:
+	var projectile := Projectile.new()
+	add_child_autofree(projectile)
+	projectile.setup(0, 1, Vector2.ZERO, _p1.stats.moveset.side_special)
+	var huge := Rect2(-10000, -10000, 20000, 20000)
+	for i in 119:
+		projectile.advance()
+	assert_false(projectile.is_expired(huge), "still there at 119 ticks old")
+	projectile.advance()
+	assert_true(projectile.is_expired(huge), "gone at 120 ticks")
+
+
+func test_projectile_leaving_the_blast_zone_disappears() -> void:
 	await _place(Vector2(100, 192), Vector2(240, 128), _fire())
 	_steps(11)
 	assert_eq(_match.get_projectiles().size(), 1)
-	_steps(119)
-	assert_eq(_match.get_projectiles().size(), 1, "still there at 120 ticks old")
-	_steps(1)
-	assert_eq(_match.get_projectiles().size(), 0, "gone after 120 ticks")
+	_steps(120)
+	assert_eq(_match.get_projectiles().size(), 0, "flew out past x 552")
 
 
 func test_one_projectile_at_a_time() -> void:

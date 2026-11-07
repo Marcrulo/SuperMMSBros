@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bxutv2lms3gq"
-path="res://.godot/imported/slot_day.png-3410e50c1c4aaebdc7efd797635ebbe7.ctex"
+uid="uid://c6ya1x0728p8d"
+path="res://.godot/imported/stock_icon.png-643ebc40daaf248c06e6904063f8c12e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/stage/backgrounds/slot_day.png"
-dest_files=["res://.godot/imported/slot_day.png-3410e50c1c4aaebdc7efd797635ebbe7.ctex"]
+source_file="res://assets/fighters/default/stock_icon.png"
+dest_files=["res://.godot/imported/stock_icon.png-643ebc40daaf248c06e6904063f8c12e.ctex"]
 
 [params]
 

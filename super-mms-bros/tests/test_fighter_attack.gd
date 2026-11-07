@@ -134,7 +134,7 @@ func test_move_lasts_its_total_frames_then_can_act() -> void:
 	_run(_attack(), 1)
 	_run(_make_input(), _moves.jab.total_frames() - 1)
 	assert_eq(_fighter.state, Fighter.State.ATTACK)
-	assert_eq(_fighter.state_frame, 19)
+	assert_eq(_fighter.state_frame, _moves.jab.total_frames())
 	_run(_make_input(0.0, false, true), 1)
 	assert_eq(_fighter.state, Fighter.State.AIR, "the jump on the next tick isn't lost")
 
@@ -158,7 +158,9 @@ func test_ground_move_does_not_steer() -> void:
 func test_air_move_steers_and_ends_on_landing() -> void:
 	await _start_at(OPEN_SKY)
 	_run(_make_input(0.0, false, true), 1)
-	_run(_make_input(), 8)
+	# A full jump (jump held), attacking past its top (about 24 ticks up), so it lands during the
+	# forward air.
+	_run(_hold_jump(), 38)
 	_run(_attack(1.0), 1)
 	assert_eq(_fighter.state, Fighter.State.ATTACK)
 	assert_eq(_fighter.facing, 1, "no turning in the air")

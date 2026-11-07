@@ -2,7 +2,7 @@
 
 A small 2D Smash-Bros-style platform fighter with a pixel-art look, built in Godot 4.7 with
 GDScript. v1: you vs one CPU, 1v1, 3 stocks, damage %, one big-headed fighter design with a full
-Smash-style move set, four themed stages sharing one layout, a zooming camera, generated
+Smash-style move set, three themed stages sharing one layout, a zooming camera, generated
 placeholder sprites. See `docs/vision.md`.
 
 ## Talking to the user
@@ -29,7 +29,8 @@ placeholder sprites. See `docs/vision.md`.
 `godot` is on the PATH (`~/.local/bin/godot`, Godot 4.7 standard build). Run from the repo root:
 
 ```bash
-godot --path super-mms-bros                          # run the game
+godot --path super-mms-bros                          # run the game (character select → stage select → match)
+godot --path super-mms-bros -- --stage=fc            # skip the menus, straight into a match on that stage
 godot --path super-mms-bros --editor                 # open the editor
 godot --headless --path super-mms-bros --import      # import new/changed assets and new class_name scripts (needed before headless runs)
 godot --path super-mms-bros -- --p1=cpu              # CPU vs CPU (from M8)

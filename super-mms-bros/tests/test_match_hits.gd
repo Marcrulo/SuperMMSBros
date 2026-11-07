@@ -119,6 +119,14 @@ func test_dive_spikes_in_the_match() -> void:
 	assert_eq(_p2.percent, 8.0, "one hit per victim")
 
 
+func test_invulnerable_fighters_cant_be_hit() -> void:
+	await _place(Vector2(230, 192), 1, Vector2(250, 192), -1, _jabs(), [])
+	_p2.invulnerable_frames = 100
+	_steps(8)
+	assert_eq(_p2.percent, 0.0)
+	assert_eq(_p2.state, Fighter.State.IDLE)
+
+
 func test_percent_adds_up() -> void:
 	await _place(Vector2(230, 192), 1, Vector2(250, 192), -1, _jabs(3), [])
 	for i in 3:

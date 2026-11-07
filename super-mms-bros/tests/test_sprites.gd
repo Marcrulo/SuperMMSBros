@@ -22,6 +22,11 @@ func test_every_animation_strip_has_its_frames() -> void:
 		assert_eq(texture.get_size(), Vector2(48 * FRAMES[animation], 48), animation)
 
 
+func test_stock_icon() -> void:
+	var texture := load(DIR + "stock_icon.png") as Texture2D
+	assert_eq(texture.get_size(), Vector2(8, 8))
+
+
 func test_projectile_strip() -> void:
 	var texture := load(DIR + "projectile.png") as Texture2D
 	assert_eq(texture.get_size(), Vector2(36, 12))

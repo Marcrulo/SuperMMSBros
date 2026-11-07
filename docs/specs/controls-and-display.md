@@ -21,7 +21,8 @@ Gameplay and UI code refer only to these action names, never to specific keys or
   left free (e.g. for a second player if local multiplayer is added).
 - Stick actions use a dead zone of 0.5 for `up` and `down` and 0.2 for `move_left`/`move_right`.
 - Menus use Godot's built-in `ui_*` actions (arrows / d-pad to move focus, Enter / Space / A to
-  press), which already support keyboard and gamepad.
+  press), which already support keyboard and gamepad; the game keys are added to them at startup
+  (see [menus](menus.md#controls)).
 
 ## `KeyboardController`
 
@@ -52,7 +53,7 @@ physics frame, so `is_action_just_pressed` works per tick):
 | `rendering/textures/canvas_textures/default_texture_filter` | Nearest | Sharp pixels, no smoothing |
 | `rendering/2d/snap/snap_2d_transforms_to_pixel` | off | Lets the camera glide smoothly |
 
-The camera zooms between 0.67× and 1.4× (see [match & stage](match-and-stage.md#camera)). At
+The camera zooms between 0.77× and 1.4× (see [match & stage](match-and-stage.md#camera)). At
 in-between zooms some game pixels are a screen pixel wider than others; that's the accepted cost
 of smooth zoom.
 | `physics/common/physics_ticks_per_second` | 60 | One tick = 1/60 s (the default) |

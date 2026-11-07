@@ -19,20 +19,20 @@ const ANIMATIONS := {
 	"shield": {"ticks": [1], "loop": false},
 	"dizzy": {"ticks": [10, 10], "loop": true},
 	"hurt": {"ticks": [4, 4], "loop": true},
-	"jab": {"ticks": [2, 2, 3, 6, 6], "loop": false},
-	"down_tilt": {"ticks": [3, 2, 3, 6, 6], "loop": false},
-	"up_tilt": {"ticks": [3, 2, 4, 7, 7], "loop": false},
-	"side_tilt": {"ticks": [4, 3, 3, 8, 8], "loop": false},
-	"neutral_air": {"ticks": [2, 1, 6, 5, 5], "loop": false},
-	"forward_air": {"ticks": [3, 2, 3, 6, 6], "loop": false},
-	"back_air": {"ticks": [3, 3, 3, 7, 7], "loop": false},
-	"up_air": {"ticks": [2, 2, 4, 6, 6], "loop": false},
-	"down_air": {"ticks": [3, 3, 3, 7, 7], "loop": false},
+	"jab": {"ticks": [2, 2, 3, 4, 3], "loop": false},
+	"down_tilt": {"ticks": [3, 2, 3, 4, 3], "loop": false},
+	"up_tilt": {"ticks": [3, 2, 4, 4, 4], "loop": false},
+	"side_tilt": {"ticks": [4, 3, 3, 5, 5], "loop": false},
+	"neutral_air": {"ticks": [2, 1, 6, 3, 3], "loop": false},
+	"forward_air": {"ticks": [3, 2, 3, 4, 3], "loop": false},
+	"back_air": {"ticks": [3, 3, 3, 4, 4], "loop": false},
+	"up_air": {"ticks": [2, 2, 4, 4, 3], "loop": false},
+	"down_air": {"ticks": [3, 3, 3, 4, 4], "loop": false},
 	"neutral_special_charge": {"ticks": [6, 6], "loop": true},
-	"neutral_special": {"ticks": [3, 4, 9, 9], "loop": false},
+	"neutral_special": {"ticks": [3, 4, 5, 5], "loop": false},
 	"down_special_dive": {"ticks": [1], "loop": false},
-	"down_special": {"ticks": [5, 5, 6, 10, 10], "loop": false},
-	"side_special": {"ticks": [5, 5, 10, 10], "loop": false},
+	"down_special": {"ticks": [5, 5, 6, 6, 6], "loop": false},
+	"side_special": {"ticks": [5, 5, 6, 6], "loop": false},
 	"up_special": {"ticks": [4, 12, 1], "loop": false},
 }
 ## The shirt's three shades in the drawings (P1), and what P2 wears instead: the team color swap.
@@ -96,32 +96,47 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 	return "idle"
 
 
+## Not drawn while KO'd; while invulnerable, hidden 4 ticks, shown 4 ticks, starting hidden.
+static func is_hidden(state: Fighter.State, invulnerable_frames: int) -> bool:
+	if state == Fighter.State.KO:
+		return true
+	return invulnerable_frames > 0 and (Match.INVULNERABLE_FRAMES - invulnerable_frames) / 4 % 2 == 0
+
+
 ## The shield bubble's radius for a given shield health.
 static func shield_radius(health: float, max_health: float) -> float:
 	return lerpf(SHIELD_MIN_RADIUS, SHIELD_MAX_RADIUS, clampf(health / max_health, 0.0, 1.0))
 
 
-## Loads every strip; with `shirt` colors given, repaints the shirt's shades in them.
+## Loads every strip and the stock icon; with `shirt` colors given, repaints the shirt's shades.
 static func load_textures(shirt: Array[Color]) -> Dictionary:
 	var textures := {}
 	for animation: String in ANIMATIONS:
 		var texture := load(SPRITE_DIR + "fighter_%s.png" % animation) as Texture2D
-		if not shirt.is_empty():
-			var image := texture.get_image()
-			image.decompress()
-			for y in image.get_height():
-				for x in image.get_width():
-					var index := SHIRT_COLORS.find(image.get_pixel(x, y))
-					if index != -1:
-						image.set_pixel(x, y, shirt[index])
-			texture = ImageTexture.create_from_image(image)
-		textures[animation] = texture
+		textures[animation] = _recolored(texture, shirt)
+	textures["stock_icon"] = _recolored(load(SPRITE_DIR + "stock_icon.png") as Texture2D, shirt)
 	return textures
 
 
-func _ready() -> void:
+## `texture` with the shirt's shades repainted in `shirt` (unchanged if `shirt` is empty).
+static func _recolored(texture: Texture2D, shirt: Array[Color]) -> Texture2D:
+	if shirt.is_empty():
+		return texture
+	var image := texture.get_image()
+	image.decompress()
+	for y in image.get_height():
+		for x in image.get_width():
+			var index := SHIRT_COLORS.find(image.get_pixel(x, y))
+			if index != -1:
+				image.set_pixel(x, y, shirt[index])
+	return ImageTexture.create_from_image(image)
+
+
+## Every strip in a player's colors (0 = P1 red, 1 and up = P2 blue), loaded once and shared.
+static func textures_for(player_index: int) -> Dictionary:
 	if _textures.is_empty():
 		_textures = [load_textures([]), load_textures(P2_SHIRT_COLORS)]
+	return _textures[mini(player_index, 1)]
 
 
 func _process(_delta: float) -> void:
@@ -136,8 +151,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _draw() -> void:
+	if is_hidden(_fighter.state, _fighter.invulnerable_frames):
+		return
 	var animation := animation_for(_fighter.state, _fighter.velocity.y, _fighter.move)
-	var texture: Texture2D = _textures[mini(_fighter.player_index, 1)][animation]
+	var texture: Texture2D = textures_for(_fighter.player_index)[animation]
 	var timing: Dictionary = ANIMATIONS[animation]
 	var frame := frame_index(timing.ticks, timing.loop, _fighter.state_frame)
 	# Mirror when facing left; the strips are drawn facing right.

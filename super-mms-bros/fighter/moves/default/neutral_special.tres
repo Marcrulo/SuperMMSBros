@@ -6,7 +6,7 @@
 script = ExtResource("1_move")
 startup = 3
 active = 4
-recovery = 18
+recovery = 10
 hitbox_center = Vector2(16, -13)
 hitbox_size = Vector2(16, 12)
 damage = 8.0

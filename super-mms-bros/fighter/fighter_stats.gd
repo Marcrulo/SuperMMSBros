@@ -21,6 +21,8 @@ extends Resource
 @export var air_friction: float
 @export var gravity: float
 @export var max_fall_speed: float
+## Falling speed while fast-falling (holding down while falling).
+@export var fast_fall_speed: float
 
 @export_group("Jumps")
 @export var jump_velocity: float

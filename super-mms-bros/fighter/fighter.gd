@@ -4,7 +4,7 @@ extends CharacterBody2D
 ## docs/specs/moves.md). The Match advances it one tick at a time with tick(); it has no
 ## _physics_process of its own.
 
-enum State { IDLE, RUN, CROUCH, AIR, ATTACK, SHIELD, SHIELD_DROP, SHIELD_BREAK, HITSTUN, HELPLESS }
+enum State { IDLE, RUN, CROUCH, AIR, ATTACK, SHIELD, SHIELD_DROP, SHIELD_BREAK, HITSTUN, HELPLESS, KO }
 
 ## One tick of game time, in seconds (the game runs at 60 ticks per second).
 const DELTA := 1.0 / 60.0
@@ -39,9 +39,15 @@ var shield_health: float = 0.0
 var up_special_available: bool = true
 ## Set by the Match each tick: this fighter's projectile is still out.
 var has_projectile: bool = false
+## Lives left; the Match takes one on a KO.
+var stocks: int = 0
+## Ticks left in which the fighter can't be hit (after respawning). Counted down by the Match.
+var invulnerable_frames: int = 0
 
 ## True from a ground jump until the fighter stops rising or releases jump.
 var _can_short_hop: bool = false
+## Fast-falling: falls at fast_fall_speed until landing, a double jump, a hit or an up special.
+var _fast_falling: bool = false
 ## Ticks left before pass-through platforms become solid again after dropping through one.
 var _drop_through_frames_left: int = 0
 ## Ticks since down was last pressed (a second press soon after drops through a platform).
@@ -73,6 +79,23 @@ func get_hurtbox_rect() -> Rect2:
 	var shape := _crouching_hurtbox if state == State.CROUCH else _standing_hurtbox
 	var size := (shape.shape as RectangleShape2D).size
 	return Rect2(shape.global_position - size / 2.0, size)
+
+
+## False while KO'd or invulnerable.
+func can_be_hit() -> bool:
+	return state != State.KO and invulnerable_frames == 0
+
+
+## Knocked out by the Match (it left the blast zone): stops, cancels everything and waits, hidden,
+## until the Match respawns it with spawn_at().
+func knock_out() -> void:
+	state = State.KO
+	state_frame = 0
+	velocity = Vector2.ZERO
+	move = NO_MOVE
+	_charged_punch = null
+	_launched = false
+	_hit_victims.clear()
 
 
 ## The data of the move in progress (the charged punch for the neutral special), or null when
@@ -148,6 +171,7 @@ func take_hit(data: MoveData, side: int, attacker_x: float) -> void:
 		facing = -side
 	jumps_left = stats.max_air_jumps
 	up_special_available = true
+	_fast_falling = false
 	move = NO_MOVE
 	_charged_punch = null
 	_launched = false
@@ -172,6 +196,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	velocity = Vector2.ZERO
 	state = State.IDLE
 	state_frame = 0
+	invulnerable_frames = 0
 	jumps_left = stats.max_air_jumps
 	move = NO_MOVE
 	percent = 0.0
@@ -179,6 +204,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	up_special_available = true
 	has_projectile = false
 	_can_short_hop = false
+	_fast_falling = false
 	_drop_through_frames_left = 0
 	_ticks_since_down_press = 1000
 	_hit_victims.clear()
@@ -192,6 +218,8 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 ## takes its time step from the physics engine (which is 1/60 s there).
 func tick(input: FighterInput) -> void:
 	assert(Engine.is_in_physics_frame(), "Fighter.tick() must run inside a physics frame")
+	if state == State.KO:
+		return
 	_end_finished_state(input)
 	match state:
 		State.AIR:
@@ -281,6 +309,7 @@ func _air_actions(input: FighterInput) -> void:
 		velocity.y = -stats.double_jump_velocity
 		velocity.x = input.move_x * stats.air_speed
 		jumps_left -= 1
+		_fast_falling = false
 		_can_short_hop = false
 	elif _can_short_hop:
 		if velocity.y >= 0.0:
@@ -370,12 +399,14 @@ func _pick_special(input: FighterInput) -> StringName:
 
 func _start_move(move_name: StringName, input: FighterInput) -> void:
 	var on_ground := state != State.AIR
-	# A side move on the ground turns toward the held direction first.
-	if on_ground and String(move_name).begins_with("side_"):
+	# A side move on the ground turns toward the held direction first; the side special does in the
+	# air too, so it always fires where the player holds.
+	if (on_ground and String(move_name).begins_with("side_")) or move_name == &"side_special":
 		_turn_toward(input.move_x)
 	if move_name == &"up_special":
 		up_special_available = false
 		_launched = false
+		_fast_falling = false
 	_move_airborne = not on_ground
 	_can_short_hop = false
 	_hit_victims.clear()
@@ -406,7 +437,7 @@ func _apply_movement(input: FighterInput) -> void:
 	match state:
 		State.AIR:
 			_steer(input.move_x, stats.air_speed, stats.air_accel, stats.air_friction)
-			_apply_gravity()
+			_fall(input)
 		State.ATTACK:
 			_move_during_attack(input)
 		State.HITSTUN:
@@ -440,6 +471,9 @@ func _move_during_attack(input: FighterInput) -> void:
 	elif is_on_floor() and velocity.y >= 0.0:
 		# A move on the ground doesn't steer: slide to a stop.
 		_steer(0.0, 0.0, 0.0, stats.ground_friction)
+	elif move in NORMALS:
+		_steer(input.move_x, stats.air_speed, stats.air_accel, stats.air_friction)
+		_fall(input)
 	else:
 		_steer(input.move_x, stats.air_speed, stats.air_accel, stats.air_friction)
 		_apply_gravity()
@@ -451,6 +485,18 @@ func _steer(move_x: float, top_speed: float, accel: float, friction: float) -> v
 		velocity.x = move_toward(velocity.x, move_x * top_speed, accel * DELTA)
 	else:
 		velocity.x = move_toward(velocity.x, 0.0, friction * DELTA)
+
+
+## Falling in AIR and during air attacks: holding down once falling starts a fast fall (not on the
+## tick of a drop-through), which then holds the fall at fast_fall_speed; otherwise normal gravity.
+func _fall(input: FighterInput) -> void:
+	var dropping_now := _drop_through_frames_left == stats.drop_through_frames
+	if not _fast_falling and input.down_held and velocity.y >= 0.0 and not dropping_now:
+		_fast_falling = true
+	if _fast_falling:
+		velocity.y = stats.fast_fall_speed
+	else:
+		_apply_gravity()
 
 
 func _apply_gravity() -> void:
@@ -496,6 +542,7 @@ func _after_move_in_attack(input: FighterInput) -> void:
 
 
 func _land(input: FighterInput) -> void:
+	_fast_falling = false
 	jumps_left = stats.max_air_jumps
 	up_special_available = true
 	_can_short_hop = false

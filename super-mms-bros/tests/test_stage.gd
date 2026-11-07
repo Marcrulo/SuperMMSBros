@@ -61,4 +61,4 @@ func _layer_bit(layer: int) -> int:
 
 
 func test_blast_zone() -> void:
-	assert_eq(_stage.blast_zone, Rect2(-120, -200, 720, 520))
+	assert_eq(_stage.blast_zone, Rect2(-72, -160, 624, 464))

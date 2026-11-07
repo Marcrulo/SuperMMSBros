@@ -1,17 +1,15 @@
 extends GutTest
-## The four stages as data, and Stage.apply() (docs/specs/match-and-stage.md#stages).
+## The three stages as data, and Stage.apply() (docs/specs/match-and-stage.md#stages).
 
 const STAGE_SCENE := preload("res://stage/battlefield.tscn")
 const NAMES := {
 	"mms": "Marie Mørks Skole",
 	"fc": "Frederiksborgcenteret",
-	"slot_day": "Frederiksborg Slot (Dag)",
-	"slot_sunset": "Frederiksborg Slot (Solnedgang)",
+	"slot_sunset": "Frederiksborg Castle (sunset)",
 }
 const STYLES := {
 	"mms": "school_brick",
 	"fc": "modern",
-	"slot_day": "castle",
 	"slot_sunset": "castle",
 }
 
@@ -32,10 +30,15 @@ func test_light_and_haze() -> void:
 	var sunset := StageData.load_stage("slot_sunset")
 	assert_eq(sunset.light_color, Color(1.0, 0.85, 0.70))
 	assert_eq(sunset.haze_color, Color(0.96, 0.80, 0.60))
-	for id in ["mms", "fc", "slot_day"]:
+	for id in ["mms", "fc"]:
 		var data := StageData.load_stage(id)
 		assert_eq(data.light_color, Color.WHITE, id)
 		assert_eq(data.haze_color, Color(0.82, 0.87, 0.93), id)
+
+
+func test_the_day_castle_stage_is_gone() -> void:
+	assert_eq(StageData.ALL_IDS, ["mms", "fc", "slot_sunset"])
+	assert_false(ResourceLoader.exists("res://stage/stages/slot_day.tres"))
 
 
 func test_unknown_stage_falls_back_to_mms() -> void:

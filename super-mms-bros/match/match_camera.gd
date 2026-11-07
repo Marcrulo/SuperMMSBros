@@ -10,7 +10,7 @@ const STAGE_FOCUS := Vector2(240, 160)
 const MARGIN := Vector2(120, 80)
 ## The view's size at zoom 1.
 const VIEW := Vector2(480, 270)
-const MIN_ZOOM := 0.67
+const MIN_ZOOM := 0.77
 const MAX_ZOOM := 1.4
 ## How quickly the camera catches up (higher = snappier).
 const FOLLOW_SPEED := 4.0
@@ -41,7 +41,8 @@ func _process(delta: float) -> void:
 		return
 	var points: Array[Vector2] = []
 	for fighter: Fighter in match_node.get_node("Fighters").get_children():
-		points.append(fighter.get_center())
+		if fighter.state != Fighter.State.KO:
+			points.append(fighter.get_center())
 	var stage := match_node.get_node("Stage") as Stage
 	var target := target_framing(points, stage.blast_zone)
 	var weight := 1.0 - exp(-FOLLOW_SPEED * delta) if _placed else 1.0

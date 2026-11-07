@@ -29,6 +29,7 @@ in px/s², durations in ticks (60 per second).
 | `air_friction` | 150 | Toward 0 in the air with no input |
 | `gravity` | 600 | |
 | `max_fall_speed` | 250 | |
+| `fast_fall_speed` | 400 | Falling speed while fast-falling |
 | `jump_velocity` | 240 | ≈ 48 px ground jump |
 | `double_jump_velocity` | 219 | ≈ 40 px double jump |
 | `short_hop_cut` | 0.5 | Upward speed is multiplied by this if jump is released early |
@@ -136,6 +137,13 @@ Checked in this order on each tick; the first that applies happens:
   −`double_jump_velocity`, horizontal speed = `move_x × air_speed`, `jumps_left −= 1`.
 - **Jumps are restored** (`jumps_left = max_air_jumps`) on landing and when hit. Up special is
   allowed again at the same moments.
+- **Fast fall:** in `AIR` or during an air attack (not a special), holding down while falling
+  (vertical speed ≥ 0) starts a fast fall: vertical speed becomes `fast_fall_speed` and stays
+  there (gravity and `max_fall_speed` don't apply). Holding down while still rising does nothing
+  until the fighter starts to fall. It doesn't start on the tick the fighter drops through a
+  platform (still holding down, it starts the tick after), so a drop-through tap on its own lands
+  on the next platform below. A fast fall lasts until landing, a double jump, being hit, an
+  up special, or a respawn — releasing down doesn't end it.
 - Walking off a ledge does not use up the double jump.
 - **Facing** changes only in `IDLE`/`RUN`/`CROUCH`, to the sign of `move_x`, and when a side move
   starts on the ground. It does not change in the air, while attacking, shielding or in hitstun.

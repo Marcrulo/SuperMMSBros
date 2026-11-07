@@ -30,6 +30,7 @@ Checked every tick after hits are resolved (see [architecture](architecture.md))
    full shield, collision on, **120 ticks of invulnerability**. The Match emits
    `fighter_respawned(index)`.
 3. Invulnerable fighters can't be hit. They can attack normally.
+4. A fighter with no stocks left stays `KO` (until the win condition in M7 ends the match).
 
 ## Win condition
 
@@ -86,10 +87,19 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
 
 ## HUD
 
-- **Damage panels:** one per fighter along the bottom of the screen (P1 left of center, P2 right):
-  the damage % in large pixel digits, tinting from white toward red as it rises (white at 0 %, red
-  at 150 % and above), with one small stock icon per remaining stock underneath, in the fighter's
-  color. A hit makes the number jump briefly.
+- **Player cards:** one 96×30 card per fighter along the bottom of the screen, 6 px from the
+  bottom edge, P1 left of center and P2 right, 16 px apart. Each card shows:
+  - a dark panel (`#1a1c2c`, slightly see-through) with a 1 px border in the **player color**
+    (P1 `#b13e53` red, P2 `#3b5dc9` blue);
+  - the **portrait**: the fighter's head, cut from the first `idle` drawing (frame pixels x 14–33,
+    y 16–35) in that player's shirt colors, on a 22×22 square in a darker shade of the player color;
+  - the **name** (`P1`, `P2`; the CPU's card will say `CPU`) at the font's native 8 px, in a light
+    shade of the player color;
+  - the **damage %** at 16 px (2× the font), as a whole number (`42%`), tinting from `#f4f4f4`
+    white at 0 % toward `#f0524f` red at 150 % and above. A hit makes the number jump 2 px up for
+    6 frames.
+  - one **stock icon** (8×8, the fighter's head in its player colors) per remaining stock, in a
+    row on the name's line, starting at x 60 of the card, 10 px apart.
 - **Stage name:** the stage's name in the top-left corner for the first 3 seconds of a match.
 - **Countdown:** large text in the center ("3", "2", "1", "GO!").
 - **Off-screen arrows:** when a fighter (not `KO`) is fully outside the visible screen, a small
@@ -101,19 +111,18 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
 
 ## Stages
 
-Four stages in v1. They share the Battlefield layout; each has its own name, background, platform
+Three stages in v1. They share the Battlefield layout; each has its own name, background, platform
 style and light. Each stage is a `StageData` resource in `stage/stages/` (id = file name):
 
 | Id | Name | Background | Platform style | Haze | Light |
 |---|---|---|---|---|---|
 | `mms` | Marie Mørks Skole | `mms.png` | school brick | cool (0.82, 0.87, 0.93) | white |
 | `fc` | Frederiksborgcenteret | `fc.png` | modern | cool | white |
-| `slot_day` | Frederiksborg Slot (Dag) | `slot_day.png` | castle | cool | white |
-| `slot_sunset` | Frederiksborg Slot (Solnedgang) | `slot_sunset.png` | castle | warm (0.96, 0.80, 0.60) | warm (1.0, 0.85, 0.70) |
+| `slot_sunset` | Frederiksborg Castle (sunset) | `slot_sunset.png` | castle | warm (0.96, 0.80, 0.60) | warm (1.0, 0.85, 0.70) |
 
 `StageData` fields: `id`, `display_name`, `background` (texture), `style` (a `PlatformStyle`
-resource), `haze_color`, `light_color`. The stage is chosen with `--stage=<id>` (default `mms`);
-a stage-select screen later just lists the resources. The stage's look is presentation only: every
+resource), `haze_color`, `light_color`. The stage is chosen on the stage select (see [menus](menus.md)) or with
+`--stage=<id>` (default `mms`). The stage's look is presentation only: every
 stage plays identically.
 
 ### Layout: Battlefield
@@ -138,7 +147,7 @@ starting points, tuned in M9.
 | Top platform | pass-through | x 204–276, top at y 128 |
 | P1 spawn | point | (168, 192), facing right |
 | P2 spawn | point | (312, 192), facing left |
-| Blast zone | rectangle (fighter center must stay inside) | x −120…600, y −200…320 |
+| Blast zone | rectangle (fighter center must stay inside) | x −72…552, y −160…304 |
 
 - Platforms are 32 px apart vertically, so each one is reachable with a single ground jump (48 px).
 - The main platform floats: below and beside it is empty space.
@@ -205,7 +214,7 @@ and never changes gameplay.
 
 - Every frame it frames a box around every fighter's center (not `KO`) plus a fixed stage focus
   point (240, 160), grown by 120 px on the sides and 80 px above and below.
-- Zoom fits that box in the 480×270 view, clamped between 0.67 (zoomed out: never shows beyond the
+- Zoom fits that box in the 480×270 view, clamped between 0.77 (zoomed out: never shows beyond the
   blast zone) and 1.4 (zoomed in).
 - Position and zoom glide toward the target (`1 − e^(−4·delta)` per frame); the first frame jumps
   straight there. The view is clamped to stay inside the blast zone.

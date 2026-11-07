@@ -13,6 +13,7 @@ air_accel = 400.0
 air_friction = 150.0
 gravity = 600.0
 max_fall_speed = 250.0
+fast_fall_speed = 400.0
 jump_velocity = 240.0
 double_jump_velocity = 219.0
 short_hop_cut = 0.5
