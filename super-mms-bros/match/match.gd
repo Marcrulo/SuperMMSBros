@@ -46,7 +46,16 @@ func step() -> void:
 		inputs.append(controller.get_input(null))
 	for i in _fighters.size():
 		_fighters[i].tick(inputs[i])
+	_respawn_fighters_out_of_bounds()
 	tick += 1
+
+
+## For now a fighter that leaves the blast zone is put straight back at its spawn point.
+## M7 turns this into the full KO rule: stocks, a 60-tick wait and invulnerability.
+func _respawn_fighters_out_of_bounds() -> void:
+	for i in _fighters.size():
+		if not _stage.blast_zone.has_point(_fighters[i].get_center()):
+			_fighters[i].spawn_at(_stage.get_spawn_position(i), _stage.get_spawn_facing(i))
 
 
 ## Puts everything back to the start of a match, without reloading the scene.

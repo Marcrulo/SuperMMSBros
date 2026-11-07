@@ -33,9 +33,9 @@ fighters. Gameplay geometry moves to the new layout; everything visual stays pre
 
 **Files:** `project.godot`, `stage/battlefield.tscn`, `stage/stage.gd`; tests `test_project_setup.gd`, `test_stage.gd`, `test_fighter_movement.gd`, `test_match.gd`.
 
-- [ ] Update the tests to the spec: viewport 480×270, window 1440×810, stretch `canvas_items`, snap off; main platform `Rect2(96, 192, 288, 16)`, left `Rect2(132, 160, 72, 4)`, right `Rect2(276, 160, 72, 4)`, top `Rect2(204, 128, 72, 4)`; spawns (168, 192) and (312, 192); `blast_zone == Rect2(-120, -200, 720, 520)`. Movement test constants: `FLOOR_Y 192`, `PLATFORM_Y 160`, `OPEN_SKY (110, 192)`, `UNDER_LEFT_PLATFORM (168, 192)`, ledge walk from (372, 192), middle (240, 192); match spawn positions likewise.
-- [ ] Run: those tests fail on the old values.
-- [ ] Change `project.godot` and the scene/script to the spec values. Run: all pass. Commit.
+- [x] Update the tests to the spec: viewport 480×270, window 1440×810, stretch `canvas_items`, snap off; main platform `Rect2(96, 192, 288, 16)`, left `Rect2(132, 160, 72, 4)`, right `Rect2(276, 160, 72, 4)`, top `Rect2(204, 128, 72, 4)`; spawns (168, 192) and (312, 192); `blast_zone == Rect2(-120, -200, 720, 520)`. Movement test constants: `FLOOR_Y 192`, `PLATFORM_Y 160`, `OPEN_SKY (110, 192)`, `UNDER_LEFT_PLATFORM (168, 192)`, ledge walk from (372, 192), middle (240, 192); match spawn positions likewise.
+- [x] Run: those tests fail on the old values.
+- [x] Change `project.godot` and the scene/script to the spec values. Run: all pass. Commit.
 
 ### Task 2: Stage data, styles and `Stage.apply()`
 
@@ -44,8 +44,8 @@ fighters. Gameplay geometry moves to the new layout; everything visual stays pre
 - `StageData` (`Resource`): `id`, `display_name`, `background: Texture2D`, `style: PlatformStyle`, `haze_color`, `light_color`. `static func load_stage(id: String) -> StageData` loads `res://stage/stages/<id>.tres`, falling back to `mms`.
 - `PlatformStyle` (`Resource`): `top`, `top_edge`, `shadow`, `far_shadow`, `side`, `under` colors; `main_bands`, `thin_bands: Array` (band arrays as in the spec); `quoins: Color`, `has_quoins: bool`.
 - `Stage.apply(data: StageData)`: background texture, haze shader parameter, `Light` (`CanvasModulate`) color, `PlatformLook.style`. Match reads `--stage=<id>` in `_ready()` and applies it before `reset()`.
-- [ ] Tests: each of the four ids loads with the spec's `display_name`, a 528×297 background and its style; `slot_sunset` light (1.0, 0.85, 0.70) and the others white; `test_unknown_stage_falls_back_to_mms`; `test_every_stage_has_the_same_layout` (apply each, collision rects unchanged); `apply()` sets the `Light` color and the shader's `haze_color`.
-- [ ] Run: fail. Implement. Run: pass. Commit.
+- [x] Tests: each of the four ids loads with the spec's `display_name`, a 528×297 background and its style; `slot_sunset` light (1.0, 0.85, 0.70) and the others white; `test_unknown_stage_falls_back_to_mms`; `test_every_stage_has_the_same_layout` (apply each, collision rects unchanged); `apply()` sets the `Light` color and the shader's `haze_color`.
+- [x] Run: fail. Implement. Run: pass. Commit.
 
 ### Task 3: Perspective platform drawing
 
@@ -53,8 +53,8 @@ fighters. Gameplay geometry moves to the new layout; everything visual stays pre
 
 - `static func perspective_x(x: float, depth: float, vanish_x: float) -> float` = `vanish_x + (x − vanish_x) × (1 + 0.011 × depth)`.
 - `static func is_fillable(points: PackedVector2Array) -> bool` (`Geometry2D.triangulate_polygon` not empty); every filled shape goes through it.
-- [ ] Tests: `perspective_x` at depth 0 returns x for any vanish x; at depth 6, x 96 with vanish 240 → 86.496; `test_collapsed_shapes_are_skipped`: a zero-width quad is not fillable, a normal one is; a camera sweep within ±0.1 px of each thin platform's ends in 0.001 steps draws without any unfillable shape reaching `draw_colored_polygon` (count via a test hook).
-- [ ] Run: fail. Implement. Run: pass. Commit.
+- [x] Tests: `perspective_x` at depth 0 returns x for any vanish x; at depth 6, x 96 with vanish 240 → 86.496; `test_collapsed_shapes_are_skipped`: a zero-width quad is not fillable, a normal one is; a camera sweep within ±0.1 px of each thin platform's ends in 0.001 steps draws without any unfillable shape reaching `draw_colored_polygon` (count via a test hook).
+- [x] Run: fail. Implement. Run: pass. Commit.
 
 ### Task 4: The camera
 
@@ -62,16 +62,24 @@ fighters. Gameplay geometry moves to the new layout; everything visual stays pre
 
 - `static func target_framing(points: Array[Vector2], blast_zone: Rect2) -> Dictionary` returns `{position: Vector2, zoom: float}`: box around the points plus the stage focus (240, 160), grown 120 px sideways and 80 px vertically; zoom = min(480 / w, 270 / h) clamped to 0.67…1.4; position clamped so the 480/zoom × 270/zoom view stays inside the blast zone.
 - `_process` glides toward the target (`1 − e^(−4·delta)`), first frame jumps; KO'd fighters are skipped (M7).
-- [ ] Tests: two fighters at the spawns → centered between them and the focus, zoom within range; fighters far apart → `test_zoom_is_clamped` at 0.67; `test_view_stays_inside_the_blast_zone` for a fighter near a blast-zone corner; a lone point at the focus → zoom 1.4.
-- [ ] Run: fail. Implement. Run: pass. Commit.
+- [x] Tests: two fighters at the spawns → centered between them and the focus, zoom within range; fighters far apart → `test_zoom_is_clamped` at 0.67; `test_view_stays_inside_the_blast_zone` for a fighter near a blast-zone corner; a lone point at the focus → zoom 1.4.
+- [x] Run: fail. Implement. Run: pass. Commit.
 
 ### Task 5: Instant respawn (until M7)
 
 **Files:** `fighter/fighter.gd` (`get_center()`), `match/match.gd`; tests in `test_match.gd`.
 
-- [ ] Tests: a fighter moved past each side of the blast zone (left, right, bottom) is back at its spawn after one step, facing its spawn facing, velocity zero, `IDLE`; inside the blast zone it stays.
-- [ ] Run: fail. Implement (`_respawn_fighters_out_of_bounds()` after the fighters tick). Run: pass. Commit.
+- [x] Tests: a fighter moved past each side of the blast zone (left, right, bottom) is back at its spawn after one step, facing its spawn facing, velocity zero, `IDLE`; inside the blast zone it stays.
+- [x] Run: fail. Implement (`_respawn_fighters_out_of_bounds()` after the fighters tick). Run: pass. Commit.
 
 ### Task 6: Check it runs
 
-- [ ] Headless runs with `--stage=` each id: no errors. Mark this plan done.
+- [x] Headless runs with `--stage=` each id: no errors. Mark this plan done.
+
+## Notes from execution
+
+- Task 2 ported the full perspective drawing (needed by `Stage.apply()`), so Task 3's tests passed
+  on their first run; they check the perspective numbers and that the collapsed-shape guard is hit.
+- `Fighter.get_center()` arrived in Task 4 (the camera needs it) instead of Task 5.
+- The test fixture for a collapsed shape uses a real near-zero-width face from the sweep: Godot
+  triangulates an exactly zero-width quad without complaint.

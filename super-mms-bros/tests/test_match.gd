@@ -82,3 +82,32 @@ func test_reset_puts_everything_back() -> void:
 	assert_eq(p1.state, Fighter.State.IDLE)
 	_match.step()
 	assert_gt(p1.velocity.x, 0.0, "the controller was reset and plays its inputs again")
+
+
+# --- Blast zone (instant respawn until M7's KO rule) ----------------------------------------------
+
+
+func test_leaving_the_blast_zone_on_any_side_respawns_the_fighter() -> void:
+	_add_match(false)
+	_match.set_controller(0, ScriptedController.new())
+	await wait_physics_frames(1)
+	var p1 := _match.get_fighter(0)
+	for outside in [Vector2(-130, 150), Vector2(610, 150), Vector2(240, 335)]:
+		p1.global_position = outside
+		p1.velocity = Vector2(100, 100)
+		p1.facing = -1
+		_match.step()
+		assert_eq(p1.position, Vector2(168, 192), "back at the spawn from %s" % outside)
+		assert_eq(p1.facing, 1)
+		assert_eq(p1.velocity, Vector2.ZERO)
+		assert_eq(p1.state, Fighter.State.IDLE)
+
+
+func test_inside_the_blast_zone_nothing_happens() -> void:
+	_add_match(false)
+	_match.set_controller(0, ScriptedController.new())
+	await wait_physics_frames(1)
+	var p1 := _match.get_fighter(0)
+	p1.global_position = Vector2(590, 150)
+	_match.step()
+	assert_almost_eq(p1.position.x, 590.0, 0.01, "off the stage but still in play")
