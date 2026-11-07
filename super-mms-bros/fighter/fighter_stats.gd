@@ -34,3 +34,13 @@ extends Resource
 @export var drop_through_frames: int
 ## Max ticks between the two down presses of a drop-through.
 @export var drop_double_tap_frames: int
+
+@export_group("Getting hit")
+## Hitstun ticks per px/s of launch speed.
+@export var hitstun_per_knockback: float
+@export var min_hitstun: int
+## Horizontal slowdown in the air during hitstun.
+@export var hitstun_friction: float
+
+@export_group("Moves")
+@export var moveset: MoveSet

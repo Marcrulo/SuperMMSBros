@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="MoveSet" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_set.gd" id="1_set"]
+[ext_resource type="Resource" path="res://fighter/moves/default/jab.tres" id="2_jab"]
+[ext_resource type="Resource" path="res://fighter/moves/default/down_tilt.tres" id="3_down_tilt"]
+[ext_resource type="Resource" path="res://fighter/moves/default/up_tilt.tres" id="4_up_tilt"]
+[ext_resource type="Resource" path="res://fighter/moves/default/side_tilt.tres" id="5_side_tilt"]
+
+[resource]
+script = ExtResource("1_set")
+jab = ExtResource("2_jab")
+down_tilt = ExtResource("3_down_tilt")
+up_tilt = ExtResource("4_up_tilt")
+side_tilt = ExtResource("5_side_tilt")

@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="FighterStats" format=3 uid="uid://7a532m0v0rqu"]
 
+[ext_resource type="Resource" path="res://fighter/moves/default/moveset.tres" id="2_moves"]
 [ext_resource type="Script" uid="uid://vkponc2ve5t6" path="res://fighter/fighter_stats.gd" id="1_hc333"]
 
 [resource]
@@ -18,4 +19,8 @@ short_hop_cut = 0.5
 max_air_jumps = 1
 drop_through_frames = 10
 drop_double_tap_frames = 12
+hitstun_per_knockback = 0.06
+min_hitstun = 6
+hitstun_friction = 300.0
+moveset = ExtResource("2_moves")
 metadata/_custom_type_script = "uid://vkponc2ve5t6"
