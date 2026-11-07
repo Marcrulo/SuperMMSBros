@@ -28,6 +28,21 @@ enum Direction { FACING, AWAY }
 @export var direction: Direction = Direction.FACING
 
 
+@export_group("Special")
+## Neutral special: ticks of charging for a full charge, and what a full charge adds.
+@export var charge_frames: int
+@export var charge_damage: float
+@export var charge_knockback: float
+## Up special: upward launch speed and the sideways speed it starts with (× move_x).
+@export var launch_speed: float
+@export var drift_speed: float
+## Down special in the air: diving speed.
+@export var dive_speed: float
+## Side special: the projectile (its size, damage and knockback are this move's hitbox and hit
+## values; it appears at hitbox_center on frame `startup`).
+@export var projectile_speed: float
+@export var projectile_lifetime: int
+
 func total_frames() -> int:
 	return startup + active + recovery
 

@@ -5,6 +5,10 @@
 [ext_resource type="Resource" path="res://fighter/moves/default/down_tilt.tres" id="3_down_tilt"]
 [ext_resource type="Resource" path="res://fighter/moves/default/up_tilt.tres" id="4_up_tilt"]
 [ext_resource type="Resource" path="res://fighter/moves/default/side_tilt.tres" id="5_side_tilt"]
+[ext_resource type="Resource" path="res://fighter/moves/default/neutral_special.tres" id="6_neutral_special"]
+[ext_resource type="Resource" path="res://fighter/moves/default/down_special.tres" id="7_down_special"]
+[ext_resource type="Resource" path="res://fighter/moves/default/side_special.tres" id="8_side_special"]
+[ext_resource type="Resource" path="res://fighter/moves/default/up_special.tres" id="9_up_special"]
 
 [resource]
 script = ExtResource("1_set")
@@ -12,3 +16,7 @@ jab = ExtResource("2_jab")
 down_tilt = ExtResource("3_down_tilt")
 up_tilt = ExtResource("4_up_tilt")
 side_tilt = ExtResource("5_side_tilt")
+neutral_special = ExtResource("6_neutral_special")
+down_special = ExtResource("7_down_special")
+side_special = ExtResource("8_side_special")
+up_special = ExtResource("9_up_special")

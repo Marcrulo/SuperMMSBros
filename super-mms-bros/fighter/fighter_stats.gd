@@ -42,5 +42,24 @@ extends Resource
 ## Horizontal slowdown in the air during hitstun.
 @export var hitstun_friction: float
 
+@export_group("Shield")
+@export var shield_max: float
+## Shield health lost per tick while shielding, and regained per tick otherwise.
+@export var shield_drain: float
+@export var shield_regen: float
+## Shield health lost per point of a blocked hit's damage.
+@export var shield_damage_scale: float
+## Ticks to lower the shield.
+@export var shield_drop_frames: int
+## Ticks stunned after the shield breaks, and the shield's health afterwards.
+@export var shield_break_frames: int
+@export var shield_reset_health: float
+## Speed a blocked hit pushes the shielder away.
+@export var block_pushback: float
+
+@export_group("Helpless")
+## Top air speed while helpless (after up special).
+@export var helpless_air_speed: float
+
 @export_group("Moves")
 @export var moveset: MoveSet
