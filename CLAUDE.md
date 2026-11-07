@@ -32,8 +32,8 @@ placeholder sprites. See `docs/vision.md`.
 godot --path super-mms-bros                          # run the game
 godot --path super-mms-bros --editor                 # open the editor
 godot --headless --path super-mms-bros --import      # import new/changed assets and new class_name scripts (needed before headless runs)
-godot --path super-mms-bros -- --p1=cpu              # CPU vs CPU (from M5)
-godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-ticks=36000   # headless end-to-end (from M5)
+godot --path super-mms-bros -- --p1=cpu              # CPU vs CPU (from M8)
+godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-ticks=36000   # headless end-to-end (from M8)
 ```
 
 Don't run `--import` while the editor is open: two Godot processes writing `.godot/` at once can
