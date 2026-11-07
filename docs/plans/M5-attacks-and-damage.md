@@ -33,8 +33,8 @@ As in M3/M4. Move numbers live only in `fighter/moves/default/*.tres`; fighter-w
 - `MoveData` (`Resource`): `startup`, `active`, `recovery` (int); `hitbox_center`, `hitbox_size` (Vector2); `damage`, `base_knockback`, `knockback_growth`, `angle_deg` (float); `direction` (`enum Direction { FACING, AWAY }`). `total_frames() -> int`.
 - `MoveSet` (`Resource`): `jab`, `down_tilt`, `up_tilt`, `side_tilt` (`MoveData`; specials added in M6).
 - `FighterStats`: `moveset`, `hitstun_per_knockback` 0.06, `min_hitstun` 6, `hitstun_friction` 300.
-- [ ] Tests (`test_moves.gd`): the four normals load with the spec table's numbers; stats values.
-- [ ] Fail → implement (`.tres` files in `fighter/moves/default/`) → pass → commit.
+- [x] Tests (`test_moves.gd`): the four normals load with the spec table's numbers; stats values.
+- [x] Fail → implement (`.tres` files in `fighter/moves/default/`) → pass → commit.
 
 ### Task 2: Attacking
 
@@ -42,8 +42,8 @@ As in M3/M4. Move numbers live only in `fighter/moves/default/*.tres`; fighter-w
 - Actions: attack pressed (from `IDLE`/`RUN`/`CROUCH`/`AIR`, before jump) picks by direction: up → `up_tilt`, down → `down_tilt`, `move_x ≠ 0` → `side_tilt` (on the ground, turns first), else `jab`.
 - During `ATTACK`: on the floor slide to a stop; in the air steer and fall; an air attack that lands ends at once (`IDLE`/`RUN`/`CROUCH`); after `total_frames` it ends into whatever fits and the fighter can act that tick.
 - `is_hitbox_active()`, `get_hitbox_rect()` (mirrored), `has_hit(i)`, `register_hit(i)`; hurtbox as M4.
-- [ ] Tests (`test_fighter_attack.gd`): each direction picks its move; side tilt on the ground turns; active frames exactly `startup+1 … startup+active` for each normal; total frames; can act on the next tick; attack wins over jump; no acting/turning during a move; ground move doesn't steer; air move steers and lands out early; hitbox rects mirror (jab facing right/left); a new move forgets who it hit.
-- [ ] Fail → implement → pass → commit.
+- [x] Tests (`test_fighter_attack.gd`): each direction picks its move; side tilt on the ground turns; active frames exactly `startup+1 … startup+active` for each normal; total frames; can act on the next tick; attack wins over jump; no acting/turning during a move; ground move doesn't steer; air move steers and lands out early; hitbox rects mirror (jab facing right/left); a new move forgets who it hit.
+- [x] Fail → implement → pass → commit.
 
 ### Task 3: Getting hit and damage %
 
@@ -51,17 +51,23 @@ As in M3/M4. Move numbers live only in `fighter/moves/default/*.tres`; fighter-w
 - `Fighter.take_hit(move: MoveData, side: int, attacker_x: float)`: percent += damage (cap 999); speed = base + growth × percent; velocity = (cos a × speed × side, −sin a × speed); `HITSTUN` for `max(min_hitstun, round(speed × hitstun_per_knockback))` (restarts if already stunned); face the attacker; jumps restored; move lost.
 - Hitstun movement: airborne (`not on floor or velocity.y < 0`) → `hitstun_friction` + gravity; else ground friction. Ends into `IDLE`/`AIR`; acts that tick.
 - `spawn_at` resets `percent` to 0.
-- [ ] Tests (in `test_fighter_attack.gd`): `test_knockback_uses_percent_after_damage` (jab on 0 % → % 3, speed 120 + 0.8×3); angle and side; AWAY sides; hitstun ticks from speed and the minimum; facing the attacker; jumps restored; move cancelled; restart; launch from the ground; ground friction; lands and stays stunned; ends in air → `AIR`; can act when it ends; spawn resets %.
-- [ ] Fail → implement → pass → commit.
+- [x] Tests (in `test_fighter_attack.gd`): `test_knockback_uses_percent_after_damage` (jab on 0 % → % 3, speed 120 + 0.8×3); angle and side; AWAY sides; hitstun ticks from speed and the minimum; facing the attacker; jumps restored; move cancelled; restart; launch from the ground; ground friction; lands and stays stunned; ends in air → `AIR`; can act when it ends; spawn resets %.
+- [x] Fail → implement → pass → commit.
 
 ### Task 4: Dummy and hit resolution
 
 - `match.tscn` gets P2; non-P1 controllers are empty `ScriptedController`s. `Match.step()`: controllers → fighters → `_resolve_hits()` (collect `[attacker, victim, move, side]` for every active hitbox overlapping another fighter's hurtbox not already hit; then `register_hit` + `take_hit`) → respawn → tick.
-- [ ] Tests (`test_match_hits.gd`, updated `test_match.gd`): P2 is a dummy at (312, 192) facing left; jab hits on its first active frame and not before; out of range misses; one hit per move; knockback follows the attacker's facing; hit from behind turns the victim; `test_trade_hits_both_fighters`; % accumulates over several jabs.
-- [ ] Fail → implement → pass → commit.
+- [x] Tests (`test_match_hits.gd`, updated `test_match.gd`): P2 is a dummy at (312, 192) facing left; jab hits on its first active frame and not before; out of range misses; one hit per move; knockback follows the attacker's facing; hit from behind turns the victim; `test_trade_hits_both_fighters`; % accumulates over several jabs.
+- [x] Fail → implement → pass → commit.
 
 ### Task 5: Visuals
 
 - `animation_for(state, velocity_y, move)`: `ATTACK` → the move's name; `HITSTUN` → `hurt`. Hit flash (brighten on alternate pairs of hitstun ticks). Debug view adds the move hitbox (outline during the move, filled when active).
-- [ ] Tests (in `test_fighter_visuals.gd`): `animation_for` for ATTACK with each move and HITSTUN; each normal's animation shows its strike drawing (index 2) exactly on the move's active frames.
-- [ ] Fail → implement → pass → headless run with `--hitboxes` clean → mark done → commit.
+- [x] Tests (in `test_fighter_visuals.gd`): `animation_for` for ATTACK with each move and HITSTUN; each normal's animation shows its strike drawing (index 2) exactly on the move's active frames.
+- [x] Fail → implement → pass → headless run with `--hitboxes` clean → mark done → commit.
+
+## Notes from execution
+
+- Tasks 2 and 3 were tested and built together (one test file, one rewrite of `fighter.gd`): the
+  attack and hitstun code share the end-of-state and movement logic.
+- A test helper named `_input` clashed again with `Node._input()`; tests use `_make_input`.

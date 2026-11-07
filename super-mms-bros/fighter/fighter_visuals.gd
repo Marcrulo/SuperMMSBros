@@ -34,8 +34,12 @@ const ANIMATIONS := {
 const SHIRT_COLORS: Array[Color] = [Color8(177, 62, 83), Color8(128, 40, 62), Color8(214, 92, 106)]
 const P2_SHIRT_COLORS: Array[Color] = [Color8(59, 93, 201), Color8(41, 54, 111), Color8(90, 140, 230)]
 const HURTBOX_COLOR := Color(0.3, 0.6, 1.0, 0.35)
+const HITBOX_ACTIVE_COLOR := Color(1.0, 0.15, 0.15, 0.55)
+const HITBOX_IDLE_COLOR := Color(1.0, 0.3, 0.3, 0.5)
+## Brightness of the hit flash (values above 1 brighten the sprite).
+const FLASH := Color(2.2, 2.2, 2.2)
 
-## Debug view of hurtboxes (and, from M5, hitboxes): F1 toggles it, `--hitboxes` turns it on.
+## Debug view of hurtboxes and hitboxes: F1 toggles it, `--hitboxes` turns it on at start.
 static var show_boxes := "--hitboxes" in OS.get_cmdline_user_args()
 ## Textures per player color (index 0 = P1, 1 = P2), then per animation name.
 static var _textures: Array[Dictionary] = []
@@ -58,9 +62,13 @@ static func frame_index(durations: Array, loop: bool, ticks: int) -> int:
 	return durations.size() - 1
 
 
-## The animation for a movement state (moves are added in M5–M6).
-static func animation_for(state: Fighter.State, velocity_y: float) -> String:
+## The animation for a state (and, during a move, the move's own animation).
+static func animation_for(state: Fighter.State, velocity_y: float, move: StringName = &"") -> String:
 	match state:
+		Fighter.State.ATTACK:
+			return String(move) if ANIMATIONS.has(String(move)) else "jab"
+		Fighter.State.HITSTUN:
+			return "hurt"
 		Fighter.State.RUN:
 			return "run"
 		Fighter.State.CROUCH:
@@ -105,17 +113,36 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _draw() -> void:
-	var animation := animation_for(_fighter.state, _fighter.velocity.y)
+	var animation := animation_for(_fighter.state, _fighter.velocity.y, _fighter.move)
 	var texture: Texture2D = _textures[mini(_fighter.player_index, 1)][animation]
 	var timing: Dictionary = ANIMATIONS[animation]
 	var frame := frame_index(timing.ticks, timing.loop, _fighter.state_frame)
 	# Mirror when facing left; the strips are drawn facing right.
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(_fighter.facing, 1))
 	draw_texture_rect_region(texture, Rect2(-FRAME / 2.0, -FRAME, FRAME, FRAME),
-		Rect2(frame * FRAME, 0, FRAME, FRAME))
+		Rect2(frame * FRAME, 0, FRAME, FRAME), _flash())
 	draw_set_transform(Vector2.ZERO)
 	if show_boxes:
-		var hurtbox := _fighter.get_hurtbox_rect()
-		hurtbox.position -= _fighter.global_position
-		draw_rect(hurtbox, HURTBOX_COLOR)
-		draw_rect(hurtbox, HURTBOX_COLOR.lightened(0.4), false, 1.0)
+		_draw_boxes()
+
+
+## Brightens the sprite on alternate pairs of hitstun ticks (1–2, 5–6, …), so a hit flashes.
+func _flash() -> Color:
+	if _fighter.state == Fighter.State.HITSTUN and int((_fighter.state_frame - 1) / 2.0) % 2 == 0:
+		return FLASH
+	return Color.WHITE
+
+
+## Hurtbox in blue; during a move its hitbox in red, filled on the active frames.
+func _draw_boxes() -> void:
+	var hurtbox := _fighter.get_hurtbox_rect()
+	hurtbox.position -= _fighter.global_position
+	draw_rect(hurtbox, HURTBOX_COLOR)
+	draw_rect(hurtbox, HURTBOX_COLOR.lightened(0.4), false, 1.0)
+	if _fighter.current_move() == null:
+		return
+	var hitbox := _fighter.get_hitbox_rect()
+	hitbox.position -= _fighter.global_position
+	if _fighter.is_hitbox_active():
+		draw_rect(hitbox, HITBOX_ACTIVE_COLOR)
+	draw_rect(hitbox, HITBOX_IDLE_COLOR, false, 1.0)

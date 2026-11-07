@@ -45,3 +45,20 @@ func test_p2_wears_blue() -> void:
 			colors[image.get_pixel(x, y).to_html(false)] = true
 	assert_false(colors.has("b13e53"), "no red shirt left")
 	assert_true(colors.has("3b5dc9"), "blue shirt")
+
+
+func test_animation_for_moves_and_hitstun() -> void:
+	for name in [&"jab", &"down_tilt", &"up_tilt", &"side_tilt"]:
+		assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, name), String(name))
+	assert_eq(FighterVisuals.animation_for(Fighter.State.HITSTUN, -50.0), "hurt")
+
+
+## The strike drawing (index 2) must show exactly while the move can hit.
+func test_strike_drawing_matches_each_moves_active_frames() -> void:
+	var moves := (load("res://fighter/default_stats.tres") as FighterStats).moveset
+	for name in ["jab", "down_tilt", "up_tilt", "side_tilt"]:
+		var data := moves.get(name) as MoveData
+		var timing: Dictionary = FighterVisuals.ANIMATIONS[name]
+		for frame in range(1, data.total_frames() + 1):
+			var strike := FighterVisuals.frame_index(timing.ticks, timing.loop, frame) == 2
+			assert_eq(strike, data.is_active_frame(frame), "%s frame %d" % [name, frame])
