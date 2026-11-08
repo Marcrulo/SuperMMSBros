@@ -1,8 +1,12 @@
-"""Generates the placeholder pixel-art fighter strips, projectile and stock icon (docs/specs/art-guide.md).
+"""Generates every fighter's pixel-art strips, projectile and stock icon (docs/specs/art-guide.md).
 
-Each frame is 48x48, figure facing right, feet on the bottom row centered at x=24, body inside
-x 16-31 / y 24-47. Big head (~10 px of the 24 px height). Output: one PNG strip per animation.
-Usage: python3 -I tools/gen_placeholder_sprites.py super-mms-bros/assets/fighters/default
+All characters share one body and one set of poses; each has a "look" (colors, hair, a few traits)
+in tools/fighter_looks.py. Each frame is 48x48, figure facing right, feet on the bottom row
+centered at x=24, body inside x 16-31 / y 24-47, a big head about 13 px tall.
+Usage:
+  python3 -I tools/gen_fighter_sprites.py super-mms-bros/assets/fighters          # every character
+  python3 -I tools/gen_fighter_sprites.py super-mms-bros/assets/fighters slot_02  # just some
+Each character goes to <out_dir>/<id>/, one PNG strip per animation.
 """
 import math
 import sys
@@ -10,15 +14,38 @@ from pathlib import Path
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fighter_looks import LOOKS  # noqa: E402
+
 FRAME = 48
-HEAD = {"rx": 5.3, "ry": 5.0, "cy": 28.5}
+HEAD = {"rx": 6.4, "ry": 6.4, "cy": 27.0}
 OUTLINE = (26, 28, 44)
-SKIN, SKIN_SHADE = (240, 195, 155), (205, 150, 115)
-HAIR, HAIR_LIGHT = (59, 42, 40), (93, 63, 53)
-EYE = (26, 28, 44)
-SHIRT, SHIRT_SHADE, SHIRT_LIGHT = (177, 62, 83), (128, 40, 62), (214, 92, 106)
-PANTS, PANTS_BACK = (51, 60, 87), (38, 43, 68)
-SHOES = (26, 28, 44)
+
+
+def scale(color, f):
+    """`color` darkened (f < 1) or lightened toward white (f > 1)."""
+    if f <= 1:
+        return tuple(round(c * f) for c in color)
+    return tuple(round(c + (255 - c) * (f - 1)) for c in color)
+
+
+def palette(look):
+    """Every color a drawing uses, with shades derived from the look's base colors."""
+    p = {
+        "skin": look["skin"], "skin_shade": look.get("skin_shade", scale(look["skin"], 0.82)),
+        "skin_light": scale(look["skin"], 1.25),
+        "hair": look["hair"], "hair_light": look.get("hair_light", scale(look["hair"], 1.3)),
+        "eye": look.get("eye", (26, 28, 44)),
+        "shirt": look["shirt"], "shirt_shade": look.get("shirt_shade", scale(look["shirt"], 0.72)),
+        "shirt_light": look.get("shirt_light", scale(look["shirt"], 1.22)),
+        "pants": look["pants"], "pants_back": scale(look["pants"], 0.75),
+        "shoes": look.get("shoes", (26, 28, 44)),
+        "hands": look.get("hands", look["skin"]),
+        "inner": look.get("inner"), "stripe": look.get("stripe"),
+        "beard": look.get("beard"), "glasses": look.get("glasses"),
+        "blush": look.get("blush"), "face": look.get("face"),
+    }
+    return p
 
 
 class Canvas:
@@ -43,6 +70,12 @@ class Canvas:
                 for dy in range(width):
                     self.put(x0 + dx, y0 + dy, color)
 
+    def disc(self, cx, cy, r, color):
+        for y in range(int(cy - r) - 1, int(cy + r) + 2):
+            for x in range(int(cx - r) - 1, int(cx + r) + 2):
+                if (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r:
+                    self.put(x, y, color)
+
     def image(self):
         img = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
         filled = set(self.px)
@@ -65,11 +98,118 @@ def add(p, d, length):
     return (p[0] + d[0] * length, p[1] + d[1] * length)
 
 
-def draw_frame(pose):
+def hair_at(style, ux, uy):
+    """Hair color key ("hair", "hair_light" or None) at a point of the head, in head units
+    (ux forward, uy down, the head's edge at distance 1)."""
+    if style == "bald":
+        return None
+    top = uy < -0.3
+    back = ux < -0.25 and uy < 0.45
+    if style == "receding":
+        top = uy < -0.3 and ux < 0.05
+    elif style == "fringe":
+        top = uy < -0.12 or (uy < 0.0 and ux > 0.55)
+    elif style in ("bob", "long"):
+        back = ux < -0.1 and uy < 0.95
+    if not (top or back):
+        return None
+    shine = uy < -0.75 and -0.2 < ux < 0.4
+    return "hair_light" if shine else "hair"
+
+
+def draw_head(c, look, p, cx, cy, eyes):
+    style = look.get("hair_style", "short")
+    rx, ry = HEAD["rx"], HEAD["ry"]
+    fur = style == "monkey"
+    # Volume: big hair sticks out past the skull at the top and back.
+    puff = look.get("puff", 0.0)
+    for y in range(int(cy) - 10, int(cy) + 10):
+        for x in range(int(cx) - 10, int(cx) + 11):
+            ux, uy = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            d = ux * ux + uy * uy
+            if d > 1.0:
+                if puff and d <= (1 + puff) ** 2 and (uy < -0.2 or (ux < 0 and uy < 0.6)):
+                    c.put(x, y, p["hair"])
+                continue
+            if fur:
+                # A light face patch at the front, fur everywhere else.
+                face = (ux - 0.3) ** 2 / 0.55 + (uy - 0.2) ** 2 / 0.45 < 1.0 and uy > -0.5
+                c.put(x, y, p["face"] if face else p["hair"] if uy > -0.7 else p["hair_light"])
+                continue
+            color = p["skin"]
+            if ux < -0.35 and uy > 0.25:
+                color = p["skin_shade"]
+            if style == "bald" and -0.6 < uy < -0.4 and 0.0 < ux < 0.35:
+                color = p["skin_light"]
+            if look.get("camo") and color != p["skin_light"]:
+                color = look["camo"][(x * 7 + y * 13 + (x // 2) * (y // 3)) % len(look["camo"])]
+            if p["beard"] and ux > -0.45 and uy > 0.3:
+                color = p["beard"]
+            key = hair_at(style, ux, uy)
+            if key:
+                color = p[key]
+            c.put(x, y, color)
+    if p["beard"]:
+        # The beard hangs a pixel or two below the chin.
+        for x in range(round(cx) - 2, round(cx) + 5):
+            c.put(x, round(cy + ry), p["beard"])
+        for x in range(round(cx), round(cx) + 3):
+            c.put(x, round(cy + ry) + 1, p["beard"])
+    if fur:
+        # An ear at the back of the head.
+        c.disc(cx - rx + 0.2, cy - 0.5, 2.3, p["hair"])
+        c.disc(cx - rx + 0.4, cy - 0.5, 1.2, p["face"])
+    if style == "bun":
+        c.disc(cx - rx + 0.3, cy + 1.0, 1.9, p["hair"])
+    if style == "ponytail":
+        c.stroke((cx - rx + 1.5, cy - 4.0), (cx - rx - 1.0, cy - 2.5), 2, p["hair"])
+        c.stroke((cx - rx - 1.0, cy - 2.5), (cx - rx - 1.5, cy + 4.0), 2, p["hair"])
+        c.put(cx - rx - 1.0, cy - 3.0, p["hair_light"])
+
+    # Eyes (front one bigger), looking forward; closed for the hurt pose.
+    ex, ey = round(cx) + 1, round(cy)
+    if fur:
+        ex += 1
+    if p["glasses"] and eyes != "shut":
+        g = p["glasses"]
+        # Frames over the brow and down the outer sides, a bridge, and the arm back to the ear;
+        # the lenses stay clear, so the eyes show through.
+        for x in range(ex - 1, ex + 5):
+            c.put(x, ey - 1, g)
+        for y in range(ey, ey + 2):
+            c.put(ex - 1, y, g)
+            c.put(ex + 4, y, g)
+        c.put(ex + 1, ey + 2, g)
+        c.put(ex + 2, ey + 2, g)
+        for x in range(ex - 4, ex - 1):
+            c.put(x, ey, g)
+        for y in range(ey, ey + 2):
+            c.put(ex, y, p["eye"])
+            c.put(ex + 3, y, p["eye"])
+        return
+    if eyes == "shut":
+        c.put(ex, ey + 1, p["eye"]); c.put(ex + 1, ey + 1, p["eye"])
+        c.put(ex + 3, ey + 1, p["eye"]); c.put(ex + 4, ey + 1, p["eye"])
+    else:
+        for y in range(ey, ey + 2):
+            c.put(ex, y, p["eye"])
+            c.put(ex + 3, y, p["eye"])
+        c.put(ex + 3, ey - 1, p["eye"])
+    if p["blush"]:
+        c.put(ex + 2, ey + 3, p["blush"])
+        c.put(ex - 2, ey + 3, p["blush"])
+
+
+def draw_frame(pose, look):
+    p = palette(look)
     c = Canvas()
     dx, dy = pose.get("lean", 0), pose.get("bob", 0)
     hip_y = 40.5 + pose.get("crouch", 0)
     shoulder = (24 + dx, 35 + dy + pose.get("crouch", 0))
+    cx = 24.5 + dx + pose.get("head_dx", 0)
+    cy = HEAD["cy"] + dy + pose.get("crouch", 0) + pose.get("head_dy", 0)
+    style = look.get("hair_style", "short")
+    short_sleeves = look.get("sleeves") == "short"
 
     def leg(root, thigh, knee, color, length=3.6):
         k = add(root, down(thigh), length)
@@ -79,61 +219,64 @@ def draw_frame(pose):
         # Shoe: 3 px pointing forward.
         fx, fy = round(f[0]), min(round(f[1]), 47)
         for x in range(fx - 1, fx + 2):
-            c.put(x, fy, SHOES)
+            c.put(x, fy, p["shoes"])
 
-    def arm(root, upper, elbow, color, length=3.0, reach=0.0):
+    def arm(root, upper, elbow, color, length=3.0, reach=0.0, skin=None):
         e = add(root, down(upper), length + reach)
         h = add(e, down(upper + elbow), length + reach)
         c.stroke(root, e, 2, color)
-        c.stroke(e, h, 2, color)
-        c.stroke(h, h, 2, SKIN)
+        c.stroke(e, h, 2, skin if short_sleeves else color)
+        c.stroke(h, h, 2, p["hands"])
+
+    # Long hair hangs down the back, behind everything.
+    if style == "long":
+        for y in range(round(cy), round(cy) + 11):
+            w = 4 if y < cy + 8 else 3
+            for x in range(round(cx - HEAD["rx"]) - 1, round(cx - HEAD["rx"]) - 1 + w):
+                c.put(x, y, p["hair"])
+    # A hood bunched up behind the neck.
+    if look.get("hood"):
+        c.disc(cx - 4.0, cy + 6.0, 2.4, p["shirt_shade"])
+    # A monkey's tail, curling up behind.
+    if look.get("tail"):
+        tx, ty = 21 + dx * 0.3, hip_y - 1
+        c.stroke((tx, ty), (tx - 3, ty - 1), 1, p["hair"])
+        c.stroke((tx - 3, ty - 1), (tx - 5, ty - 4), 1, p["hair"])
+        c.stroke((tx - 5, ty - 4), (tx - 4, ty - 7), 1, p["hair"])
 
     # Back limbs (darker), behind everything.
-    leg((23 + dx * 0.3, hip_y), pose["bt"], pose["bk"], PANTS_BACK)
-    arm((22 + dx, shoulder[1] + 0.5), pose["ba"], pose["be"], SHIRT_SHADE)
+    leg((23 + dx * 0.3, hip_y), pose["bt"], pose["bk"], p["pants_back"])
+    arm((22 + dx, shoulder[1] + 0.5), pose["ba"], pose["be"], p["shirt_shade"], skin=p["skin_shade"])
 
     # Torso: 6 x 7, shaded on the back side, lighter on the front.
-    for y in range(int(shoulder[1]), int(hip_y) + 1):
+    top = int(shoulder[1])
+    for y in range(top, int(hip_y) + 1):
         for x in range(21, 27):
             xx = x + round(dx * (1 - (y - shoulder[1]) / 8))
-            color = SHIRT_SHADE if x == 21 else SHIRT_LIGHT if x == 26 and y < shoulder[1] + 3 else SHIRT
+            color = p["shirt_shade"] if x == 21 else p["shirt_light"] if x == 26 and y < shoulder[1] + 3 else p["shirt"]
+            if p["inner"] and x in (24, 25) and y < top + 3 and not (x == 24 and y == top + 2):
+                color = p["inner"]
+            if p["stripe"] and y in (top + 3, top + 5):
+                color = p["stripe"]
+            if look.get("dots") and (x + 2 * y) % 4 == 0 and x > 21:
+                color = look["dots"]
             c.put(xx, y, color)
 
     # A raised front arm goes behind the head, so it never covers the face.
     raised = pose["fa"] > 2.2
     if raised:
-        arm((26 + dx, shoulder[1] + 0.5), pose["fa"], pose["fe"], SHIRT, reach=pose.get("reach", 0))
+        arm((26 + dx, shoulder[1] + 0.5), pose["fa"], pose["fe"], p["shirt"], reach=pose.get("reach", 0), skin=p["skin"])
 
-    # Head: big, like a chibi figure.
-    cx, cy = 24.5 + dx + pose.get("head_dx", 0), HEAD["cy"] + dy + pose.get("crouch", 0) + pose.get("head_dy", 0)
-    for y in range(int(cy) - 9, int(cy) + 9):
-        for x in range(int(cx) - 9, int(cx) + 10):
-            ux, uy = (x + 0.5 - cx) / HEAD["rx"], (y + 0.5 - cy) / HEAD["ry"]
-            if ux * ux + uy * uy > 1.0:
-                continue
-            color = SKIN
-            if ux < -0.35 and uy > 0.25:
-                color = SKIN_SHADE
-            # Hair: the top, and the back of the head down to the ear.
-            if uy < -0.3 or (ux < -0.25 and uy < 0.45):
-                color = HAIR_LIGHT if (uy < -0.75 and -0.2 < ux < 0.4) else HAIR
-            c.put(x, y, color)
-    # Eyes (front one bigger), looking forward; closed for the hurt pose.
-    ex, ey = round(cx) + 1, round(cy)
-    if pose.get("eyes") == "shut":
-        c.put(ex, ey + 1, EYE); c.put(ex + 1, ey + 1, EYE)
-        c.put(ex + 3, ey + 1, EYE); c.put(ex + 4, ey + 1, EYE)
-    else:
-        tall = 3 if HEAD["ry"] > 5.5 else 2
-        for y in range(ey, ey + tall):
-            c.put(ex, y, EYE)
-            c.put(ex + 3, y, EYE)
-        c.put(ex + 3, ey - 1, EYE)
+    draw_head(c, look, p, cx, cy, pose.get("eyes"))
 
     # Front limbs.
-    leg((25.5 + dx * 0.3, hip_y), pose["ft"], pose["fk"], PANTS)
+    leg((25.5 + dx * 0.3, hip_y), pose["ft"], pose["fk"], p["pants"])
+    if look.get("skirt"):
+        for i, y in enumerate(range(int(hip_y) + 1, int(hip_y) + 4)):
+            for x in range(21 - i // 2, 27 + (i + 1) // 2):
+                c.put(x + round(dx * 0.3), y, p["shirt_shade"] if x <= 21 - i // 2 else p["shirt"])
     if not raised:
-        arm((26 + dx, shoulder[1] + 0.5), pose["fa"], pose["fe"], SHIRT, reach=pose.get("reach", 0))
+        arm((26 + dx, shoulder[1] + 0.5), pose["fa"], pose["fe"], p["shirt"], reach=pose.get("reach", 0), skin=p["skin"])
     return c.image()
 
 
@@ -295,7 +438,7 @@ def projectile_frame(i):
     return img
 
 
-# Stock icon, 8x8: the head facing right, with a collar in the shirt shades (recolored for P2).
+# Stock icon, 8x8: the head facing right, with a collar in the shirt shades.
 STOCK_ICON = [
     "..hhhh..",
     ".hhHHhh.",
@@ -306,36 +449,40 @@ STOCK_ICON = [
     ".rRRRRr.",
     "rrRRRRrr",
 ]
-STOCK_COLORS = {"h": HAIR, "H": HAIR_LIGHT, "s": SKIN, "e": EYE, "r": SHIRT_SHADE, "R": SHIRT}
 
 
-def stock_icon():
+def stock_icon(look):
+    p = palette(look)
+    bald = look.get("hair_style") == "bald"
+    colors = {"h": p["skin"] if bald else p["hair"], "H": p["skin_light"] if bald else p["hair_light"],
+              "s": p["face"] or p["skin"], "e": p["eye"], "r": p["shirt_shade"], "R": p["shirt"]}
     img = Image.new("RGBA", (8, 8), (0, 0, 0, 0))
     for y, row in enumerate(STOCK_ICON):
         for x, key in enumerate(row):
-            if key in STOCK_COLORS:
-                img.putpixel((x, y), STOCK_COLORS[key] + (255,))
+            if key in colors:
+                img.putpixel((x, y), colors[key] + (255,))
     return img
 
 
-def main(out_dir):
-    # Brawlhalla-like: a head about 13 px tall, poking 3 px above the 24 px body box.
-    HEAD.update(rx=6.4, ry=6.4, cy=27.0)
-    out = Path(out_dir)
+def write_character(look, out):
     out.mkdir(parents=True, exist_ok=True)
     for name, poses in ANIMATIONS.items():
         strip = Image.new("RGBA", (FRAME * len(poses), FRAME), (0, 0, 0, 0))
-        for i, p in enumerate(poses):
-            strip.paste(draw_frame(p), (i * FRAME, 0))
+        for i, pose_ in enumerate(poses):
+            strip.paste(draw_frame(pose_, look), (i * FRAME, 0))
         strip.save(out / f"fighter_{name}.png")
-        print(name, len(poses))
     strip = Image.new("RGBA", (PROJECTILE * 3, PROJECTILE), (0, 0, 0, 0))
     for i in range(3):
         strip.paste(projectile_frame(i), (i * PROJECTILE, 0))
     strip.save(out / "projectile.png")
-    stock_icon().save(out / "stock_icon.png")
-    print("projectile", 3)
+    stock_icon(look).save(out / "stock_icon.png")
+
+
+def main(out_dir, ids):
+    for character_id in ids or LOOKS:
+        write_character(LOOKS[character_id], Path(out_dir) / character_id)
+        print(character_id)
 
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2:])

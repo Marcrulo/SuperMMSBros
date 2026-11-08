@@ -183,7 +183,8 @@ super-mms-bros/
 ```
 
 Outside the Godot project, `tools/` holds helper scripts that aren't part of the game, such as
-`tools/gen_placeholder_sprites.py` (generates the placeholder sprite strips).
+`tools/gen_fighter_sprites.py` (generates every character's sprite strips from the looks in
+`tools/fighter_looks.py`).
 
 Group by feature: a scene lives next to its scripts.
 

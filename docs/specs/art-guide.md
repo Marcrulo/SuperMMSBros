@@ -89,11 +89,19 @@ color. The game swaps exactly those shades to blue for P2 when it loads the stri
 - File names: `fighter_<animation>.png`, e.g. `fighter_run.png`.
 - Location: `super-mms-bros/assets/fighters/default/` (a new character gets its own folder).
 
+### Generated characters
+
+`tools/gen_fighter_sprites.py <out_dir> [ids…]` draws every character on the same body and poses;
+each character's look (colors sampled from its portrait, hair style, traits such as glasses or a
+beard) is in `tools/fighter_looks.py`, keyed by character id, and its strips go to
+`<out_dir>/<id>/`. The generated looks are a base to fine-tune by hand. The game still loads only
+`default/`; wiring per-character folders into the game is the next step.
+
 ## Stages
 
 - **Backgrounds:** one image per stage, **528×297** (the 480×270 screen plus 10% for parallax
   drift), in `super-mms-bros/assets/stage/backgrounds/`, named after the stage id
-  (`mms.png`, `fc.png`, `slot_sunset.png`, `cafe_station.png`, `lindevej.png`). Paint at full brightness: the game tones
+  (`mms.png`, `fc.png`, `slot_sunset.png`, `cafe_station.png`, `lindevej.png`, `cafe_slotsbio.png`). Paint at full brightness: the game tones
   backgrounds down with a haze.
 - **Platforms:** drawn by the game in code, in perspective, from each stage's platform style (colors
   and front-face bands; see [match & stage](match-and-stage.md#platform-look-perspective)). New
