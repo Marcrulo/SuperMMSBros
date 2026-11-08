@@ -64,6 +64,10 @@ of smooth zoom.
   it. Chosen in M1.
 - Pixel fonts are used only at their native size or whole multiples of it.
 - The project's default theme uses this font, so all UI picks it up.
+- **Display font:** the select screens' titles use **Ink Yugo** by ArtiXLabs
+  (`assets/fonts/ink_yugo.otf`), a brush font, so the native-size rule doesn't apply to it. Its
+  demo license allows personal use only and forbids redistribution, so it is **not committed**
+  (in `.gitignore`); without it the title falls back to the pixel font.
 
 ## Placeholder palette
 
@@ -81,15 +85,24 @@ looks consistent before real art exists. Stage colors are in the platform styles
 
 ## Audio
 
+- **Buses** (`default_bus_layout.tres`): `Master` ← `Music` and `SFX`, all at 0 dB. Music players
+  use `Music`, sound effects `SFX`, so each group can get its own volume later.
 - **Music:** each stage has a music track that loops for the whole match: `assets/music/<stage
   id>.ogg` (found by its name; a stage without a file is silent). It's played by the Match's
-  `Music` node (an `AudioStreamPlayer`), presentation only.
+  `Music` node (an `AudioStreamPlayer`), presentation only. The menus have their own looping
+  track, `assets/music/menu.ogg` (see [menus](menus.md#sound)).
+- **Sound effects:** `assets/sfx/<name>.wav`: some synthesized by `tools/gen_menu_sfx.py` (our
+  own), some from outside (credited in `assets/sfx/CREDITS.txt`, or kept out of git when their
+  license is unknown). v1 has menu sounds only (see [menus](menus.md#sound)).
 - Tracks are prepared with `tools/prepare_music.py`: leading and trailing silence trimmed (so the
   loop has no gap), loudness normalized to −18 LUFS with peaks below −1.5 dBTP, saved as OGG Vorbis
-  44.1 kHz stereo. Every track then plays at the same loudness.
+  44.1 kHz stereo. Every track then plays at the same loudness. Sound effects are too short for
+  integrated loudness, so `tools/prepare_music.py --sfx` trims their leading and trailing silence
+  the same way and sets their **loudest 400 ms window**
+  (EBU R128 momentary loudness) to −18 LUFS instead, keeps peaks below −1.5 dBFS, and writes
+  16-bit WAV (no compression delay for short sounds).
 - The tracks are the user's own copies of existing songs, so they are **not committed** (the repo is
   public): `assets/music/` is in `.gitignore`. The game runs without them.
 - **Quitting:** closing the window goes through `Game.quit()`, which frees the current scene and
   waits 0.1 s (real time) before quitting, so the audio engine releases the playing track first.
   Code that ends the game (e.g. M8's `--autoquit`) calls `Game.quit()` too.
-- No sound effects in v1.

@@ -2,9 +2,12 @@
 
 [ext_resource type="Script" path="res://fighter/character_data.gd" id="1_data"]
 [ext_resource type="Resource" path="res://fighter/default_stats.tres" id="2_stats"]
+[ext_resource type="Texture2D" path="res://assets/fighters/portraits/default.png" id="3_portrait"]
 
 [resource]
 script = ExtResource("1_data")
 id = "default"
-display_name = "Default"
+display_name = "Pia"
+playable = true
+portrait = ExtResource("3_portrait")
 stats = ExtResource("2_stats")

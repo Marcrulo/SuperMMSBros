@@ -4,8 +4,12 @@ extends Control
 ## of thumbnails. Back returns to the character select.
 
 const THUMBNAIL := Vector2(80, 45)
+## Where the title's top goes in the brush font (its letters then end just above the preview).
+const TITLE_TOP := 2.0
 
 var _tiles: Array[SelectTile] = []
+## Off until the screen has opened, so the first highlight makes no sound.
+var _sounds_on := false
 
 @onready var _row := $Thumbnails as HBoxContainer
 @onready var _preview := $Preview/Picture as TextureRect
@@ -13,6 +17,8 @@ var _tiles: Array[SelectTile] = []
 
 
 func _ready() -> void:
+	Game.play_menu_music()
+	TitleFont.apply($Title as Label, TITLE_TOP)
 	var start := 0
 	for i in StageData.ALL_IDS.size():
 		var stage := StageData.load_stage(StageData.ALL_IDS[i])
@@ -27,6 +33,7 @@ func _ready() -> void:
 		_tiles.append(tile)
 	SelectTile.wrap_rows(_tiles, _tiles.size())
 	_tiles[start].grab_focus()
+	_sounds_on = true
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -49,15 +56,19 @@ func get_name_text() -> String:
 
 ## Plays stage number `index` (in StageData.ALL_IDS order).
 func choose(index: int) -> void:
+	Game.play_sfx("menu_confirm")
 	Game.stage_id = StageData.ALL_IDS[index]
 	Game.go_to(Game.MATCH_PATH)
 
 
 func back() -> void:
+	Game.play_sfx("menu_back")
 	Game.go_to(Game.CHARACTER_SELECT_PATH)
 
 
 func _on_tile_focused(index: int) -> void:
+	if _sounds_on:
+		Game.play_sfx("menu_move")
 	var stage := StageData.load_stage(StageData.ALL_IDS[index])
 	_preview.texture = stage.background
 	_name.text = stage.display_name

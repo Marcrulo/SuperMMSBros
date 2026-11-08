@@ -4,5 +4,9 @@ extends Resource
 
 @export var id: String
 @export var display_name: String
-## Its movement and shield numbers, and its move set.
+## False for a character that's announced on the select screen but can't be played yet.
+@export var playable: bool = false
+## Its picture on the select screen (optional; without one the screen shows the fighter's head).
+@export var portrait: Texture2D
+## Its movement and shield numbers, and its move set (empty while it isn't playable).
 @export var stats: FighterStats

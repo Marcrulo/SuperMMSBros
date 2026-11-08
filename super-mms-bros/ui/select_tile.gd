@@ -29,7 +29,8 @@ static func wrap_rows(tiles: Array[SelectTile], columns: int) -> void:
 
 ## Makes a `size` tile showing `picture` (stretched to fill, inside the border). Its layers, back to
 ## front: the square, the picture, the highlight border (only while focused).
-func setup(tile_size: Vector2, picture: Texture2D) -> void:
+func setup(tile_size: Vector2, picture: Texture2D,
+		filter := CanvasItem.TEXTURE_FILTER_NEAREST) -> void:
 	custom_minimum_size = tile_size
 	size = tile_size
 	focus_mode = Control.FOCUS_ALL
@@ -40,7 +41,7 @@ func setup(tile_size: Vector2, picture: Texture2D) -> void:
 	square.color = SQUARE
 	square.size = tile_size
 	_picture.texture = picture
-	_picture.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_picture.texture_filter = filter
 	_picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_picture.stretch_mode = TextureRect.STRETCH_SCALE
 	_picture.position = Vector2(BORDER, BORDER)
@@ -61,6 +62,14 @@ func setup(tile_size: Vector2, picture: Texture2D) -> void:
 
 func get_picture() -> Texture2D:
 	return _picture.texture
+
+
+func get_picture_size() -> Vector2:
+	return _picture.size
+
+
+func get_picture_filter() -> CanvasItem.TextureFilter:
+	return _picture.texture_filter
 
 
 func is_highlighted() -> bool:

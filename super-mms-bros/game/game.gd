@@ -9,6 +9,10 @@ const ROSTER_PATH := "res://fighter/characters/roster.tres"
 const DEFAULT_CHARACTER := "default"
 ## Seconds the audio engine gets to release the music before quitting.
 const QUIT_DELAY := 0.1
+## Menu sound effects (docs/specs/menus.md#sound): assets/sfx/<name>.wav.
+const SFX_DIR := "res://assets/sfx/"
+const SOUNDS: Array[String] = ["menu_move", "menu_confirm", "menu_back", "menu_locked"]
+const MENU_TRACK := "menu"
 ## Menu action ← the game actions whose keys and buttons it also accepts.
 const MENU_KEYS := {
 	"ui_left": ["move_left"], "ui_right": ["move_right"], "ui_up": ["up"], "ui_down": ["down"],
@@ -23,11 +27,29 @@ var stage_id: String = ""
 var change_scenes: bool = true
 ## The last scene go_to() was asked for.
 var requested_scene: String = ""
+## The last sound effect played (for tests).
+var last_sfx: String = ""
+
+## Here, not in a screen, so the menu music carries on across screens and a sound effect finishes
+## after its screen is gone.
+var _menu_music := AudioStreamPlayer.new()
+var _sfx: Dictionary[String, AudioStreamPlayer] = {}
 
 
 func _ready() -> void:
 	# Closing the window goes through quit() instead of stopping the engine at once.
 	get_tree().auto_accept_quit = false
+	_menu_music.bus = &"Music"
+	add_child(_menu_music)
+	for sound in SOUNDS:
+		var player := AudioStreamPlayer.new()
+		# Not every sound is in git; a missing one stays silent.
+		var path := SFX_DIR + sound + ".wav"
+		if ResourceLoader.exists(path):
+			player.stream = load(path)
+		player.bus = &"SFX"
+		add_child(player)
+		_sfx[sound] = player
 	for menu_action: String in MENU_KEYS:
 		for game_action: String in MENU_KEYS[menu_action]:
 			for event in InputMap.action_get_events(game_action):
@@ -44,6 +66,9 @@ func _notification(what: int) -> void:
 ## leaves the track "in use" at exit. Shutdown only, so not counted in ticks.
 func quit() -> void:
 	var tree := get_tree()
+	stop_menu_music()
+	for player: AudioStreamPlayer in _sfx.values():
+		player.stop()
 	if tree.current_scene != null:
 		tree.current_scene.queue_free()
 	await tree.create_timer(QUIT_DELAY).timeout
@@ -62,14 +87,45 @@ func roster() -> Roster:
 	return load(ROSTER_PATH) as Roster
 
 
-## The chosen character (the default one if the id is unknown).
+## The chosen character (the default one if the id is unknown or not playable).
 func character() -> CharacterData:
 	var chosen := roster().find(character_id)
-	return chosen if chosen != null else roster().find(DEFAULT_CHARACTER)
+	return chosen if chosen != null and chosen.playable else roster().find(DEFAULT_CHARACTER)
 
 
-## Switches to the scene at `path` (after this frame, so the current one finishes cleanly).
+## Plays a menu sound effect (one of SOUNDS), from the start.
+func play_sfx(sound: String) -> void:
+	last_sfx = sound
+	if _sfx[sound].stream != null:
+		_sfx[sound].play()
+
+
+func sfx_player(sound: String) -> AudioStreamPlayer:
+	return _sfx[sound]
+
+
+## Starts the looping menu music, unless it's already playing (it carries on between screens).
+func play_menu_music() -> void:
+	if _menu_music.playing:
+		return
+	_menu_music.stream = MusicLibrary.load_looping(MENU_TRACK)
+	if _menu_music.stream != null:
+		_menu_music.play()
+
+
+func stop_menu_music() -> void:
+	_menu_music.stop()
+
+
+func menu_music_player() -> AudioStreamPlayer:
+	return _menu_music
+
+
+## Switches to the scene at `path` (after this frame, so the current one finishes cleanly). The
+## menu music stops when the match starts.
 func go_to(path: String) -> void:
 	requested_scene = path
+	if path == MATCH_PATH:
+		stop_menu_music()
 	if change_scenes:
 		get_tree().change_scene_to_file.call_deferred(path)

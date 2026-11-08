@@ -21,18 +21,37 @@ func after_each() -> void:
 # --- Data ----------------------------------------------------------------------------------------
 
 
-func test_roster_has_10_slots_and_one_character() -> void:
+const ANNOUNCED_NAMES: Array[String] = ["Gitte", "Trine", "Nina", "Michael Bech", "Henrik", "Stig",
+		"Casper", "Kim", "Mette"]
+
+
+func test_roster_has_10_characters_one_playable() -> void:
 	var roster := Game.roster()
 	assert_eq(roster.slots, 10)
-	assert_eq(roster.characters.size(), 1)
+	assert_eq(roster.characters.size(), 10)
 	assert_eq(roster.characters[0].id, "default")
-	assert_null(roster.character_in_slot(1), "slot 2 is locked")
-	assert_null(roster.character_in_slot(9))
+	assert_true(roster.characters[0].playable)
+	assert_false(roster.is_locked(0))
+	for i in range(1, 10):
+		var character := roster.character_in_slot(i)
+		assert_eq(character.id, "slot_%02d" % (i + 1))
+		assert_false(character.playable, character.id)
+		assert_eq(character.display_name, ANNOUNCED_NAMES[i - 1])
+		assert_eq(character.portrait.resource_path,
+				"res://assets/fighters/portraits/slot_%02d.png" % (i + 1))
+		assert_true(roster.is_locked(i))
+	assert_true(roster.is_locked(10), "past the list")
+
+
+func test_an_unplayable_character_falls_back_to_the_default() -> void:
+	Game.character_id = "slot_05"
+	assert_eq(Game.character().id, "default")
 
 
 func test_default_character_uses_the_default_stats() -> void:
 	var character := Game.roster().find("default")
-	assert_eq(character.display_name, "Default")
+	assert_eq(character.display_name, "Pia")
+	assert_eq(character.portrait.resource_path, "res://assets/fighters/portraits/default.png")
 	assert_eq(character.stats, load("res://fighter/default_stats.tres"))
 
 
@@ -95,9 +114,9 @@ func test_ten_tiles_first_unlocked_rest_locked() -> void:
 func test_tiles_are_a_5_by_2_grid() -> void:
 	var screen: CharacterSelect = await _character_select()
 	var tiles := screen.get_tiles()
-	assert_eq(tiles[0].get_global_rect(), Rect2(64, 44, 64, 64))
-	assert_eq(tiles[4].get_global_rect().position, Vector2(352, 44))
-	assert_eq(tiles[5].get_global_rect().position, Vector2(64, 116))
+	assert_eq(tiles[0].get_global_rect(), Rect2(39, 44, 74, 74))
+	assert_eq(tiles[4].get_global_rect().position, Vector2(367, 44))
+	assert_eq(tiles[5].get_global_rect().position, Vector2(39, 126))
 
 
 ## The tile the arrows move to from `tile` toward `side`.
@@ -119,30 +138,62 @@ func test_left_and_right_wrap_within_each_row() -> void:
 func test_first_slot_is_highlighted_and_named() -> void:
 	var screen: CharacterSelect = await _character_select()
 	assert_true(screen.get_tiles()[0].has_focus())
-	assert_eq(screen.get_name_text(), "Default")
+	assert_eq(screen.get_name_text(), "Pia")
 
 
-func test_highlighting_a_locked_slot_shows_question_marks() -> void:
+func test_highlighting_a_locked_slot_shows_its_name() -> void:
 	var screen: CharacterSelect = await _character_select()
 	screen.get_tiles()[3].grab_focus()
-	assert_eq(screen.get_name_text(), "???")
+	assert_eq(screen.get_name_text(), "Nina")
 	assert_true(screen.get_tiles()[3].is_highlighted(), "the border moved")
-	assert_eq(screen.get_node("Tag").position, Vector2(64 + 3 * 72, 35), "the P1 tag moved too")
+	assert_eq(screen.get_node("Tag").position, Vector2(39 + 3 * 82, 35), "the P1 tag moved too")
 	assert_false(screen.get_tiles()[0].is_highlighted())
 
 
-func test_tiles_show_the_head_and_locked_ones_a_silhouette() -> void:
+func test_tiles_show_the_head_or_the_portrait() -> void:
 	var screen: CharacterSelect = await _character_select()
-	var head := screen.get_tiles()[0].get_picture() as AtlasTexture
-	assert_eq(head.region, PlayerCard.HEAD_REGION)
-	var locked := screen.get_tiles()[1].get_picture().get_image()
+	for i in range(0, 10):
+		var portrait := screen.get_tiles()[i].get_picture() as AtlasTexture
+		var expected := Game.roster().character_in_slot(i).portrait
+		assert_eq(portrait.atlas, expected, "slot %d" % (i + 1))
+		assert_eq(portrait.region, Rect2(0, 6, 221, 221), "slot %d: the face" % (i + 1))
+		assert_eq(screen.get_tiles()[i].get_picture_filter(),
+				CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
+		assert_eq(screen.get_tiles()[i].get_picture_size(), Vector2(70, 70))
+		assert_false(screen.get_tiles()[i].has_node("QuestionMark"), "no ? over a portrait")
+
+
+func test_portrait_square_is_the_top_of_the_picture() -> void:
+	var pia := load("res://assets/fighters/portraits/default.png") as Texture2D
+	assert_eq(CharacterSelect.portrait_region(pia), Rect2(0, 6, 221, 221))
+	var small := Image.create(153, 193, false, Image.FORMAT_RGB8)
+	assert_eq(CharacterSelect.portrait_region(ImageTexture.create_from_image(small)),
+			Rect2(0, 4, 153, 153), "any size works")
+
+
+func test_an_unlocked_character_without_a_portrait_shows_the_fighter_head() -> void:
+	var character := CharacterData.new()
+	character.playable = true
+	var tile := CharacterSelect.make_tile(character)
+	add_child_autofree(tile)
+	assert_eq((tile.get_picture() as AtlasTexture).region, PlayerCard.HEAD_REGION)
+	assert_eq(tile.get_picture_filter(), CanvasItem.TEXTURE_FILTER_NEAREST)
+
+
+func test_a_locked_slot_without_a_portrait_is_a_silhouette() -> void:
+	var character := CharacterData.new()
+	character.id = "mystery"
+	var tile := CharacterSelect.make_tile(character)
+	add_child_autofree(tile)
+	assert_true(tile.locked)
+	assert_true(tile.has_node("QuestionMark"))
+	var image := tile.get_picture().get_image()
 	var colors := {}
-	for y in locked.get_height():
-		for x in locked.get_width():
-			if locked.get_pixel(x, y).a > 0.0:
-				colors[locked.get_pixel(x, y).to_html()] = true
+	for y in image.get_height():
+		for x in image.get_width():
+			if image.get_pixel(x, y).a > 0.0:
+				colors[image.get_pixel(x, y).to_html()] = true
 	assert_eq(colors.keys().size(), 1, "one flat color")
-	assert_true(locked.get_size() == Vector2i(20, 20))
 
 
 func test_choosing_the_character_opens_the_stage_select() -> void:
@@ -206,3 +257,39 @@ func test_back_returns_to_the_character_select() -> void:
 	var screen: StageSelect = await _stage_select()
 	screen.back()
 	assert_eq(Game.requested_scene, Game.CHARACTER_SELECT_PATH)
+
+
+func test_title_uses_the_brush_font_when_present() -> void:
+	var screen: CharacterSelect = await _character_select()
+	var title := screen.get_node("Title") as Label
+	if not ResourceLoader.exists(TitleFont.PATH):
+		assert_false(title.has_theme_font_override("font"), "pixel font fallback")
+		assert_eq(title.position.y, 14.0)
+		return
+	var font := title.get_theme_font("font")
+	assert_eq(font.resource_path, TitleFont.PATH)
+	assert_eq(title.get_theme_font_size("font_size"), 24)
+	assert_eq(title.position.y, 4.0)
+	assert_eq(title.text, "CHOOSE YOUR FIGHTER")
+
+
+func test_stage_title_uses_the_brush_font_when_present() -> void:
+	var screen: StageSelect = await _stage_select()
+	var title := screen.get_node("Title") as Label
+	assert_eq(title.text, "CHOOSE YOUR STAGE")
+	if not ResourceLoader.exists(TitleFont.PATH):
+		assert_eq(title.position.y, 10.0, "pixel font fallback")
+		return
+	assert_eq(title.get_theme_font("font").resource_path, TitleFont.PATH)
+	assert_eq(title.get_theme_font_size("font_size"), 24)
+	assert_eq(title.position.y, 2.0)
+
+
+func test_every_portrait_is_221_by_279() -> void:
+	for character in Game.roster().characters:
+		assert_eq(character.portrait.get_size(), Vector2(221, 279), character.id)
+
+
+func test_portraits_are_imported_with_mipmaps() -> void:
+	for character in Game.roster().characters:
+		assert_true(character.portrait.get_image().has_mipmaps(), character.id)

@@ -26,3 +26,4 @@ script = ExtResource("4_camera")
 [node name="HUD" parent="." instance=ExtResource("5_hud")]
 
 [node name="Music" type="AudioStreamPlayer" parent="."]
+bus = &"Music"

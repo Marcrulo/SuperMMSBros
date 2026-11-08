@@ -5,3 +5,10 @@
 # Stage music: the user's own copies of existing songs, not for a public repo
 # (docs/specs/controls-and-display.md#audio).
 /assets/music/
+# Menu select sound from the user; license unknown (docs/specs/menus.md#sound).
+/assets/sfx/menu_confirm.wav
+/assets/sfx/menu_confirm.wav.import
+# Ink Yugo title font: demo license, personal use only, no redistribution
+# (docs/specs/controls-and-display.md#text).
+/assets/fonts/ink_yugo.otf
+/assets/fonts/ink_yugo.otf.import

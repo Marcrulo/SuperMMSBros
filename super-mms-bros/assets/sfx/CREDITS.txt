@@ -1,0 +1,9 @@
+Sound effect credits (docs/specs/menus.md#sound)
+
+menu_move.wav
+  "navigation" by Andy Rhode, rhodesmas.com (2017)
+  License: Creative Commons Attribution 3.0 (CC BY 3.0), http://creativecommons.org/licenses/by/3.0/
+  Changes: silence trimmed, loudness normalized, resampled to 44.1 kHz.
+
+menu_back.wav, menu_locked.wav
+  Made for this game by tools/gen_menu_sfx.py.
