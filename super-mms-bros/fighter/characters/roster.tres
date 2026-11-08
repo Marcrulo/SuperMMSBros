@@ -12,8 +12,12 @@
 [ext_resource type="Resource" path="res://fighter/characters/slot_08.tres" id="10_slot_08"]
 [ext_resource type="Resource" path="res://fighter/characters/slot_09.tres" id="11_slot_09"]
 [ext_resource type="Resource" path="res://fighter/characters/slot_10.tres" id="12_slot_10"]
+[ext_resource type="Resource" path="res://fighter/characters/slot_11.tres" id="13_slot_11"]
+[ext_resource type="Resource" path="res://fighter/characters/slot_12.tres" id="14_slot_12"]
+[ext_resource type="Resource" path="res://fighter/characters/slot_13.tres" id="15_slot_13"]
+[ext_resource type="Resource" path="res://fighter/characters/slot_14.tres" id="16_slot_14"]
 
 [resource]
 script = ExtResource("1_roster")
-characters = Array[ExtResource("2_data")]([ExtResource("3_default"), ExtResource("4_slot_02"), ExtResource("5_slot_03"), ExtResource("6_slot_04"), ExtResource("7_slot_05"), ExtResource("8_slot_06"), ExtResource("9_slot_07"), ExtResource("10_slot_08"), ExtResource("11_slot_09"), ExtResource("12_slot_10")])
-slots = 10
+characters = Array[ExtResource("2_data")]([ExtResource("3_default"), ExtResource("4_slot_02"), ExtResource("5_slot_03"), ExtResource("6_slot_04"), ExtResource("7_slot_05"), ExtResource("8_slot_06"), ExtResource("9_slot_07"), ExtResource("10_slot_08"), ExtResource("11_slot_09"), ExtResource("12_slot_10"), ExtResource("13_slot_11"), ExtResource("14_slot_12"), ExtResource("15_slot_13"), ExtResource("16_slot_14")])
+slots = 15

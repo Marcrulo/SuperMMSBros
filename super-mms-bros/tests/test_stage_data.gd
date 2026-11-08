@@ -3,10 +3,10 @@ extends GutTest
 
 const STAGE_SCENE := preload("res://stage/battlefield.tscn")
 const NAMES := {
-	"mms": "Marie Mørks Skole",
+	"mms": "MMS",
 	"fc": "Frederiksborgcenteret",
-	"slot_sunset": "Frederiksborg Castle (sunset)",
-	"cafe_station": "Café Station",
+	"slot_sunset": "Frederiksborg Castle Sunset",
+	"cafe_station": "Cafe Station",
 	"lindevej": "Lindevej",
 }
 const STYLES := {
@@ -62,6 +62,7 @@ func test_apply_sets_background_light_haze_and_style() -> void:
 	assert_eq(material.get_shader_parameter("haze_color"), data.haze_color)
 	assert_eq((stage.get_node("Light") as CanvasModulate).color, data.light_color)
 	assert_eq(stage.get_node("PlatformLook").style, data.style)
+	assert_eq(stage.get_node("PlatformFront").style, data.style)
 
 
 func test_every_stage_has_the_same_layout() -> void:

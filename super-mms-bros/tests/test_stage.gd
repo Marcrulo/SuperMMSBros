@@ -26,9 +26,9 @@ func test_main_platform_is_solid() -> void:
 
 func test_pass_through_platforms() -> void:
 	var expected := {
-		"Left": Rect2(132, 160, 72, 4),
-		"Right": Rect2(276, 160, 72, 4),
-		"Top": Rect2(204, 128, 72, 4),
+		"Left": Rect2(132, 150, 72, 4),
+		"Right": Rect2(276, 150, 72, 4),
+		"Top": Rect2(204, 108, 72, 4),
 	}
 	for platform_name: String in expected:
 		var body := _stage.get_node("Platforms/" + platform_name) as StaticBody2D

@@ -195,7 +195,8 @@ func test_up_special_launches_on_frame_5_then_goes_helpless() -> void:
 
 
 func test_helpless_cannot_act_and_steers_slowly() -> void:
-	await _start()
+	# Near the left end, out from under the platforms, so it doesn't land on one while steering.
+	await _start(Vector2(104, 192))
 	_run(_special(0.0, true), 1)
 	for i in 120:
 		_fighter.tick(_idle())

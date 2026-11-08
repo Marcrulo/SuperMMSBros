@@ -28,3 +28,4 @@ func apply(data: StageData) -> void:
 	(background.material as ShaderMaterial).set_shader_parameter("haze_color", data.haze_color)
 	($Light as CanvasModulate).color = data.light_color
 	($PlatformLook as PlatformLook).style = data.style
+	($PlatformFront as PlatformLook).style = data.style

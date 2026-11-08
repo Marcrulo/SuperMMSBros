@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "slot_sunset"
-display_name = "Frederiksborg Castle (sunset)"
+display_name = "Frederiksborg Castle Sunset"
 background = ExtResource("2_background")
 style = ExtResource("3_style")
 haze_color = Color(0.96, 0.8, 0.6, 1)

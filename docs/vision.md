@@ -36,8 +36,8 @@ opponent.
   up B (jump boost, then helpless until landing).
 - KOs by leaving the blast zone; respawn with brief invulnerability.
 - Five stages sharing a Battlefield-style layout (main platform plus three pass-through platforms),
-  each with its own background, platform style and light: **Marie Mørks Skole**,
-  **Frederiksborgcenteret**, **Frederiksborg Castle (sunset)**, **Café Station** and **Lindevej**.
+  each with its own background, platform style and light: **MMS**,
+  **Frederiksborgcenteret**, **Frederiksborg Castle Sunset**, **Cafe Station** and **Lindevej**.
   Chosen on a stage select screen (or with a command-line option).
 - 480×270 pixel-art rendering, smooth-zooming camera that frames the fighters.
 - Five air attacks (neutral, forward, back, up, down) next to the four ground attacks.

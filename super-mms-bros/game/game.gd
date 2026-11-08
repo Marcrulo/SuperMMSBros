@@ -36,6 +36,14 @@ var _menu_music := AudioStreamPlayer.new()
 var _sfx: Dictionary[String, AudioStreamPlayer] = {}
 
 
+## Here, not in _ready(): the first screen's labels enter the tree before this autoload is ready.
+func _enter_tree() -> void:
+	# Every label, in every scene, gets the ink font as it enters the tree.
+	get_tree().node_added.connect(_on_node_added)
+	for label in get_tree().root.find_children("*", "Label", true, false):
+		InkFont.apply_to(label as Label)
+
+
 func _ready() -> void:
 	# Closing the window goes through quit() instead of stopping the engine at once.
 	get_tree().auto_accept_quit = false
@@ -54,6 +62,11 @@ func _ready() -> void:
 		for game_action: String in MENU_KEYS[menu_action]:
 			for event in InputMap.action_get_events(game_action):
 				InputMap.action_add_event(menu_action, event)
+
+
+func _on_node_added(node: Node) -> void:
+	if node is Label:
+		InkFont.apply_to(node as Label)
 
 
 func _notification(what: int) -> void:

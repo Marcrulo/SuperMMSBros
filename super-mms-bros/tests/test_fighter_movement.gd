@@ -6,7 +6,7 @@ extends GutTest
 const STAGE_SCENE := preload("res://stage/battlefield.tscn")
 const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
 const FLOOR_Y := 192.0
-const PLATFORM_Y := 160.0
+const PLATFORM_Y := 150.0
 ## A spot on the main platform with open sky above: no pass-through platform to land on.
 const OPEN_SKY := Vector2(110, 192)
 ## Right below the left pass-through platform.

@@ -116,10 +116,10 @@ style and light. Each stage is a `StageData` resource in `stage/stages/` (id = f
 
 | Id | Name | Background | Platform style | Haze | Light |
 |---|---|---|---|---|---|
-| `mms` | Marie Mørks Skole | `mms.png` | school brick | cool (0.82, 0.87, 0.93) | white |
+| `mms` | MMS | `mms.png` | school brick | cool (0.82, 0.87, 0.93) | white |
 | `fc` | Frederiksborgcenteret | `fc.png` | modern | cool | white |
-| `slot_sunset` | Frederiksborg Castle (sunset) | `slot_sunset.png` | castle | warm (0.96, 0.80, 0.60) | warm (1.0, 0.85, 0.70) |
-| `cafe_station` | Café Station | `cafe_station.png` | school brick | soft warm (0.96, 0.85, 0.72) | soft warm (1.0, 0.93, 0.84) |
+| `slot_sunset` | Frederiksborg Castle Sunset | `slot_sunset.png` | castle | warm (0.96, 0.80, 0.60) | warm (1.0, 0.85, 0.70) |
+| `cafe_station` | Cafe Station | `cafe_station.png` | school brick | soft warm (0.96, 0.85, 0.72) | soft warm (1.0, 0.93, 0.84) |
 | `lindevej` | Lindevej | `lindevej.png` | white plaster | cool | white |
 
 Each stage also has a looping music track (see [controls & display](controls-and-display.md#audio)).
@@ -136,8 +136,8 @@ starting points, tuned in M9.
 
 ```
   y
- 128                     [=====top=====]
- 160       [====left====]               [====right====]
+ 108                     [=====top=====]
+ 150       [====left====]               [====right====]
  192   P1 ▶  ███████████████████████████████████████████  ◀ P2
  208         ███████████████████████████████████████████
           x: 96                                          384
@@ -146,14 +146,16 @@ starting points, tuned in M9.
 | Element | Type | Position |
 |---|---|---|
 | Main platform | solid (`stage_solid`) | x 96–384 (18 fighter widths), top at y 192, 16 px thick |
-| Left platform | pass-through (`stage_platform`) | x 132–204, top at y 160 |
-| Right platform | pass-through | x 276–348, top at y 160 |
-| Top platform | pass-through | x 204–276, top at y 128 |
+| Left platform | pass-through (`stage_platform`) | x 132–204, top at y 150 |
+| Right platform | pass-through | x 276–348, top at y 150 |
+| Top platform | pass-through | x 204–276, top at y 108 |
 | P1 spawn | point | (168, 192), facing right |
 | P2 spawn | point | (312, 192), facing left |
 | Blast zone | rectangle (fighter center must stay inside) | x −72…552, y −160…304 |
 
-- Platforms are 32 px apart vertically, so each one is reachable with a single ground jump (48 px).
+- Platforms are 42 px apart vertically, so each one is reachable with a single ground jump (48 px),
+  and a fighter (29 px tall) standing under a thin platform fits fully below its drawing (the walk
+  line + 3 px of top face + 6 px front face), with 4 px to spare.
 - The main platform floats: below and beside it is empty space.
 - The blast zone leaves room off every side for recovering and for launches at high %. The camera
   never shows beyond it.
@@ -165,7 +167,8 @@ Battlefield            (Node2D, stage/stage.gd)
 ├── BackgroundLayer    (CanvasLayer, layer −1)
 │   └── Background     (Sprite2D + haze shader, slight parallax)
 ├── Light              (CanvasModulate: the stage's light color)
-├── PlatformLook       (Node2D, stage/platform_look.gd: draws every platform)
+├── PlatformLook       (Node2D, stage/platform_look.gd, z_index −1: the platforms behind the fighters)
+├── PlatformFront      (Node2D, the same script with `front` on, z_index 1: the thin platforms' fronts)
 ├── MainPlatform       (StaticBody2D, layer stage_solid) + CollisionShape2D
 ├── Platforms          (Node2D)
 │   ├── Left / Right / Top   (StaticBody2D, layer stage_platform, one-way collision)
@@ -193,6 +196,12 @@ Collision is unchanged by any of this.
 - **Underside:** the main platform has a dark underside narrowing 12 px downward.
 - **Shadows:** each thin platform casts a shadow straight down onto the main platform's top face,
   in the same depth band; the top platform's shadow is fainter.
+- **In front of the fighters:** a thin platform is split at its walk line. The part behind it (the
+  back of the top face and the back of the side face) is drawn behind the fighters; the part in
+  front (the front of the top face, the front of the side face and the front face) is drawn over
+  them. The side face splits where its top edge crosses the walk line, at the collision's end. A fighter standing on it looks the same,
+  and one jumping or dropping through it passes behind its front face. The main platform is drawn
+  wholly behind the fighters (they can't pass through it).
 
 `PlatformStyle` resources (`stage/styles/`) hold the colors and front-face bands:
 

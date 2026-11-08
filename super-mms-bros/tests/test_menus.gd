@@ -22,17 +22,18 @@ func after_each() -> void:
 
 
 const ANNOUNCED_NAMES: Array[String] = ["Gitte", "Trine", "Nina", "Michael Bech", "Henrik", "Stig",
-		"Casper", "Kim", "Mette"]
+		"Casper", "Kim", "Mette", "Mads", "Sjippepigen", "Fidusen",
+		"Magnus"]
 
 
-func test_roster_has_10_characters_one_playable() -> void:
+func test_roster_has_15_slots_14_characters_one_playable() -> void:
 	var roster := Game.roster()
-	assert_eq(roster.slots, 10)
-	assert_eq(roster.characters.size(), 10)
+	assert_eq(roster.slots, 15)
+	assert_eq(roster.characters.size(), 14)
 	assert_eq(roster.characters[0].id, "default")
 	assert_true(roster.characters[0].playable)
 	assert_false(roster.is_locked(0))
-	for i in range(1, 10):
+	for i in range(1, 14):
 		var character := roster.character_in_slot(i)
 		assert_eq(character.id, "slot_%02d" % (i + 1))
 		assert_false(character.playable, character.id)
@@ -40,7 +41,9 @@ func test_roster_has_10_characters_one_playable() -> void:
 		assert_eq(character.portrait.resource_path,
 				"res://assets/fighters/portraits/slot_%02d.png" % (i + 1))
 		assert_true(roster.is_locked(i))
-	assert_true(roster.is_locked(10), "past the list")
+	for i in [14]:
+		assert_null(roster.character_in_slot(i), "slot %d is empty" % (i + 1))
+		assert_true(roster.is_locked(i), "past the list")
 
 
 func test_an_unplayable_character_falls_back_to_the_default() -> void:
@@ -102,21 +105,29 @@ func _character_select() -> CharacterSelect:
 	return screen
 
 
-func test_ten_tiles_first_unlocked_rest_locked() -> void:
+func test_twelve_tiles_first_unlocked_rest_locked() -> void:
 	var screen: CharacterSelect = await _character_select()
 	var tiles := screen.get_tiles()
-	assert_eq(tiles.size(), 10)
+	assert_eq(tiles.size(), 15)
 	assert_false(tiles[0].locked)
-	for i in range(1, 10):
+	for i in range(1, 15):
 		assert_true(tiles[i].locked, "slot %d locked" % (i + 1))
 
 
-func test_tiles_are_a_5_by_2_grid() -> void:
+func test_tiles_are_a_5_by_3_grid() -> void:
 	var screen: CharacterSelect = await _character_select()
 	var tiles := screen.get_tiles()
-	assert_eq(tiles[0].get_global_rect(), Rect2(39, 44, 74, 74))
-	assert_eq(tiles[4].get_global_rect().position, Vector2(367, 44))
-	assert_eq(tiles[5].get_global_rect().position, Vector2(39, 126))
+	assert_eq(tiles[0].get_global_rect(), Rect2(88, 42, 56, 56))
+	assert_eq(tiles[4].get_global_rect().position, Vector2(336, 42), "row 1 ends at x 392")
+	assert_eq(tiles[5].get_global_rect().position, Vector2(88, 104))
+	assert_eq(tiles[14].get_global_rect(), Rect2(336, 166, 56, 56), "the grid ends at y 222")
+
+
+func test_name_sits_below_the_grid() -> void:
+	var screen: CharacterSelect = await _character_select()
+	# The ink font, when present, moves a 16 px label up 2 px to stay centred on its line.
+	var expected := 226.0 if InkFont.present() else 228.0
+	assert_eq((screen.get_node("Name") as Label).position.y, expected)
 
 
 ## The tile the arrows move to from `tile` toward `side`.
@@ -131,6 +142,7 @@ func test_left_and_right_wrap_within_each_row() -> void:
 	assert_eq(_neighbor(tiles[4], SIDE_RIGHT), tiles[0], "row 1: right of the last is the first")
 	assert_eq(_neighbor(tiles[5], SIDE_LEFT), tiles[9], "row 2 wraps within row 2")
 	assert_eq(_neighbor(tiles[9], SIDE_RIGHT), tiles[5])
+	assert_eq(_neighbor(tiles[10], SIDE_LEFT), tiles[14], "row 3 too")
 	assert_eq(_neighbor(tiles[2], SIDE_LEFT), tiles[1], "the middle moves normally")
 	assert_eq(_neighbor(tiles[2], SIDE_RIGHT), tiles[3])
 
@@ -146,21 +158,87 @@ func test_highlighting_a_locked_slot_shows_its_name() -> void:
 	screen.get_tiles()[3].grab_focus()
 	assert_eq(screen.get_name_text(), "Nina")
 	assert_true(screen.get_tiles()[3].is_highlighted(), "the border moved")
-	assert_eq(screen.get_node("Tag").position, Vector2(39 + 3 * 82, 35), "the P1 tag moved too")
+	assert_eq(screen.get_node("Tag").position, Vector2(88 + 3 * 62, 33), "the P1 tag moved too")
 	assert_false(screen.get_tiles()[0].is_highlighted())
 
 
-func test_tiles_show_the_head_or_the_portrait() -> void:
+func test_an_empty_slot_is_named_in_words_the_brush_font_draws() -> void:
+	assert_eq(CharacterSelect.name_for(null), "Coming soon")
+	assert_true(InkFont.can_draw(CharacterSelect.name_for(null)))
+	assert_eq(CharacterSelect.name_for(Game.roster().character_in_slot(11)), "Sjippepigen")
+
+
+func test_magnus_is_slot_14_and_the_last_is_coming_soon() -> void:
 	var screen: CharacterSelect = await _character_select()
-	for i in range(0, 10):
-		var portrait := screen.get_tiles()[i].get_picture() as AtlasTexture
-		var expected := Game.roster().character_in_slot(i).portrait
-		assert_eq(portrait.atlas, expected, "slot %d" % (i + 1))
-		assert_eq(portrait.region, Rect2(0, 6, 221, 221), "slot %d: the face" % (i + 1))
-		assert_eq(screen.get_tiles()[i].get_picture_filter(),
-				CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
-		assert_eq(screen.get_tiles()[i].get_picture_size(), Vector2(70, 70))
-		assert_false(screen.get_tiles()[i].has_node("QuestionMark"), "no ? over a portrait")
+	screen.get_tiles()[13].grab_focus()
+	assert_eq(screen.get_name_text(), "Magnus")
+	assert_true(screen.get_tiles()[13].locked)
+	screen.get_tiles()[14].grab_focus()
+	assert_eq(screen.get_name_text(), "Coming soon")
+	assert_true(screen.get_tiles()[14].locked)
+
+
+func test_tiles_show_the_portraits_faces() -> void:
+	var screen: CharacterSelect = await _character_select()
+	for i in range(0, 14):
+		var tile := screen.get_tiles()[i]
+		var face := tile.get_picture() as AtlasTexture
+		assert_eq(face.atlas, Game.roster().character_in_slot(i).portrait, "slot %d" % (i + 1))
+		assert_eq(face.region, Rect2(0, 6, 221, 221), "slot %d: the face" % (i + 1))
+		assert_eq(tile.get_picture_filter(), CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS)
+		assert_eq(tile.get_picture_size(), Vector2(52, 52))
+
+
+## Silhouette portraits are off for now, but every portrait must still make a clean one.
+func test_every_portrait_makes_a_clean_silhouette() -> void:
+	for i in range(0, 14):
+		var portrait := Game.roster().character_in_slot(i).portrait
+		var image := CharacterSelect.portrait_silhouette(portrait).get_image()
+		assert_eq(image.get_size(), Vector2i(221, 221), "slot %d: the face square" % (i + 1))
+		assert_true(image.has_mipmaps(), "slot %d: mipmaps" % (i + 1))
+		var counts := _silhouette_counts(image)
+		assert_eq(counts.other, 0, "slot %d: only flat color or see-through" % (i + 1))
+		# The person covers a real share of the square, the background another (Magnus's close-up
+		# face covers about 92%).
+		assert_between(counts.flat, 221 * 221 / 4, 221 * 221 * 95 / 100, "slot %d" % (i + 1))
+		assert_eq(image.get_pixel(0, 0).a, 0.0, "slot %d: the corner is background" % (i + 1))
+		assert_eq(image.get_pixel(110, 200), CharacterSelect.SILHOUETTE,
+				"slot %d: the bottom middle is the person" % (i + 1))
+
+
+func test_a_portrait_silhouette_is_made_once() -> void:
+	var pia := load("res://assets/fighters/portraits/default.png") as Texture2D
+	assert_same(CharacterSelect.portrait_silhouette(pia),
+			CharacterSelect.portrait_silhouette(pia))
+
+
+func test_portrait_silhouette_keeps_the_person_and_drops_the_background() -> void:
+	# A navy square with a lighter "person" blob touching the bottom edge.
+	var image := Image.create(30, 38, false, Image.FORMAT_RGB8)
+	image.fill(Color8(21, 23, 43))
+	image.fill_rect(Rect2i(10, 12, 10, 26), Color8(200, 150, 120))
+	image.set_pixel(3, 20, Color8(200, 200, 200))  # a lone speck in the background
+	var silhouette := CharacterSelect.portrait_silhouette(ImageTexture.create_from_image(image))
+	var result := silhouette.get_image()
+	result.clear_mipmaps()
+	assert_eq(result.get_size(), Vector2i(30, 30))
+	assert_eq(result.get_pixel(15, 20), CharacterSelect.SILHOUETTE, "the person")
+	assert_eq(result.get_pixel(2, 2).a, 0.0, "the background")
+	assert_eq(result.get_pixel(3, 19).a, 0.0, "the speck is cleaned up")
+
+
+func _silhouette_counts(image: Image) -> Dictionary:
+	var counts := {flat = 0, other = 0}
+	var top := image.duplicate() as Image
+	top.clear_mipmaps()
+	for y in top.get_height():
+		for x in top.get_width():
+			var color := top.get_pixel(x, y)
+			if color == CharacterSelect.SILHOUETTE:
+				counts.flat += 1
+			elif color.a != 0.0:
+				counts.other += 1
+	return counts
 
 
 func test_portrait_square_is_the_top_of_the_picture() -> void:
@@ -186,7 +264,7 @@ func test_a_locked_slot_without_a_portrait_is_a_silhouette() -> void:
 	var tile := CharacterSelect.make_tile(character)
 	add_child_autofree(tile)
 	assert_true(tile.locked)
-	assert_true(tile.has_node("QuestionMark"))
+	assert_eq(tile.get_child_count(), 3, "just the square, the picture and the border: no ?")
 	var image := tile.get_picture().get_image()
 	var colors := {}
 	for y in image.get_height():
@@ -262,12 +340,12 @@ func test_back_returns_to_the_character_select() -> void:
 func test_title_uses_the_brush_font_when_present() -> void:
 	var screen: CharacterSelect = await _character_select()
 	var title := screen.get_node("Title") as Label
-	if not ResourceLoader.exists(TitleFont.PATH):
+	if not ResourceLoader.exists(InkFont.PATH):
 		assert_false(title.has_theme_font_override("font"), "pixel font fallback")
 		assert_eq(title.position.y, 14.0)
 		return
 	var font := title.get_theme_font("font")
-	assert_eq(font.resource_path, TitleFont.PATH)
+	assert_eq(font.resource_path, InkFont.PATH)
 	assert_eq(title.get_theme_font_size("font_size"), 24)
 	assert_eq(title.position.y, 4.0)
 	assert_eq(title.text, "CHOOSE YOUR FIGHTER")
@@ -277,12 +355,55 @@ func test_stage_title_uses_the_brush_font_when_present() -> void:
 	var screen: StageSelect = await _stage_select()
 	var title := screen.get_node("Title") as Label
 	assert_eq(title.text, "CHOOSE YOUR STAGE")
-	if not ResourceLoader.exists(TitleFont.PATH):
+	if not ResourceLoader.exists(InkFont.PATH):
 		assert_eq(title.position.y, 10.0, "pixel font fallback")
 		return
-	assert_eq(title.get_theme_font("font").resource_path, TitleFont.PATH)
+	assert_eq(title.get_theme_font("font").resource_path, InkFont.PATH)
 	assert_eq(title.get_theme_font_size("font_size"), 24)
 	assert_eq(title.position.y, 2.0)
+
+
+func test_every_label_switches_to_the_ink_font_when_present() -> void:
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", 8)
+	label.position = Vector2(0, 100)
+	add_child_autofree(label)
+	if not ResourceLoader.exists(InkFont.PATH):
+		assert_false(label.has_theme_font_override("font"), "pixel font fallback")
+		assert_eq(label.position.y, 100.0)
+		return
+	assert_eq(label.get_theme_font("font").resource_path, InkFont.PATH)
+	assert_eq(label.get_theme_font_size("font_size"), 10)
+	assert_true(label.uppercase, "capitals only")
+	assert_eq(label.position.y, 99.0, "moved up half the extra height")
+
+
+func test_a_label_with_digits_or_signs_keeps_the_pixel_font() -> void:
+	for text in ["P1", "0%", "?", "MOVE: WASD"]:
+		var label := Label.new()
+		label.text = text
+		add_child_autofree(label)
+		assert_false(label.has_theme_font_override("font"), text)
+
+
+func test_the_ink_font_draws_only_letters_and_plain_punctuation() -> void:
+	assert_true(InkFont.can_draw("Frederiksborg Castle Sunset"))
+	assert_true(InkFont.can_draw("Hi, there."))
+	assert_true(InkFont.can_draw(""))
+	for text in ["P1", "50%", "???", "J/SPACE", "Café", "Mørk", "FIGHT!"]:
+		assert_false(InkFont.can_draw(text), text)
+
+
+func test_a_vertically_centred_label_keeps_its_place() -> void:
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", 16)
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.position = Vector2(0, 100)
+	add_child_autofree(label)
+	if not ResourceLoader.exists(InkFont.PATH):
+		return
+	assert_eq(label.get_theme_font_size("font_size"), 20)
+	assert_eq(label.position.y, 100.0)
 
 
 func test_every_portrait_is_221_by_279() -> void:

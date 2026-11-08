@@ -116,7 +116,7 @@ func test_projectile_expires_after_its_lifetime() -> void:
 
 
 func test_projectile_leaving_the_blast_zone_disappears() -> void:
-	await _place(Vector2(100, 192), Vector2(240, 128), _fire())
+	await _place(Vector2(100, 192), Vector2(240, 108), _fire())
 	_steps(11)
 	assert_eq(_match.get_projectiles().size(), 1)
 	_steps(120)
@@ -124,7 +124,7 @@ func test_projectile_leaving_the_blast_zone_disappears() -> void:
 
 
 func test_one_projectile_at_a_time() -> void:
-	await _place(Vector2(100, 192), Vector2(240, 128), _fire(3))
+	await _place(Vector2(100, 192), Vector2(240, 108), _fire(3))
 	_steps(80)
 	assert_eq(_match.get_projectiles().size(), 1, "the second press did nothing")
 

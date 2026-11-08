@@ -120,8 +120,8 @@ func test_fast_fall_during_an_air_attack() -> void:
 
 
 func test_dropping_through_a_platform_is_not_a_fast_fall_by_itself() -> void:
-	# Stand on the left pass-through platform (x 132–204, top y 160).
-	_fighter.spawn_at(Vector2(168, 160), 1)
+	# Stand on the left pass-through platform (x 132–204, top y 150).
+	_fighter.spawn_at(Vector2(168, 150), 1)
 	await wait_physics_frames(1)
 	_fighter.tick(_make_input())
 	var tap := _make_input(true)

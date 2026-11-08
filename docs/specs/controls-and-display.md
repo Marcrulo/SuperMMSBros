@@ -64,10 +64,18 @@ of smooth zoom.
   it. Chosen in M1.
 - Pixel fonts are used only at their native size or whole multiples of it.
 - The project's default theme uses this font, so all UI picks it up.
-- **Display font:** the select screens' titles use **Ink Yugo** by ArtiXLabs
-  (`assets/fonts/ink_yugo.otf`), a brush font, so the native-size rule doesn't apply to it. Its
-  demo license allows personal use only and forbids redistribution, so it is **not committed**
-  (in `.gitignore`); without it the title falls back to the pixel font.
+- **Ink font:** when it's on the machine, **all text** uses **Ink Yugo** by ArtiXLabs
+  (`assets/fonts/ink_yugo.otf`), a brush font, so the native-size rule doesn't apply to it. Every
+  label is switched as it enters the scene tree: its size × 1.25 (the brush letters are smaller at
+  the same size), moved up by half the extra height so it stays centred on its line. Labels show in capitals only (the Label's `uppercase` setting), and names avoid accented
+  letters and other signs the brush font draws badly (é, ø, brackets).
+- The demo font only has real letters: every digit and sign except `,` and `.` draws as a
+  "personal use only" stamp. So a label switches only if its text (when it enters the tree) is
+  letters, spaces, commas and full stops; anything with digits or signs (the "P1" tag, the player
+  cards, the "?" on locked tiles) keeps the pixel font. Menu hints are written without colons or
+  "!" so they can be in the ink font. The select
+  screens' titles are 24. Its demo license allows personal use only and forbids redistribution, so
+  it is **not committed** (in `.gitignore`); without it all text stays in the pixel font.
 
 ## Placeholder palette
 

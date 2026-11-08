@@ -4,7 +4,7 @@ extends GutTest
 const STAGE_SCENE := preload("res://stage/battlefield.tscn")
 const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
 const FLOOR_Y := 192.0
-const PLATFORM_Y := 160.0
+const PLATFORM_Y := 150.0
 const MIDDLE := Vector2(240, 192)
 const UNDER_LEFT_PLATFORM := Vector2(168, 192)
 const TOLERANCE := 0.5

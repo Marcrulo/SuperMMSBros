@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "cafe_station"
-display_name = "Café Station"
+display_name = "Cafe Station"
 background = ExtResource("2_background")
 style = ExtResource("3_style")
 haze_color = Color(0.96, 0.85, 0.72, 1)

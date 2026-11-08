@@ -7,7 +7,7 @@
 [resource]
 script = ExtResource("1_data")
 id = "mms"
-display_name = "Marie Mørks Skole"
+display_name = "MMS"
 background = ExtResource("2_background")
 style = ExtResource("3_style")
 haze_color = Color(0.82, 0.87, 0.93, 1)

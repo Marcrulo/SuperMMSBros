@@ -74,5 +74,5 @@ offset_right = 480.0
 offset_bottom = 262.0
 theme_override_colors/font_color = Color(0.580392, 0.690196, 0.760784, 1)
 theme_override_font_sizes/font_size = 8
-text = "J/SPACE: FIGHT!   L/ESC: BACK"
+text = "FIGHT WITH J OR SPACE    BACK WITH L OR ESC"
 horizontal_alignment = 1

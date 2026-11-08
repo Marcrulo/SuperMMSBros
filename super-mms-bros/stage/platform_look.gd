@@ -4,12 +4,21 @@ extends Node2D
 ## (docs/specs/match-and-stage.md#platform-look-perspective). Presentation only: collision is
 ## unchanged. The walkable line runs through the middle of each top face, so fighters stand a
 ## little toward the back.
+## The stage has two of these: one behind the fighters, and one (`front` on) over them that draws
+## the thin platforms' parts in front of their walk lines, so a fighter jumping through one passes
+## behind its front face.
 
 ## Where the top faces recede toward when there's no camera: the stage's middle.
 const STAGE_CENTER_X := 240.0
 ## How much wider a platform gets per pixel toward the viewer (and narrower per pixel away).
 ## The same for every platform, like one camera looking at the whole stage.
 const PERSPECTIVE := 0.011
+
+## Which part of a platform `_platform()` draws.
+enum Part { WHOLE, BEHIND, IN_FRONT }
+
+## Off: draws everything behind the fighters. On: draws the thin platforms' fronts over them.
+@export var front := false
 
 ## The platform style being drawn. Nothing is drawn without one.
 var style: PlatformStyle:
@@ -20,6 +29,8 @@ var style: PlatformStyle:
 var follow_camera := true
 ## Shapes skipped because they collapsed to no area (for tests).
 var skipped_shapes := 0
+## Side faces drawn in the last redraw (for tests).
+var side_faces_drawn := 0
 
 ## Where the camera looks: top faces recede toward it and side faces turn with it, so panning
 ## the camera shows the platforms from slightly different angles.
@@ -36,6 +47,19 @@ static func perspective_x(x: float, depth: float, vanish: float) -> float:
 	return vanish + (x - vanish) * (1.0 + PERSPECTIVE * depth)
 
 
+## The top edge of a platform end's side face, near point first, for `part`: the whole edge from
+## the front corner to the back corner, or only the half in front of / behind the walk line.
+## `walk` is where the edge crosses the walk line (the collision's end).
+static func side_face_edge(part: Part, front: Vector2, walk: Vector2,
+		back: Vector2) -> PackedVector2Array:
+	match part:
+		Part.IN_FRONT:
+			return PackedVector2Array([front, walk])
+		Part.BEHIND:
+			return PackedVector2Array([walk, back])
+	return PackedVector2Array([front, back])
+
+
 ## False for a shape that has collapsed to (almost) no area, which Godot can't fill: a side face
 ## seen exactly edge-on, when the camera looks along a platform's end.
 static func is_fillable(points: PackedVector2Array) -> bool:
@@ -50,19 +74,28 @@ func _process(_delta: float) -> void:
 
 
 func _draw() -> void:
+	side_faces_drawn = 0
 	if style == null:
 		return
 	# x, width (the collision, along the walk line), walk line y, top-face depth behind / in
 	# front of the walk line, front-face bands, underside depth, corner blocks.
+	if front:
+		for thin in _thin_platforms():
+			_platform(thin.x, 72, thin.y, 4, 3, style.thin_bands, 0, null, Part.IN_FRONT)
+		return
 	_platform(96, 288, 192, 8, 6, style.main_bands, 12, style.quoins if style.has_quoins else null)
 	# Shadows of the thin platforms, cast straight down onto the main platform's top face, in the
 	# same depth band the platform occupies (4 px behind its walk line to 3 px in front).
 	_shadow(132, 72, 192, 4, 3, style.shadow)
 	_shadow(276, 72, 192, 4, 3, style.shadow)
 	_shadow(204, 72, 192, 4, 3, style.far_shadow)
-	_platform(132, 72, 160, 4, 3, style.thin_bands, 0, null)
-	_platform(276, 72, 160, 4, 3, style.thin_bands, 0, null)
-	_platform(204, 72, 128, 4, 3, style.thin_bands, 0, null)
+	for thin in _thin_platforms():
+		_platform(thin.x, 72, thin.y, 4, 3, style.thin_bands, 0, null, Part.BEHIND)
+
+
+## The thin platforms' left ends and walk lines: left, right, top.
+func _thin_platforms() -> Array[Vector2]:
+	return [Vector2(132, 150), Vector2(276, 150), Vector2(204, 108)]
 
 
 ## `x` at `depth` pixels toward the viewer from the walk line (negative = away from the viewer).
@@ -79,30 +112,52 @@ func _shadow(x: float, width: float, floor_y: float, back: float, front: float,
 
 
 func _platform(x: float, width: float, walk_y: float, back: float, front: float,
-		bands: Array, under: float, quoins: Variant) -> void:
+		bands: Array, under: float, quoins: Variant, part := Part.WHOLE) -> void:
 	var front_y := walk_y + front
 	var back_y := walk_y - back
 	# The top face matches the collision exactly along the walk line: wider in front of it,
 	# narrower behind it. The front face is as wide as the top face's front edge.
 	var back_left := _x_at(x, -back)
 	var back_right := _x_at(x + width, -back)
+	var walk_left := x
+	var walk_right := x + width
 	var left := roundf(_x_at(x, front))
 	var right := roundf(_x_at(x + width, front))
 	width = right - left
-	_polygon(PackedVector2Array([
+	# The top face; when only one part is drawn, it's split at the walk line (where the collision
+	# is, so x is unchanged there).
+	var top_face := PackedVector2Array([
 		Vector2(left, front_y), Vector2(right, front_y),
 		Vector2(back_right, back_y), Vector2(back_left, back_y),
-	]), style.top)
-	draw_rect(Rect2(back_left, back_y, back_right - back_left, 1), style.top_edge)
+	])
+	if part == Part.BEHIND:
+		top_face = PackedVector2Array([
+			Vector2(walk_left, walk_y), Vector2(walk_right, walk_y),
+			Vector2(back_right, back_y), Vector2(back_left, back_y),
+		])
+	elif part == Part.IN_FRONT:
+		top_face = PackedVector2Array([
+			Vector2(left, front_y), Vector2(right, front_y),
+			Vector2(walk_right, walk_y), Vector2(walk_left, walk_y),
+		])
+	_polygon(top_face, style.top)
+	if part != Part.IN_FRONT:
+		draw_rect(Rect2(back_left, back_y, back_right - back_left, 1), style.top_edge)
 	# Side face: an end is visible only if it faces the middle of the screen, where the "camera" is.
+	# Split at the walk line like the top face, so a fighter passing through stands in front of
+	# its back half.
 	var face_height := 0.0
 	for band: Array in bands:
 		face_height += band[1]
 	var edge_color: Color = bands[0][2]
 	if right < vanish_x:
-		_side_face(right, front_y, back_right, back_y, face_height, edge_color)
+		_side_face(side_face_edge(part, Vector2(right, front_y), Vector2(walk_right, walk_y),
+				Vector2(back_right, back_y)), face_height, edge_color)
 	elif left > vanish_x:
-		_side_face(left, front_y, back_left, back_y, face_height, edge_color)
+		_side_face(side_face_edge(part, Vector2(left, front_y), Vector2(walk_left, walk_y),
+				Vector2(back_left, back_y)), face_height, edge_color)
+	if part == Part.BEHIND:
+		return
 	# Front face: the style's bands, top to bottom.
 	var y := front_y
 	var brick_row := 0
@@ -130,15 +185,15 @@ func _platform(x: float, width: float, walk_y: float, back: float, front: float,
 		]), style.under)
 
 
-## The end of a platform, from the front face's edge back to the top face's back corner.
-func _side_face(front_x: float, front_y: float, back_x: float, back_y: float, height: float,
-		edge_color: Color) -> void:
-	_polygon(PackedVector2Array([
-		Vector2(front_x, front_y), Vector2(back_x, back_y),
-		Vector2(back_x, back_y + height), Vector2(front_x, front_y + height),
-	]), style.side)
-	draw_line(Vector2(front_x, front_y), Vector2(back_x, back_y), edge_color)
-	draw_line(Vector2(front_x, front_y + height - 1), Vector2(back_x, back_y + height - 1), style.under)
+## (Part of) the end of a platform: `height` tall below its top edge `edge` (near point, far point).
+func _side_face(edge: PackedVector2Array, height: float, edge_color: Color) -> void:
+	var near := edge[0]
+	var far := edge[1]
+	var down := Vector2(0, height)
+	side_faces_drawn += 1
+	_polygon(PackedVector2Array([near, far, far + down, near + down]), style.side)
+	draw_line(near, far, edge_color)
+	draw_line(near + down - Vector2(0, 1), far + down - Vector2(0, 1), style.under)
 
 
 ## One row of bricks: 3 px of brick, then a 1 px mortar line; bricks 8 px wide, every other row

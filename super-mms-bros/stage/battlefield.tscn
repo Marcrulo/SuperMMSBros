@@ -42,6 +42,12 @@ z_index = -1
 script = ExtResource("4_look")
 style = ExtResource("6_style")
 
+[node name="PlatformFront" type="Node2D" parent="."]
+z_index = 1
+script = ExtResource("4_look")
+front = true
+style = ExtResource("6_style")
+
 [node name="MainPlatform" type="StaticBody2D" parent="."]
 position = Vector2(240, 200)
 collision_mask = 0
@@ -52,7 +58,7 @@ shape = SubResource("RectangleShape2D_main")
 [node name="Platforms" type="Node2D" parent="."]
 
 [node name="Left" type="StaticBody2D" parent="Platforms"]
-position = Vector2(168, 160)
+position = Vector2(168, 150)
 collision_layer = 2
 collision_mask = 0
 
@@ -62,7 +68,7 @@ shape = SubResource("RectangleShape2D_left")
 one_way_collision = true
 
 [node name="Right" type="StaticBody2D" parent="Platforms"]
-position = Vector2(312, 160)
+position = Vector2(312, 150)
 collision_layer = 2
 collision_mask = 0
 
@@ -72,7 +78,7 @@ shape = SubResource("RectangleShape2D_right")
 one_way_collision = true
 
 [node name="Top" type="StaticBody2D" parent="Platforms"]
-position = Vector2(240, 128)
+position = Vector2(240, 108)
 collision_layer = 2
 collision_mask = 0
 

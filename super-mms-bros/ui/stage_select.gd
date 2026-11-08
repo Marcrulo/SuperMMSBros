@@ -18,7 +18,7 @@ var _sounds_on := false
 
 func _ready() -> void:
 	Game.play_menu_music()
-	TitleFont.apply($Title as Label, TITLE_TOP)
+	InkFont.apply_title($Title as Label, TITLE_TOP)
 	var start := 0
 	for i in StageData.ALL_IDS.size():
 		var stage := StageData.load_stage(StageData.ALL_IDS[i])
