@@ -4,7 +4,10 @@ extends CharacterBody2D
 ## docs/specs/moves.md). The Match advances it one tick at a time with tick(); it has no
 ## _physics_process of its own.
 
-enum State { IDLE, RUN, CROUCH, AIR, ATTACK, SHIELD, SHIELD_DROP, SHIELD_BREAK, HITSTUN, HELPLESS, KO }
+enum State {
+	IDLE, RUN, CROUCH, AIR, ATTACK, SHIELD, SHIELD_DROP, SHIELD_BREAK, HITSTUN, HELPLESS, KO,
+	SPOT_DODGE, ROLL, AIR_DODGE, LEDGE, LEDGE_CLIMB,
+}
 
 ## One tick of game time, in seconds (the game runs at 60 ticks per second).
 const DELTA := 1.0 / 60.0
@@ -43,6 +46,10 @@ var has_projectile: bool = false
 var stocks: int = 0
 ## Ticks left in which the fighter can't be hit (after respawning). Counted down by the Match.
 var invulnerable_frames: int = 0
+## The air dodge can be used once per stay in the air.
+var air_dodge_available: bool = true
+## The ledge the fighter hangs from or climbs up, or null.
+var ledge: Ledge = null
 
 ## True from a ground jump until the fighter stops rising or releases jump.
 var _can_short_hop: bool = false
@@ -64,6 +71,16 @@ var _block_stun: int = 0
 var _charged_punch: MoveData
 ## Up special has launched (it becomes HELPLESS once it stops rising).
 var _launched: bool = false
+## Which way the roll in progress goes: -1 left, 1 right.
+var _roll_direction: int = 0
+## Ticks left before a ledge can be grabbed again, after leaving one.
+var _ledge_regrab_left: int = 0
+## The next ledge grab gives intangibility: true after touching the ground, a hit or a spawn.
+var _ledge_intangibility_earned: bool = true
+## The current ledge grab gave intangibility.
+var _ledge_intangible: bool = false
+## Down was held on the last tick (a fighter holding down doesn't grab ledges).
+var _down_held: bool = false
 
 @onready var _standing_hurtbox := $Hurtbox/Standing as CollisionShape2D
 @onready var _crouching_hurtbox := $Hurtbox/Crouching as CollisionShape2D
@@ -81,9 +98,69 @@ func get_hurtbox_rect() -> Rect2:
 	return Rect2(shape.global_position - size / 2.0, size)
 
 
-## False while KO'd or invulnerable.
+## False while KO'd, invulnerable or intangible.
 func can_be_hit() -> bool:
-	return state != State.KO and invulnerable_frames == 0
+	return state != State.KO and invulnerable_frames == 0 and not is_intangible()
+
+
+## On a dodge's intangible frames, early in a ledge grab (if earned) and while climbing up, hits
+## pass through the fighter (docs/specs/fighter.md#dodges).
+func is_intangible() -> bool:
+	match state:
+		State.SPOT_DODGE:
+			return _between(state_frame, stats.spot_dodge_intangible_start, stats.spot_dodge_intangible_end)
+		State.ROLL:
+			return _between(state_frame, stats.roll_intangible_start, stats.roll_intangible_end)
+		State.AIR_DODGE:
+			return _between(state_frame, stats.air_dodge_intangible_start, stats.air_dodge_intangible_end)
+		State.LEDGE:
+			return _ledge_intangible and state_frame <= stats.ledge_intangible_frames
+		State.LEDGE_CLIMB:
+			return true
+	return false
+
+
+static func _between(frame: int, first: int, last: int) -> bool:
+	return frame >= first and frame <= last
+
+
+## True if the fighter may grab `target` now (docs/specs/fighter.md#ledge): airborne and falling
+## (or in a launched up special), not holding down, not just off a ledge, on the outer side of
+## the corner, with the corner inside its grab box. The Match checks who else holds it.
+func can_grab_ledge(target: Ledge) -> bool:
+	if _ledge_regrab_left > 0 or _down_held or is_on_floor():
+		return false
+	var able := false
+	match state:
+		State.AIR, State.HELPLESS, State.AIR_DODGE:
+			able = velocity.y >= 0.0
+		State.ATTACK:
+			able = move == &"up_special" and _launched
+	if not able or (global_position.x - target.point.x) * target.side < 0.0:
+		return false
+	return stats.ledge_grab_box.has_point(target.point - global_position)
+
+
+## Hangs from `target`: snaps below the corner facing the stage, stops, and gets the double jump,
+## up special and air dodge back. Called by the Match after the fighters moved, so this tick
+## counts as the first frame of LEDGE.
+func grab_ledge(target: Ledge) -> void:
+	ledge = target
+	global_position = _hang_position()
+	velocity = Vector2.ZERO
+	facing = -target.side
+	state = State.LEDGE
+	state_frame = 1
+	move = NO_MOVE
+	_charged_punch = null
+	_launched = false
+	_fast_falling = false
+	_can_short_hop = false
+	jumps_left = stats.max_air_jumps
+	up_special_available = true
+	air_dodge_available = true
+	_ledge_intangible = _ledge_intangibility_earned
+	_ledge_intangibility_earned = false
 
 
 ## Knocked out by the Match (it left the blast zone): stops, cancels everything and waits, hidden,
@@ -96,6 +173,7 @@ func knock_out() -> void:
 	_charged_punch = null
 	_launched = false
 	_hit_victims.clear()
+	ledge = null
 
 
 ## The data of the move in progress (the charged punch for the neutral special), or null when
@@ -171,6 +249,11 @@ func take_hit(data: MoveData, side: int, attacker_x: float) -> void:
 		facing = -side
 	jumps_left = stats.max_air_jumps
 	up_special_available = true
+	air_dodge_available = true
+	_ledge_intangibility_earned = true
+	if ledge != null:
+		ledge = null
+		_ledge_regrab_left = stats.ledge_regrab_frames
 	_fast_falling = false
 	move = NO_MOVE
 	_charged_punch = null
@@ -211,6 +294,12 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	_block_stun = 0
 	_charged_punch = null
 	_launched = false
+	air_dodge_available = true
+	ledge = null
+	_ledge_regrab_left = 0
+	_ledge_intangibility_earned = true
+	_ledge_intangible = false
+	_down_held = false
 	set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
 
 
@@ -230,16 +319,24 @@ func tick(input: FighterInput) -> void:
 			_shield_actions(input)
 		State.ATTACK:
 			_special_phases(input)
+		State.LEDGE:
+			_ledge_actions(input)
 	_update_shield_health()
 
-	_apply_movement(input)
-
-	_update_platform_collision(input)
-	move_and_slide()
-
-	_after_move(input)
+	if state == State.LEDGE or state == State.LEDGE_CLIMB:
+		# Hanging and climbing are placed directly, without physics.
+		_hold_ledge()
+	else:
+		_apply_movement(input)
+		_update_platform_collision(input)
+		move_and_slide()
+		_after_move(input)
+		if is_on_floor():
+			_ledge_intangibility_earned = true
 	_count_down_drop_through()
 	_update_platform_collision(input)
+	_ledge_regrab_left = maxi(_ledge_regrab_left - 1, 0)
+	_down_held = input.down_held
 	if input.down_pressed:
 		_ticks_since_down_press = 0
 	_ticks_since_down_press += 1
@@ -263,6 +360,31 @@ func _end_finished_state(input: FighterInput) -> void:
 			if state_frame >= stats.shield_break_frames:
 				shield_health = stats.shield_reset_health
 				_set_state(_free_state(input))
+		State.SPOT_DODGE:
+			if state_frame >= stats.spot_dodge_frames:
+				_set_state(_after_dodge_state(input))
+		State.ROLL:
+			if state_frame >= stats.roll_frames:
+				velocity.x = 0.0
+				facing = -_roll_direction
+				_set_state(_after_dodge_state(input))
+		State.AIR_DODGE:
+			if state_frame >= stats.air_dodge_frames:
+				_set_state(State.AIR)
+		State.LEDGE:
+			if state_frame >= stats.ledge_max_hang:
+				_let_go()
+		State.LEDGE_CLIMB:
+			if state_frame >= stats.ledge_climb_frames:
+				ledge = null
+				_set_state(State.IDLE)
+
+
+## After a ground dodge: back to the shield if it's still held, else free.
+func _after_dodge_state(input: FighterInput) -> State:
+	if input.shield_held and shield_health > 0.0 and is_on_floor():
+		return State.SHIELD
+	return _free_state(input)
 
 
 ## The state a fighter that can act is in, given where it is.
@@ -286,7 +408,8 @@ func _ground_actions(input: FighterInput) -> void:
 	elif input.jump_pressed:
 		_jump()
 	elif input.shield_held and shield_health > 0.0:
-		_set_state(State.SHIELD)
+		if not _try_dodge(input):
+			_set_state(State.SHIELD)
 	elif _is_double_tap(input) and _is_on_pass_through_platform():
 		_drop_through()
 	elif input.down_held:
@@ -311,6 +434,8 @@ func _air_actions(input: FighterInput) -> void:
 		jumps_left -= 1
 		_fast_falling = false
 		_can_short_hop = false
+	elif input.shield_pressed and air_dodge_available:
+		_start_air_dodge(input)
 	elif _can_short_hop:
 		if velocity.y >= 0.0:
 			_can_short_hop = false
@@ -319,14 +444,88 @@ func _air_actions(input: FighterInput) -> void:
 			_can_short_hop = false
 
 
-## SHIELD: jump out, or lower it; neither during block stun.
+## SHIELD: jump out, dodge, or lower it; none of them during block stun.
 func _shield_actions(input: FighterInput) -> void:
 	if _block_stun > 0:
 		_block_stun -= 1
 	elif input.jump_pressed:
 		_jump()
+	elif _try_dodge(input):
+		pass
 	elif not input.shield_held:
 		_set_state(State.SHIELD_DROP)
+
+
+## A side pressed rolls that way; down pressed spot dodges. True if a dodge started.
+func _try_dodge(input: FighterInput) -> bool:
+	if input.side_pressed != 0:
+		_roll_direction = input.side_pressed
+		_set_state(State.ROLL)
+		return true
+	if input.down_pressed:
+		_set_state(State.SPOT_DODGE)
+		return true
+	return false
+
+
+## Air dodge: a burst toward the held direction, or a stop in place with none.
+func _start_air_dodge(input: FighterInput) -> void:
+	air_dodge_available = false
+	_fast_falling = false
+	_can_short_hop = false
+	var direction := Vector2(input.move_x, 0.0)
+	if input.up_held:
+		direction.y = -1.0
+	elif input.down_held:
+		direction.y = 1.0
+	velocity = direction.normalized() * stats.air_dodge_speed
+	_set_state(State.AIR_DODGE)
+
+
+## LEDGE: ledge jump, get up (up or toward the stage), or let go (down or away).
+func _ledge_actions(input: FighterInput) -> void:
+	if input.jump_pressed:
+		_leave_ledge()
+		velocity = Vector2(input.move_x * stats.air_speed, -stats.jump_velocity)
+		_set_state(State.AIR)
+	elif input.up_pressed or input.side_pressed == -ledge.side:
+		_set_state(State.LEDGE_CLIMB)
+	elif input.down_pressed or input.side_pressed == ledge.side:
+		_let_go()
+
+
+func _leave_ledge() -> void:
+	ledge = null
+	_ledge_regrab_left = stats.ledge_regrab_frames
+
+
+func _let_go() -> void:
+	_leave_ledge()
+	velocity = Vector2.ZERO
+	_set_state(State.AIR)
+
+
+## Where the feet are while hanging from the ledge.
+func _hang_position() -> Vector2:
+	return ledge.point + Vector2(stats.ledge_hang_offset.x * ledge.side, stats.ledge_hang_offset.y)
+
+
+## Hanging: held below the corner. Climbing: up to the corner's height in the first half, then
+## onto the stage, ending ledge_climb_inset in from the corner on the last frame.
+func _hold_ledge() -> void:
+	velocity = Vector2.ZERO
+	var hang := _hang_position()
+	if state == State.LEDGE:
+		global_position = hang
+		return
+	# This tick's frame of the climb (state_frame counts up at the end of the tick).
+	var t := clampf(float(state_frame + 1) / stats.ledge_climb_frames, 0.0, 1.0)
+	var top := Vector2(hang.x, ledge.point.y)
+	var end := ledge.point + Vector2(-ledge.side * stats.ledge_climb_inset, 0.0)
+	if t <= 0.5:
+		global_position = hang.lerp(top, t * 2.0)
+	else:
+		global_position = top.lerp(end, (t - 0.5) * 2.0)
 
 
 ## Charge release and the up special's launch.
@@ -451,7 +650,15 @@ func _apply_movement(input: FighterInput) -> void:
 		State.HELPLESS:
 			_steer(input.move_x, stats.helpless_air_speed, stats.air_accel, stats.air_friction)
 			_apply_gravity()
-		State.CROUCH, State.SHIELD, State.SHIELD_DROP, State.SHIELD_BREAK:
+		State.ROLL:
+			velocity.x = _roll_direction * stats.roll_speed
+			if not _floor_ahead():
+				velocity.x = 0.0
+			if not is_on_floor():
+				_apply_gravity()
+		State.AIR_DODGE:
+			velocity = velocity.move_toward(Vector2.ZERO, stats.air_dodge_friction * DELTA)
+		State.CROUCH, State.SHIELD, State.SHIELD_DROP, State.SHIELD_BREAK, State.SPOT_DODGE:
 			# No walking: slide to a stop.
 			_steer(0.0, 0.0, 0.0, stats.ground_friction)
 			if not is_on_floor():
@@ -499,6 +706,13 @@ func _fall(input: FighterInput) -> void:
 		_apply_gravity()
 
 
+## True if, after this tick's horizontal move, the fighter would still stand on something (a
+## roll stops at the edge instead of rolling off).
+func _floor_ahead() -> bool:
+	var ahead := global_transform.translated(Vector2(velocity.x * DELTA, 0.0))
+	return test_move(ahead, Vector2(0.0, 2.0))
+
+
 func _apply_gravity() -> void:
 	velocity.y = minf(velocity.y + stats.gravity * DELTA, stats.max_fall_speed)
 
@@ -507,7 +721,7 @@ func _apply_gravity() -> void:
 ## left the fighter.
 func _after_move(input: FighterInput) -> void:
 	match state:
-		State.AIR, State.HELPLESS:
+		State.AIR, State.HELPLESS, State.AIR_DODGE:
 			if is_on_floor():
 				_land(input)
 		State.ATTACK:
@@ -545,6 +759,7 @@ func _land(input: FighterInput) -> void:
 	_fast_falling = false
 	jumps_left = stats.max_air_jumps
 	up_special_available = true
+	air_dodge_available = true
 	_can_short_hop = false
 	_launched = false
 	_set_state(_free_state(input))
@@ -570,7 +785,7 @@ func _count_down_drop_through() -> void:
 ## with down held (in the air, during a move in the air, and while helpless). Runs before the move
 ## (so this tick's input counts) and after it (so the mask is right between ticks).
 func _update_platform_collision(input: FighterInput) -> void:
-	var airborne := state == State.AIR or state == State.HELPLESS \
+	var airborne := state == State.AIR or state == State.HELPLESS or state == State.AIR_DODGE \
 			or (state == State.ATTACK and not is_on_floor())
 	var ignore := _drop_through_frames_left > 0 or (airborne and input.down_held)
 	set_collision_mask_value(STAGE_PLATFORM_LAYER, not ignore)

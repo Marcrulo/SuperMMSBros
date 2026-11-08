@@ -37,7 +37,9 @@ physics frame, so `is_action_just_pressed` works per tick):
 | `down_pressed` / `down_held` | `is_action_just_pressed("down")` / `is_action_pressed("down")` |
 | `attack_pressed` | `is_action_just_pressed("attack")` |
 | `special_pressed` / `special_held` | `is_action_just_pressed("special")` / `is_action_pressed("special")` |
-| `shield_held` | `is_action_pressed("shield")` |
+| `shield_held` / `shield_pressed` | `is_action_pressed("shield")` / `is_action_just_pressed("shield")` |
+| `up_pressed` | `is_action_just_pressed("up")` |
+| `side_pressed` | `is_action_just_pressed("move_right")` → 1, else `is_action_just_pressed("move_left")` → −1, else 0 |
 
 `pause` is handled by the HUD/pause menu, not by the controller.
 

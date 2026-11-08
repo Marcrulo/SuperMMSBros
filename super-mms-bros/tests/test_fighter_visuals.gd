@@ -64,6 +64,21 @@ func test_strike_drawing_matches_each_moves_active_frames() -> void:
 			assert_eq(strike, data.is_active_frame(frame), "%s frame %d" % [name, frame])
 
 
+func test_animation_for_dodges_and_ledge() -> void:
+	assert_eq(FighterVisuals.animation_for(Fighter.State.SPOT_DODGE, 0.0), "spot_dodge")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ROLL, 0.0), "roll")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.AIR_DODGE, 0.0), "air_dodge")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.LEDGE, 0.0), "ledge")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.LEDGE_CLIMB, 0.0), "ledge_climb")
+
+
+func test_intangible_fighters_are_drawn_pale() -> void:
+	assert_eq(FighterVisuals.tint(false, false), Color.WHITE)
+	var pale := FighterVisuals.tint(false, true)
+	assert_lt(pale.a, 1.0, "see-through")
+	assert_gt(pale.r, 1.0, "brightened")
+
+
 func test_animation_for_shield_helpless_and_specials() -> void:
 	assert_eq(FighterVisuals.animation_for(Fighter.State.SHIELD, 0.0), "shield")
 	assert_eq(FighterVisuals.animation_for(Fighter.State.SHIELD_DROP, 0.0), "shield")

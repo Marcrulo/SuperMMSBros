@@ -149,6 +149,7 @@ starting points, tuned in M9.
 | Left platform | pass-through (`stage_platform`) | x 132–204, top at y 150 |
 | Right platform | pass-through | x 276–348, top at y 150 |
 | Top platform | pass-through | x 204–276, top at y 108 |
+| Ledges | grabbable corners of the main platform | (96, 192) outward left, (384, 192) outward right |
 | P1 spawn | point | (168, 192), facing right |
 | P2 spawn | point | (312, 192), facing left |
 | Blast zone | rectangle (fighter center must stay inside) | x −72…552, y −160…304 |
@@ -175,8 +176,9 @@ Battlefield            (Node2D, stage/stage.gd)
 ├── P1Spawn, P2Spawn   (Marker2D)
 ```
 
-`stage.gd` exports the blast zone as a `Rect2`, applies a `StageData` (`apply(data)`), and provides
-the platform rectangles for the snapshot. Pass-through platforms have a 4 px tall one-way collision
+`stage.gd` exports the blast zone as a `Rect2`, applies a `StageData` (`apply(data)`), provides
+the platform rectangles for the snapshot, and the ledges (`get_ledges()`, computed from the main
+platform's collision shape: its two top corners; see [fighter](fighter.md#ledge)). Pass-through platforms have a 4 px tall one-way collision
 shape at their top edge.
 
 ### Platform look (perspective)

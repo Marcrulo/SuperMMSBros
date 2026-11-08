@@ -9,6 +9,7 @@ const FRAMES := {
 	"neutral_special_charge": 2, "neutral_special": 4, "down_special_dive": 1,
 	"down_special": 5, "side_special": 4, "up_special": 3,
 	"neutral_air": 5, "forward_air": 5, "back_air": 5, "up_air": 5, "down_air": 5,
+	"spot_dodge": 3, "roll": 4, "air_dodge": 2, "ledge": 2, "ledge_climb": 3,
 }
 
 

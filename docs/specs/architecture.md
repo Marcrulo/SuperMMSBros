@@ -60,7 +60,8 @@ the Match and assigned one per fighter.
 | `CpuController` | `Controller` | Hand-written AI; see [cpu](cpu.md). |
 | `ScriptedController` | `Controller` | Plays back a fixed list of inputs; with an empty list it does nothing (the training dummy). Used in tests. |
 | `MatchSnapshot` / `FighterSnapshot` | `RefCounted` | Plain read-only copy of the game state; see [Game state snapshot](#game-state-snapshot). |
-| `Stage` | `Node2D` | Collision geometry, spawn points, blast zone rectangle; applies a `StageData`. |
+| `Stage` | `Node2D` | Collision geometry, spawn points, ledges, blast zone rectangle; applies a `StageData`. |
+| `Ledge` | `RefCounted` | A grabbable corner: `point` and outward `side` (−1 left, 1 right). |
 | `StageData` / `PlatformStyle` | `Resource` | A stage's name, background, haze, light and platform style (see [match & stage](match-and-stage.md#stages)). |
 | `PlatformLook` | `Node2D` (child of Stage) | Draws the platforms in perspective from the style. Presentation only. |
 | `MatchCamera` | `Camera2D` | Frames the fighters and zooms. Presentation only. |
@@ -77,6 +78,8 @@ Every tick, `step()` does, in this order:
 3. Ask each fighter's controller for input, P1 then P2. During `COUNTDOWN` the inputs are replaced
    with empty input (controllers are still asked, so the CPU's reaction buffer fills).
 4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2.
+   Then **ledge grabs**: each fighter that can grab a ledge (P1, P2 order) grabs a free one
+   whose corner is inside its grab box (see [fighter](fighter.md#ledge)).
 5. Advance each existing projectile (in the order they were created) and remove those past their
    lifetime or outside the blast zone. Then add a projectile for every fighter whose side special
    reached its spawn frame this tick (P1, P2 order); a new projectile first moves next tick.
@@ -108,11 +111,12 @@ uses.
 `Match.get_state() -> MatchSnapshot` returns a fresh, read-only copy of the game:
 
 - `tick: int`, `phase: Phase` (`COUNTDOWN`, `PLAYING`, `ENDED`)
-- `stage`: platform rectangles (solid and pass-through) and the blast zone `Rect2`
+- `stage`: platform rectangles (solid and pass-through), the ledges (corner and outward side) and
+  the blast zone `Rect2`
 - `fighters: Array[FighterSnapshot]`, each with `index`, `position`, `velocity`, `facing` (−1 or 1),
   `state`, `move` (the move in progress, or none), `state_frame` (ticks spent in the current
-  state), `on_floor`, `jumps_left`, `up_special_available`, `percent`, `shield_health`, `stocks`,
-  `invulnerable_frames`
+  state), `on_floor`, `jumps_left`, `up_special_available`, `air_dodge_available`, `percent`,
+  `shield_health`, `stocks`, `invulnerable_frames`, `intangible`
 - `projectiles`: each with `owner`, `position`, `direction`
 
 The snapshot never includes controller input or references to nodes.
@@ -168,7 +172,7 @@ super-mms-bros/
 ├── controllers/   controller.gd, fighter_input.gd, keyboard_controller.gd, cpu_controller.gd,
 │                  cpu_settings.gd, default_cpu.tres, scripted_controller.gd
 ├── stage/         battlefield.tscn, stage.gd, platform_look.gd, background.gdshader,
-│                  stage_data.gd, platform_style.gd, stages/*.tres, styles/*.tres
+│                  stage_data.gd, platform_style.gd, ledge.gd, stages/*.tres, styles/*.tres
 ├── game/          game.gd (the Game autoload: choices, scene changes, menu keys)
 ├── ui/            hud.tscn, hud.gd, player_card.tscn, player_card.gd, character_select.tscn,
 │                  character_select.gd, stage_select.tscn, stage_select.gd, select_tile.gd,

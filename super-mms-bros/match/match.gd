@@ -84,12 +84,30 @@ func step() -> void:
 		fighter.has_projectile = _projectile_of(fighter.player_index) != null
 	for i in _fighters.size():
 		_fighters[i].tick(inputs[i])
+	_grab_ledges()
 	_advance_projectiles()
 	_spawn_projectiles()
 	_resolve_hits()
 	_check_kos_and_respawns()
 	_advance_timers()
 	tick += 1
+
+
+## Every fighter that can grab a ledge nobody else holds grabs it, P1 first
+## (docs/specs/fighter.md#ledge).
+func _grab_ledges() -> void:
+	for fighter in _fighters:
+		for ledge in _stage.get_ledges():
+			if not _is_ledge_held(ledge) and fighter.can_grab_ledge(ledge):
+				fighter.grab_ledge(ledge)
+				break
+
+
+func _is_ledge_held(ledge: Ledge) -> bool:
+	for fighter in _fighters:
+		if fighter.ledge == ledge:
+			return true
+	return false
 
 
 func get_projectiles() -> Array[Projectile]:

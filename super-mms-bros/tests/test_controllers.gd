@@ -19,6 +19,9 @@ func test_fighter_input_starts_empty() -> void:
 	assert_false(input.special_pressed)
 	assert_false(input.special_held)
 	assert_false(input.shield_held)
+	assert_false(input.shield_pressed)
+	assert_false(input.up_pressed)
+	assert_eq(input.side_pressed, 0)
 
 
 func test_base_controller_returns_empty_input() -> void:
@@ -99,3 +102,25 @@ func test_keyboard_controller_pressed_is_true_for_one_tick_only() -> void:
 	assert_false(second.attack_pressed, "holding attack doesn't press it again")
 	assert_true(second.jump_held, "jump is still held")
 	assert_true(second.down_held, "down is still held")
+
+
+func test_keyboard_controller_reads_shield_up_and_side_presses() -> void:
+	var controller := KeyboardController.new()
+	await get_tree().physics_frame
+	Input.action_press("shield")
+	Input.action_press("up")
+	Input.action_press("move_left")
+	await get_tree().physics_frame
+	var first := controller.get_input(null)
+	await get_tree().physics_frame
+	var second := controller.get_input(null)
+	assert_true(first.shield_pressed)
+	assert_true(first.up_pressed)
+	assert_eq(first.side_pressed, -1)
+	assert_false(second.shield_pressed, "holding shield doesn't press it again")
+	assert_false(second.up_pressed)
+	assert_eq(second.side_pressed, 0)
+	Input.action_release("move_left")
+	Input.action_press("move_right")
+	await get_tree().physics_frame
+	assert_eq(controller.get_input(null).side_pressed, 1)

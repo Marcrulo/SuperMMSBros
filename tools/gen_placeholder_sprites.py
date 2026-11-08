@@ -253,6 +253,27 @@ ANIMATIONS.update({
                  air_pose(fa=1.2, fe=0.5, ba=-1.2, be=-0.5)],
 })
 
+# Dodges and the ledge (docs/specs/art-guide.md).
+ANIMATIONS.update({
+    "spot_dodge": [pose(crouch=1, lean=-1, fa=0.6, fe=1.4, ba=0.4, be=1.4),
+                   pose(crouch=2, lean=-2, head_dx=-1, eyes="shut", fa=1.0, fe=1.8, ba=0.8, be=1.8,
+                        ft=0.3, fk=0.7, bt=-0.4, bk=0.7),
+                   pose(crouch=1, fa=0.5, fe=0.8, ba=-0.3, be=0.6)],
+    "roll": [pose(crouch=3, lean=2, ft=0.9, fk=1.7, bt=0.5, bk=1.5, fa=1.2, fe=1.6, ba=0.9, be=1.6),
+             pose(crouch=5, lean=3, head_dy=2, eyes="shut", ft=1.4, fk=2.3, bt=1.1, bk=2.2,
+                  fa=1.6, fe=1.8, ba=1.4, be=1.8),
+             pose(crouch=5, lean=2, head_dy=2, eyes="shut", ft=1.2, fk=2.2, bt=1.0, bk=2.1,
+                  fa=1.0, fe=2.0, ba=1.0, be=2.0),
+             pose(crouch=2, lean=-1, ft=0.5, fk=1.0, bt=-0.2, bk=0.8, fa=0.5, fe=1.0, ba=-0.4)],
+    "air_dodge": [air_pose(fa=1.2, fe=1.6, ba=1.0, be=1.6, ft=0.8, fk=1.4, bt=0.6, bk=1.4),
+                  air_pose(eyes="shut", fa=1.4, fe=1.9, ba=1.2, be=1.9, ft=1.0, fk=1.8, bt=0.8, bk=1.7)],
+    "ledge": [pose(fa=2.75, fe=0.1, reach=0.8, ba=2.6, be=0.1, ft=0.2, fk=0.4, bt=-0.1, bk=0.5),
+              pose(fa=2.75, fe=0.1, reach=0.8, ba=2.6, be=0.1, ft=0.1, fk=0.6, bt=0.0, bk=0.3)],
+    "ledge_climb": [pose(crouch=2, fa=2.4, fe=0.5, ba=2.2, be=0.5, ft=1.0, fk=1.8, bt=0.3, bk=1.0),
+                    pose(crouch=4, lean=2, fa=1.2, fe=1.4, ba=1.0, be=1.4, ft=1.3, fk=2.2, bt=0.5, bk=1.6),
+                    pose(crouch=1, lean=1, fa=0.5, fe=0.8, ba=-0.3, ft=0.4, fk=0.6, bt=-0.2, bk=0.4)],
+})
+
 PROJECTILE = 12
 GLOW_OUTER, GLOW_MID, GLOW_CORE = (41, 54, 111), (65, 166, 246), (115, 239, 247)
 

@@ -23,3 +23,9 @@ var special_pressed: bool = false
 var special_held: bool = false
 ## Shield is held.
 var shield_held: bool = false
+## Shield went down this tick (air dodge).
+var shield_pressed: bool = false
+## Up went down this tick (getting up from a ledge).
+var up_pressed: bool = false
+## A side went down this tick: -1 left, 1 right, 0 neither (rolls, ledge actions).
+var side_pressed: int = 0

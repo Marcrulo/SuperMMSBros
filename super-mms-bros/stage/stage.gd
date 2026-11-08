@@ -9,11 +9,23 @@ extends Node2D
 ## It leaves room off every side for recovering; the camera never shows beyond it.
 @export var blast_zone: Rect2 = Rect2(-72, -160, 624, 464)
 
+var _ledges: Array[Ledge] = []
+
 
 ## Where player `player_index` (0 = P1) spawns, in world coordinates.
 func get_spawn_position(player_index: int) -> Vector2:
 	var marker := get_node("P%dSpawn" % (player_index + 1)) as Marker2D
 	return marker.global_position
+
+
+## The grabbable ledges: the main platform's two top corners, left one first.
+func get_ledges() -> Array[Ledge]:
+	if _ledges.is_empty():
+		var shape := $MainPlatform/CollisionShape2D as CollisionShape2D
+		var size := (shape.shape as RectangleShape2D).size
+		var top_left := shape.global_position - size / 2.0
+		_ledges = [Ledge.new(top_left, -1), Ledge.new(top_left + Vector2(size.x, 0.0), 1)]
+	return _ledges
 
 
 func get_spawn_facing(player_index: int) -> int:

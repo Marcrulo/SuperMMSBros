@@ -19,6 +19,11 @@ const ANIMATIONS := {
 	"shield": {"ticks": [1], "loop": false},
 	"dizzy": {"ticks": [10, 10], "loop": true},
 	"hurt": {"ticks": [4, 4], "loop": true},
+	"spot_dodge": {"ticks": [3, 12, 5], "loop": false},
+	"roll": {"ticks": [6, 6, 6, 6], "loop": false},
+	"air_dodge": {"ticks": [4, 4], "loop": false},
+	"ledge": {"ticks": [12, 12], "loop": true},
+	"ledge_climb": {"ticks": [6, 7, 7], "loop": false},
 	"jab": {"ticks": [2, 2, 3, 4, 3], "loop": false},
 	"down_tilt": {"ticks": [3, 2, 3, 4, 3], "loop": false},
 	"up_tilt": {"ticks": [3, 2, 4, 4, 4], "loop": false},
@@ -43,6 +48,8 @@ const HITBOX_ACTIVE_COLOR := Color(1.0, 0.15, 0.15, 0.55)
 const HITBOX_IDLE_COLOR := Color(1.0, 0.3, 0.3, 0.5)
 ## Brightness of the hit flash (values above 1 brighten the sprite).
 const FLASH := Color(2.2, 2.2, 2.2)
+## While intangible (dodges, ledge): pale and see-through.
+const INTANGIBLE := Color(1.6, 1.6, 1.8, 0.55)
 ## Shield bubble: radius from empty to full, centered on the body; colors per player.
 const SHIELD_MIN_RADIUS := 6.0
 const SHIELD_MAX_RADIUS := 16.0
@@ -87,6 +94,16 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 			return "dizzy"
 		Fighter.State.HELPLESS:
 			return "helpless"
+		Fighter.State.SPOT_DODGE:
+			return "spot_dodge"
+		Fighter.State.ROLL:
+			return "roll"
+		Fighter.State.AIR_DODGE:
+			return "air_dodge"
+		Fighter.State.LEDGE:
+			return "ledge"
+		Fighter.State.LEDGE_CLIMB:
+			return "ledge_climb"
 		Fighter.State.RUN:
 			return "run"
 		Fighter.State.CROUCH:
@@ -160,7 +177,7 @@ func _draw() -> void:
 	# Mirror when facing left; the strips are drawn facing right.
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(_fighter.facing, 1))
 	draw_texture_rect_region(texture, Rect2(-FRAME / 2.0, -FRAME, FRAME, FRAME),
-		Rect2(frame * FRAME, 0, FRAME, FRAME), _flash())
+		Rect2(frame * FRAME, 0, FRAME, FRAME), tint(_is_flashing(), _fighter.is_intangible()))
 	draw_set_transform(Vector2.ZERO)
 	if _fighter.state == Fighter.State.ATTACK and _fighter.move == &"neutral_special_charge":
 		_draw_charge_glow()
@@ -186,11 +203,16 @@ func _draw_charge_glow() -> void:
 	draw_circle(fist, 1.0 + 3.0 * charge, CHARGE_GLOW)
 
 
-## Brightens the sprite on alternate pairs of hitstun ticks (1–2, 5–6, …), so a hit flashes.
-func _flash() -> Color:
-	if _fighter.state == Fighter.State.HITSTUN and int((_fighter.state_frame - 1) / 2.0) % 2 == 0:
-		return FLASH
-	return Color.WHITE
+## The sprite's color: pale and see-through while intangible, bright on a hit flash, else as drawn.
+static func tint(flashing: bool, intangible: bool) -> Color:
+	if intangible:
+		return INTANGIBLE
+	return FLASH if flashing else Color.WHITE
+
+
+## On alternate pairs of hitstun ticks (1–2, 5–6, …), so a hit flashes.
+func _is_flashing() -> bool:
+	return _fighter.state == Fighter.State.HITSTUN and int((_fighter.state_frame - 1) / 2.0) % 2 == 0
 
 
 ## Hurtbox in blue; during a move its hitbox in red, filled on the active frames.

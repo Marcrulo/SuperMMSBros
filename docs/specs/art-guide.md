@@ -49,6 +49,11 @@ when the move can hit, and what players read.
 | `shield` | `SHIELD`, `SHIELD_DROP` | 1 | hold (the bubble is drawn by the game) | — |
 | `dizzy` | `SHIELD_BREAK` | 2 | 10 each | yes |
 | `hurt` | `HITSTUN` | 2 | 4 each | yes |
+| `spot_dodge` | `SPOT_DODGE` (20) | 3 | 3 · 12 · 5 | no |
+| `roll` | `ROLL` (24), tumbling forward | 4 | 6 each | no |
+| `air_dodge` | `AIR_DODGE` (30) | 2 | 4, then hold | no |
+| `ledge` | `LEDGE`, hanging by the hands, facing the stage | 2 | 12 each | yes |
+| `ledge_climb` | `LEDGE_CLIMB` (20) | 3 | 6, 7, 7 | no |
 | `jab` | jab (14 ticks) | 5 | 2, 2 · **3** · 4, 3 | no |
 | `down_tilt` | down tilt (15) | 5 | 3, 2 · **3** · 4, 3 | no |
 | `up_tilt` | up tilt (17) | 5 | 3, 2 · **4** · 4, 4 | no |

@@ -63,5 +63,38 @@ extends Resource
 ## Top air speed while helpless (after up special).
 @export var helpless_air_speed: float
 
+@export_group("Dodges")
+## Spot dodge (in place, from shield): length and the frames that can't be hit.
+@export var spot_dodge_frames: int
+@export var spot_dodge_intangible_start: int
+@export var spot_dodge_intangible_end: int
+## Roll (sideways, from shield): length, the frames that can't be hit, and ground speed.
+@export var roll_frames: int
+@export var roll_intangible_start: int
+@export var roll_intangible_end: int
+@export var roll_speed: float
+## Air dodge: length, the frames that can't be hit, a directional dodge's starting speed and how
+## fast that speed falls to 0 (no gravity during the dodge).
+@export var air_dodge_frames: int
+@export var air_dodge_intangible_start: int
+@export var air_dodge_intangible_end: int
+@export var air_dodge_speed: float
+@export var air_dodge_friction: float
+
+@export_group("Ledge")
+## Around the feet (mirror-symmetric): a ledge corner inside it can be grabbed.
+@export var ledge_grab_box: Rect2
+## Feet position while hanging, from the corner (x points outward, away from the stage).
+@export var ledge_hang_offset: Vector2
+## Ticks before a hanging fighter lets go by itself.
+@export var ledge_max_hang: int
+## Ticks after a grab that can't be hit (only if earned: touched ground or got hit since the last).
+@export var ledge_intangible_frames: int
+## Length of the get-up (can't be hit), and how far onto the stage from the corner it ends.
+@export var ledge_climb_frames: int
+@export var ledge_climb_inset: float
+## Ticks after leaving a ledge before any ledge can be grabbed again.
+@export var ledge_regrab_frames: int
+
 @export_group("Moves")
 @export var moveset: MoveSet

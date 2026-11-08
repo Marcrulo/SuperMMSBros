@@ -48,6 +48,22 @@ in px/s², durations in ticks (60 per second).
 | `shield_reset_health` | 30 | Shield health after a break |
 | `block_pushback` | 60 | Speed a blocked hit pushes the shielder away |
 | `helpless_air_speed` | 54 | Top air speed while helpless |
+| `spot_dodge_frames` | 20 | Length of a spot dodge |
+| `spot_dodge_intangible_start` / `_end` | 3 / 15 | Frames of the spot dodge that can't be hit |
+| `roll_frames` | 24 | Length of a roll |
+| `roll_intangible_start` / `_end` | 4 / 16 | Frames of the roll that can't be hit |
+| `roll_speed` | 100 | Ground speed during a roll (≈ 40 px) |
+| `air_dodge_frames` | 30 | Length of an air dodge |
+| `air_dodge_intangible_start` / `_end` | 3 / 20 | Frames of the air dodge that can't be hit |
+| `air_dodge_speed` | 180 | Starting speed of a directional air dodge |
+| `air_dodge_friction` | 360 | How fast the air dodge's speed falls to 0 (no gravity during it) |
+| `ledge_grab_box` | Rect2(−16, −32, 32, 20) | Around the feet (mirror-symmetric): a ledge corner inside it can be grabbed |
+| `ledge_hang_offset` | (9, 22) | Feet position while hanging, from the corner (x outward) |
+| `ledge_max_hang` | 300 | Ticks before the fighter lets go by itself |
+| `ledge_intangible_frames` | 40 | Ticks after a grab that can't be hit (when earned, see [Ledge](#ledge)) |
+| `ledge_climb_frames` | 20 | Length of the get-up (can't be hit) |
+| `ledge_climb_inset` | 12 | Where the get-up ends: this far onto the stage from the corner |
+| `ledge_regrab_frames` | 30 | Ticks after leaving a ledge before any ledge can be grabbed again |
 | `moveset` | `MoveSet` | The eight moves (see [moves](moves.md)) |
 
 Hitbox *sizes* of moves live in the `MoveData` resources; the body and hurtbox sizes live in the
@@ -69,6 +85,9 @@ Each tick the fighter receives a `FighterInput`:
 | `special_pressed` | `bool` | Special (B) went down this tick |
 | `special_held` | `bool` | Special is held (charging) |
 | `shield_held` | `bool` | Shield is held |
+| `shield_pressed` | `bool` | Shield went down this tick (air dodge) |
+| `up_pressed` | `bool` | Up went down this tick (ledge get-up) |
+| `side_pressed` | `int` −1/0/1 | Left (−1) or right (1) went down this tick (roll, ledge actions) |
 
 Actions trigger on *pressed* (the tick the button goes down); holding a button never repeats an
 action. Shield, crouch and charging act while their button is *held*.
@@ -87,6 +106,11 @@ action. Shield, crouch and charging act while their button is *held*.
 | `SHIELD_BREAK` | Shield broke; stunned |
 | `HITSTUN` | Just got hit; can't act |
 | `HELPLESS` | Falling after up special; can't act until landing |
+| `SPOT_DODGE` | Dodging in place on the ground |
+| `ROLL` | Rolling sideways on the ground |
+| `AIR_DODGE` | Dodging in the air |
+| `LEDGE` | Hanging from a ledge |
+| `LEDGE_CLIMB` | Climbing up from a ledge onto the stage |
 | `KO` | Knocked out; hidden and inactive until the Match respawns it |
 
 Every fighter also tracks `state_frame`: ticks spent in the current state, starting at 1 on the tick
@@ -102,7 +126,8 @@ Checked in this order on each tick; the first that applies happens:
 | special pressed → special (by direction) | special pressed → special (by direction) |
 | jump pressed with down held on a pass-through platform → drop through | jump pressed and `jumps_left > 0` → double jump |
 | jump pressed → ground jump | |
-| shield held and shield health > 0 → `SHIELD` | jump released while rising from a ground jump → short hop cut |
+| shield held and shield health > 0 → `SHIELD` (or straight into a roll / spot dodge if a side / down was pressed this same tick) | shield pressed and the air dodge is available → `AIR_DODGE` |
+| | jump released while rising from a ground jump → short hop cut |
 | down pressed twice within `drop_double_tap_frames` on a pass-through platform → drop through | |
 | down held → `CROUCH` | |
 | `move_x ≠ 0` → `RUN` (facing turns) | |
@@ -117,8 +142,13 @@ Checked in this order on each tick; the first that applies happens:
 - `SHIELD` → `SHIELD_DROP` when shield is released → `IDLE` after `shield_drop_frames`.
   `SHIELD` → `AIR` when jump is pressed (jump out of shield, no drop lag).
   `SHIELD` → `SHIELD_BREAK` when shield health reaches 0 → `IDLE` after `shield_break_frames`.
+  `SHIELD` → `ROLL` / `SPOT_DODGE` when a side / down is pressed (not during block stun).
+- `ROLL`, `SPOT_DODGE` → `IDLE`/`RUN`/`CROUCH` (or `SHIELD` if shield is still held) after their
+  last frame; `AIR_DODGE` → `AIR` after its last frame, or on landing.
+- `AIR`, `HELPLESS`, `AIR_DODGE`, launched up special → `LEDGE`: grabbing a ledge (set by the
+  Match). `LEDGE` → `LEDGE_CLIMB` → `IDLE`; `LEDGE` → `AIR` (let go or ledge jump).
 - up special → `HELPLESS` when the fighter stops rising → `IDLE` on landing.
-- any state except `KO` → `HITSTUN`: hit while not shielding and not invulnerable.
+- any state except `KO` → `HITSTUN`: hit while not shielding, invulnerable or intangible.
 - `HITSTUN` → `IDLE`/`AIR`: when hitstun runs out.
 - any state → `KO`: set by the Match when the fighter leaves the blast zone.
 
@@ -179,6 +209,52 @@ on the main platform it's a normal jump.
   `shield_break_frames`; afterwards shield health is `shield_reset_health`.
 - No shield in the air.
 
+## Dodges
+
+While a fighter dodges it is **intangible** on the dodge's intangible frames: hits and
+projectiles pass through it as if it weren't there (a move that misses this way can still hit it
+later, and a projectile flies on).
+
+- **Spot dodge:** in `SHIELD`, pressing down (or pressing down on the tick shield goes up). The
+  fighter stays in place (sliding to a stop at `ground_friction`) for `spot_dodge_frames`.
+- **Roll:** in `SHIELD`, pressing a side (or on the tick shield goes up). The fighter moves at
+  `roll_speed` toward that side for `roll_frames`, and ends facing **away** from the roll (back
+  toward where it came from). A roll stops at the edge of whatever it stands on: it never rolls
+  off. Holding a side while raising the shield doesn't roll; only a fresh press does.
+- Neither works during block stun. After a ground dodge, holding shield goes back to `SHIELD`.
+- **Air dodge:** in `AIR`, pressing shield. Once per stay in the air: restored on landing, when
+  grabbing a ledge, and when hit. With a direction held (side, up, down, or a diagonal) the speed
+  becomes `air_dodge_speed` that way and falls toward 0 at `air_dodge_friction`; with none the
+  fighter stops in place. Either way, there is no gravity during the dodge. Afterwards the
+  fighter is in `AIR` (it can still double jump). Landing ends it at once. Holding down passes
+  through platforms, as in `AIR`.
+
+## Ledge
+
+The main platform's two top corners are **ledges**: (96, 192) facing out to the left and
+(384, 192) facing out to the right (see [match & stage](match-and-stage.md#layout-battlefield)).
+Pass-through platforms have none.
+
+- **Grabbing** (checked by the Match every tick, after fighters move — see
+  [architecture](architecture.md#tick-order)): a fighter grabs a ledge when it is in `AIR`
+  (falling), `HELPLESS`, `AIR_DODGE` (falling) or a launched up special (rising or falling), not
+  on the floor, not holding down, not within `ledge_regrab_frames` of leaving a ledge, standing
+  on the outer side of the corner, and the corner lies inside its `ledge_grab_box`. Only one
+  fighter holds a ledge at a time; a held ledge can't be grabbed.
+- **On grab:** the fighter snaps so its feet are at the corner + `ledge_hang_offset` (x mirrored
+  outward), stops, faces the stage, and gets its double jump, up special and air dodge back. If it
+  has touched the ground or been hit since its last grab (or just spawned), it is intangible for
+  `ledge_intangible_frames`.
+- **Hanging:** no gravity, no movement. After `ledge_max_hang` ticks it lets go.
+- **From the ledge** (first that applies):
+  - jump pressed → **ledge jump**: vertical speed = −`jump_velocity`, horizontal speed =
+    `move_x × air_speed`, state `AIR` (the double jump is kept);
+  - up pressed or the stage-side pressed → **get-up**: `LEDGE_CLIMB` for `ledge_climb_frames`,
+    intangible throughout, rising to the top of the corner in the first half and moving onto the
+    stage in the second; it ends standing `ledge_climb_inset` px in from the corner, `IDLE`;
+  - down pressed or the outer side pressed → **let go**: `AIR`, falling from rest.
+- Getting hit on the ledge (when not intangible) knocks the fighter off it into `HITSTUN` as usual.
+
 ## Helpless
 
 After up special, once the fighter stops rising: it falls with gravity, steers only up to
@@ -189,7 +265,7 @@ platforms by holding down. Landing returns it to `IDLE`; being hit puts it in `H
 
 Resolved by the Match after every fighter and projectile has moved (see
 [architecture](architecture.md)). A hit lands when an active hitbox overlaps the victim's hurtbox,
-the victim is not `KO` or invulnerable, and that move or projectile hasn't hit this victim yet. All
+the victim is not `KO`, invulnerable or intangible, and that move or projectile hasn't hit this victim yet. All
 hits for a tick are collected first and then applied, so two fighters can trade hits.
 
 When a hit lands on a fighter that isn't shielding, the victim:
@@ -219,6 +295,7 @@ Drawn from the fighter's state; never changes gameplay state.
   shield health (16 px at full, 6 px near empty).
 - **Charge:** the fists glow brighter as the neutral special charges.
 - **Invulnerable:** the whole fighter blinks (hidden 4 ticks, shown 4 ticks).
+- **Intangible** (dodges, ledge): the sprite is drawn pale and see-through.
 - **KO:** hidden.
 - **Debug view:** F1 (or `--hitboxes`) draws hurtboxes in blue and move hitboxes in red (solid on
   active frames).

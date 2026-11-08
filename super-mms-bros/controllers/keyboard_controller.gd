@@ -17,4 +17,10 @@ func get_input(_state: RefCounted) -> FighterInput:
 	input.special_pressed = Input.is_action_just_pressed("special")
 	input.special_held = Input.is_action_pressed("special")
 	input.shield_held = Input.is_action_pressed("shield")
+	input.shield_pressed = Input.is_action_just_pressed("shield")
+	input.up_pressed = Input.is_action_just_pressed("up")
+	if Input.is_action_just_pressed("move_right"):
+		input.side_pressed = 1
+	elif Input.is_action_just_pressed("move_left"):
+		input.side_pressed = -1
 	return input
