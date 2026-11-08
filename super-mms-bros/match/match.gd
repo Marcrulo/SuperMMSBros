@@ -33,7 +33,9 @@ var _respawn_frames_left: Array[int] = []
 
 
 func _ready() -> void:
-	_stage.apply(StageData.load_stage(_chosen_stage_id()))
+	var stage_data := StageData.load_stage(_chosen_stage_id())
+	_stage.apply(stage_data)
+	_play_music(stage_data)
 	for child in $Fighters.get_children():
 		var fighter := child as Fighter
 		fighter.player_index = _fighters.size()
@@ -53,6 +55,14 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if auto_step:
 		step()
+
+
+## Loops the stage's music, if it has a track. Presentation only.
+func _play_music(stage_data: StageData) -> void:
+	var player := $Music as AudioStreamPlayer
+	player.stream = stage_data.load_music()
+	if player.stream != null:
+		player.play()
 
 
 ## The stage to play: `--stage=<id>` (docs/specs/architecture.md#command-line-options), else the

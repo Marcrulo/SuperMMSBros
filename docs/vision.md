@@ -35,9 +35,9 @@ opponent.
 - Default specials: neutral B (charged punch), down B (ground energy burst), side B (projectile),
   up B (jump boost, then helpless until landing).
 - KOs by leaving the blast zone; respawn with brief invulnerability.
-- Three stages sharing a Battlefield-style layout (main platform plus three pass-through platforms),
+- Five stages sharing a Battlefield-style layout (main platform plus three pass-through platforms),
   each with its own background, platform style and light: **Marie Mørks Skole**,
-  **Frederiksborgcenteret** and **Frederiksborg Castle (sunset)**.
+  **Frederiksborgcenteret**, **Frederiksborg Castle (sunset)**, **Café Station** and **Lindevej**.
   Chosen on a stage select screen (or with a command-line option).
 - 480×270 pixel-art rendering, smooth-zooming camera that frames the fighters.
 - Five air attacks (neutral, forward, back, up, down) next to the four ground attacks.
@@ -54,7 +54,7 @@ opponent.
   ledge grabbing
 - Different stage layouts
 - Menus beyond character select, stage select, pause and results (title screen, settings)
-- Sound and music
+- Sound effects (each stage has looping music)
 - Local multiplayer, online play
 - Trained (machine-learning) AI
 - Final hand-drawn pixel art
@@ -72,4 +72,4 @@ opponent.
   such as Stable-Baselines3, trained headless against the hand-written CPU.
 - **Smarter hand-written CPU**: difficulty levels, edge-guarding.
 - **Online multiplayer**: would need rollback netcode.
-- **Sound and menus.**
+- **Sound effects** and more menus (title screen, settings).

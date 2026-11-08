@@ -6,8 +6,10 @@ extends Resource
 
 const STAGES_DIR := "res://stage/stages/"
 const DEFAULT_ID := "mms"
+## Each stage's music is <MUSIC_DIR><id>.ogg (docs/specs/controls-and-display.md#audio).
+const MUSIC_DIR := "res://assets/music/"
 ## Every stage, in stage-select order.
-const ALL_IDS: Array[String] = ["mms", "fc", "slot_sunset"]
+const ALL_IDS: Array[String] = ["mms", "fc", "slot_sunset", "cafe_station", "lindevej"]
 
 @export var id: String
 @export var display_name: String
@@ -26,3 +28,19 @@ static func load_stage(stage_id: String) -> StageData:
 	if not ResourceLoader.exists(path):
 		path = STAGES_DIR + DEFAULT_ID + ".tres"
 	return load(path) as StageData
+
+
+## Where the music for the stage `stage_id` lives.
+static func music_path(stage_id: String) -> String:
+	return MUSIC_DIR + stage_id + ".ogg"
+
+
+## This stage's music, set to loop; null if there's no track (the tracks aren't in git).
+func load_music() -> AudioStream:
+	var path := music_path(id)
+	if not ResourceLoader.exists(path):
+		return null
+	var music := load(path) as AudioStream
+	if music is AudioStreamOggVorbis:
+		(music as AudioStreamOggVorbis).loop = true
+	return music

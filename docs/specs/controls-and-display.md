@@ -81,4 +81,15 @@ looks consistent before real art exists. Stage colors are in the platform styles
 
 ## Audio
 
-None in v1.
+- **Music:** each stage has a music track that loops for the whole match: `assets/music/<stage
+  id>.ogg` (found by its name; a stage without a file is silent). It's played by the Match's
+  `Music` node (an `AudioStreamPlayer`), presentation only.
+- Tracks are prepared with `tools/prepare_music.py`: leading and trailing silence trimmed (so the
+  loop has no gap), loudness normalized to −18 LUFS with peaks below −1.5 dBTP, saved as OGG Vorbis
+  44.1 kHz stereo. Every track then plays at the same loudness.
+- The tracks are the user's own copies of existing songs, so they are **not committed** (the repo is
+  public): `assets/music/` is in `.gitignore`. The game runs without them.
+- **Quitting:** closing the window goes through `Game.quit()`, which frees the current scene and
+  waits 0.1 s (real time) before quitting, so the audio engine releases the playing track first.
+  Code that ends the game (e.g. M8's `--autoquit`) calls `Game.quit()` too.
+- No sound effects in v1.

@@ -1,3 +1,7 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Stage music: the user's own copies of existing songs, not for a public repo
+# (docs/specs/controls-and-display.md#audio).
+/assets/music/

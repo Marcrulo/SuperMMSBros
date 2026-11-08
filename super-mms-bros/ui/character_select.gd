@@ -55,6 +55,7 @@ func _ready() -> void:
 		tile.pressed.connect(choose.bind(i))
 		_grid.add_child(tile)
 		_tiles.append(tile)
+	SelectTile.wrap_rows(_tiles, _grid.columns)
 	_tiles[start].grab_focus()
 
 

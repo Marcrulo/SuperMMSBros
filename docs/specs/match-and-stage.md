@@ -111,7 +111,7 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
 
 ## Stages
 
-Three stages in v1. They share the Battlefield layout; each has its own name, background, platform
+Five stages in v1. They share the Battlefield layout; each has its own name, background, platform
 style and light. Each stage is a `StageData` resource in `stage/stages/` (id = file name):
 
 | Id | Name | Background | Platform style | Haze | Light |
@@ -119,6 +119,10 @@ style and light. Each stage is a `StageData` resource in `stage/stages/` (id = f
 | `mms` | Marie Mørks Skole | `mms.png` | school brick | cool (0.82, 0.87, 0.93) | white |
 | `fc` | Frederiksborgcenteret | `fc.png` | modern | cool | white |
 | `slot_sunset` | Frederiksborg Castle (sunset) | `slot_sunset.png` | castle | warm (0.96, 0.80, 0.60) | warm (1.0, 0.85, 0.70) |
+| `cafe_station` | Café Station | `cafe_station.png` | school brick | soft warm (0.96, 0.85, 0.72) | soft warm (1.0, 0.93, 0.84) |
+| `lindevej` | Lindevej | `lindevej.png` | white plaster | cool | white |
+
+Each stage also has a looping music track (see [controls & display](controls-and-display.md#audio)).
 
 `StageData` fields: `id`, `display_name`, `background` (texture), `style` (a `PlatformStyle`
 resource), `haze_color`, `light_color`. The stage is chosen on the stage select (see [menus](menus.md)) or with
@@ -197,6 +201,7 @@ Collision is unchanged by any of this.
 | school brick | grey `#8a8f99` | white trim 2, orange-red brick 12, dark band 2 | — |
 | modern | light concrete `#b9bcc0` | aluminum 2, blue glass with frames 8, dark line 1, concrete panels 5 | glint in every third pane |
 | castle | green copper `#4f8f78` | sandstone 2, red brick 4, sandstone 2, red brick 8 | sandstone corner blocks |
+| white plaster | dark slate `#5a6270` | slate trim 2, white plaster `#ecebe6` with faint joints 11, grey stone base 3 (thin: 1, 4, 1) | — |
 
 ### Background
 

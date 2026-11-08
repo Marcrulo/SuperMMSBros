@@ -88,7 +88,7 @@ color. The game swaps exactly those shades to blue for P2 when it loads the stri
 
 - **Backgrounds:** one image per stage, **528×297** (the 480×270 screen plus 10% for parallax
   drift), in `super-mms-bros/assets/stage/backgrounds/`, named after the stage id
-  (`mms.png`, `fc.png`, `slot_sunset.png`). Paint at full brightness: the game tones
+  (`mms.png`, `fc.png`, `slot_sunset.png`, `cafe_station.png`, `lindevej.png`). Paint at full brightness: the game tones
   backgrounds down with a haze.
 - **Platforms:** drawn by the game in code, in perspective, from each stage's platform style (colors
   and front-face bands; see [match & stage](match-and-stage.md#platform-look-perspective)). New

@@ -37,7 +37,7 @@ func test_default_character_uses_the_default_stats() -> void:
 
 
 func test_stage_order() -> void:
-	assert_eq(StageData.ALL_IDS, ["mms", "fc", "slot_sunset"])
+	assert_eq(StageData.ALL_IDS, ["mms", "fc", "slot_sunset", "cafe_station", "lindevej"])
 
 
 # --- Game autoload ---------------------------------------------------------------------------------
@@ -100,6 +100,22 @@ func test_tiles_are_a_5_by_2_grid() -> void:
 	assert_eq(tiles[5].get_global_rect().position, Vector2(64, 116))
 
 
+## The tile the arrows move to from `tile` toward `side`.
+func _neighbor(tile: Control, side: Side) -> Control:
+	return tile.find_valid_focus_neighbor(side)
+
+
+func test_left_and_right_wrap_within_each_row() -> void:
+	var screen: CharacterSelect = await _character_select()
+	var tiles := screen.get_tiles()
+	assert_eq(_neighbor(tiles[0], SIDE_LEFT), tiles[4], "row 1: left of the first is the last")
+	assert_eq(_neighbor(tiles[4], SIDE_RIGHT), tiles[0], "row 1: right of the last is the first")
+	assert_eq(_neighbor(tiles[5], SIDE_LEFT), tiles[9], "row 2 wraps within row 2")
+	assert_eq(_neighbor(tiles[9], SIDE_RIGHT), tiles[5])
+	assert_eq(_neighbor(tiles[2], SIDE_LEFT), tiles[1], "the middle moves normally")
+	assert_eq(_neighbor(tiles[2], SIDE_RIGHT), tiles[3])
+
+
 func test_first_slot_is_highlighted_and_named() -> void:
 	var screen: CharacterSelect = await _character_select()
 	assert_true(screen.get_tiles()[0].has_focus())
@@ -154,12 +170,21 @@ func _stage_select() -> StageSelect:
 func test_a_thumbnail_per_stage_in_order() -> void:
 	var screen: StageSelect = await _stage_select()
 	var tiles := screen.get_tiles()
-	assert_eq(tiles.size(), 3)
-	for i in 3:
+	assert_eq(tiles.size(), 5)
+	for i in 5:
 		assert_eq(tiles[i].stage_id, StageData.ALL_IDS[i])
-	assert_eq(tiles[0].get_global_rect(), Rect2(84, 188, 96, 54))
-	assert_eq(tiles[2].get_global_rect().position, Vector2(300, 188))
+	assert_eq(tiles[0].get_global_rect(), Rect2(24, 190, 80, 45))
+	assert_eq(tiles[4].get_global_rect().position, Vector2(376, 190))
 	assert_true(tiles[0].has_focus())
+
+
+func test_stage_row_wraps_around() -> void:
+	var screen: StageSelect = await _stage_select()
+	var tiles := screen.get_tiles()
+	var last := tiles.size() - 1
+	assert_eq(_neighbor(tiles[0], SIDE_LEFT), tiles[last])
+	assert_eq(_neighbor(tiles[last], SIDE_RIGHT), tiles[0])
+	assert_eq(_neighbor(tiles[1], SIDE_LEFT), tiles[0])
 
 
 func test_highlighted_stage_shows_in_the_preview() -> void:

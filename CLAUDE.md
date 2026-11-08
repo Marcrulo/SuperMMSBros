@@ -2,7 +2,7 @@
 
 A small 2D Smash-Bros-style platform fighter with a pixel-art look, built in Godot 4.7 with
 GDScript. v1: you vs one CPU, 1v1, 3 stocks, damage %, one big-headed fighter design with a full
-Smash-style move set, three themed stages sharing one layout, a zooming camera, generated
+Smash-style move set, five themed stages sharing one layout, a zooming camera, generated
 placeholder sprites. See `docs/vision.md`.
 
 ## Talking to the user

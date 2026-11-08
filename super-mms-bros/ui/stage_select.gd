@@ -3,7 +3,7 @@ extends Control
 ## Pick a stage (docs/specs/menus.md#stage-select): a big preview of the highlighted stage and a row
 ## of thumbnails. Back returns to the character select.
 
-const THUMBNAIL := Vector2(96, 54)
+const THUMBNAIL := Vector2(80, 45)
 
 var _tiles: Array[SelectTile] = []
 
@@ -25,6 +25,7 @@ func _ready() -> void:
 		tile.pressed.connect(choose.bind(i))
 		_row.add_child(tile)
 		_tiles.append(tile)
+	SelectTile.wrap_rows(_tiles, _tiles.size())
 	_tiles[start].grab_focus()
 
 

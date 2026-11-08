@@ -29,6 +29,9 @@ Esc / B to go back). At startup `Game` also adds the game keys to them, so the s
 | `ui_accept` | `attack` (J), `jump` (Space) |
 | `ui_cancel` | `shield` (L) |
 
+Moving left from the leftmost tile of a row wraps to the rightmost tile of the same row, and right
+from the rightmost wraps to the leftmost (on both screens). Up and down don't wrap.
+
 ## Characters and the roster
 
 - A **`CharacterData`** resource per character (`fighter/characters/<id>.tres`): `id`,
@@ -65,8 +68,8 @@ Screen layout (480×270, background `#1a1c2c`):
 - **Preview** of the highlighted stage: its background at 240×135 (scaled down), centered, top at
   y 32, with a 1 px `#f4f4f4` border.
 - **Name** of the highlighted stage (`display_name`), 8 px, centered, top at y 174.
-- **Thumbnails:** one per stage, in the order `mms`, `fc`, `slot_sunset`, each 96×54, 12 px
-  apart, centered (x 84…396), top at y 188. The highlighted one has a 2 px `#b13e53` border.
+- **Thumbnails:** one per stage, in the order `mms`, `fc`, `slot_sunset`, `cafe_station`,
+  `lindevej`, each 80×45, 8 px apart, centered (x 24…456), top at y 190. The highlighted one has a 2 px `#b13e53` border.
 - **Hint**, 8 px, centered, top at y 254, `#94b0c2`: "J/SPACE: FIGHT!   L/ESC: BACK".
 - The first stage is highlighted when the screen opens (or the last chosen one). Choosing sets
   `Game.stage_id` and starts the match. Back returns to the character select.

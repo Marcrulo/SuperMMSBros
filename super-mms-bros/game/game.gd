@@ -7,6 +7,8 @@ const STAGE_SELECT_PATH := "res://ui/stage_select.tscn"
 const MATCH_PATH := "res://match/match.tscn"
 const ROSTER_PATH := "res://fighter/characters/roster.tres"
 const DEFAULT_CHARACTER := "default"
+## Seconds the audio engine gets to release the music before quitting.
+const QUIT_DELAY := 0.1
 ## Menu action ← the game actions whose keys and buttons it also accepts.
 const MENU_KEYS := {
 	"ui_left": ["move_left"], "ui_right": ["move_right"], "ui_up": ["up"], "ui_down": ["down"],
@@ -24,10 +26,28 @@ var requested_scene: String = ""
 
 
 func _ready() -> void:
+	# Closing the window goes through quit() instead of stopping the engine at once.
+	get_tree().auto_accept_quit = false
 	for menu_action: String in MENU_KEYS:
 		for game_action: String in MENU_KEYS[menu_action]:
 			for event in InputMap.action_get_events(game_action):
 				InputMap.action_add_event(menu_action, event)
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		quit()
+
+
+## Quits cleanly: frees the current scene first and gives the audio engine a moment (real time, it
+## runs on its own thread) to let go of the music, then stops the game. Quitting mid-track otherwise
+## leaves the track "in use" at exit. Shutdown only, so not counted in ticks.
+func quit() -> void:
+	var tree := get_tree()
+	if tree.current_scene != null:
+		tree.current_scene.queue_free()
+	await tree.create_timer(QUIT_DELAY).timeout
+	tree.quit()
 
 
 ## True when the command line already says which stage to play: then the menus are skipped.

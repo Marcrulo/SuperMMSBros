@@ -16,6 +16,17 @@ var _picture := TextureRect.new()
 var _border := Panel.new()
 
 
+## Makes left/right wrap around in each row of `tiles` (laid out `columns` per row): left from a
+## row's first tile goes to its last, right from its last to its first. The focus neighbor
+## properties override the direction Godot would pick from the tiles' positions.
+static func wrap_rows(tiles: Array[SelectTile], columns: int) -> void:
+	for row_start in range(0, tiles.size(), columns):
+		var first := tiles[row_start]
+		var last := tiles[mini(row_start + columns, tiles.size()) - 1]
+		first.focus_neighbor_left = first.get_path_to(last)
+		last.focus_neighbor_right = last.get_path_to(first)
+
+
 ## Makes a `size` tile showing `picture` (stretched to fill, inside the border). Its layers, back to
 ## front: the square, the picture, the highlight border (only while focused).
 func setup(tile_size: Vector2, picture: Texture2D) -> void:
