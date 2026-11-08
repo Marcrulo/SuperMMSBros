@@ -110,7 +110,7 @@ Screen layout (480×270, background `#1a1c2c`):
   y 32, with a 1 px `#f4f4f4` border.
 - **Name** of the highlighted stage (`display_name`), 8 px, centered, top at y 174.
 - **Thumbnails:** one per stage, in the order `mms`, `fc`, `slot_sunset`, `cafe_station`,
-  `lindevej`, each 80×45, 8 px apart, centered (x 24…456), top at y 190. The highlighted one has a 2 px `#b13e53` border.
+  `lindevej`, `cafe_slotsbio`, each 64×36, 8 px apart, centered (x 28…452), top at y 190. The highlighted one has a 2 px `#b13e53` border.
 - **Hint**, 8 px, centered, top at y 254, `#94b0c2`: "FIGHT WITH J OR SPACE    BACK WITH L OR ESC".
 - The first stage is highlighted when the screen opens (or the last chosen one). Choosing sets
   `Game.stage_id` and starts the match. Back returns to the character select.

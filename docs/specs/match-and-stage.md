@@ -111,7 +111,7 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
 
 ## Stages
 
-Five stages in v1. They share the Battlefield layout; each has its own name, background, platform
+Six stages in v1. They share the Battlefield layout; each has its own name, background, platform
 style and light. Each stage is a `StageData` resource in `stage/stages/` (id = file name):
 
 | Id | Name | Background | Platform style | Haze | Light |
@@ -121,6 +121,7 @@ style and light. Each stage is a `StageData` resource in `stage/stages/` (id = f
 | `slot_sunset` | Frederiksborg Castle Sunset | `slot_sunset.png` | castle | warm (0.96, 0.80, 0.60) | warm (1.0, 0.85, 0.70) |
 | `cafe_station` | Cafe Station | `cafe_station.png` | school brick | soft warm (0.96, 0.85, 0.72) | soft warm (1.0, 0.93, 0.84) |
 | `lindevej` | Lindevej | `lindevej.png` | white plaster | cool | white |
+| `cafe_slotsbio` | Cafe Slotsbio | `cafe_slotsbio.png` | yellow plaster | cool | white |
 
 Each stage also has a looping music track (see [controls & display](controls-and-display.md#audio)).
 
@@ -213,6 +214,7 @@ Collision is unchanged by any of this.
 | modern | light concrete `#b9bcc0` | aluminum 2, blue glass with frames 8, dark line 1, concrete panels 5 | glint in every third pane |
 | castle | green copper `#4f8f78` | sandstone 2, red brick 4, sandstone 2, red brick 8 | sandstone corner blocks |
 | white plaster | dark slate `#5a6270` | slate trim 2, white plaster `#ecebe6` with faint joints 11, grey stone base 3 (thin: 1, 4, 1) | — |
+| yellow plaster | warm paving `#c7b09a` | white trim 2, sunny yellow plaster `#fec62c` with faint joints 9, grey stone panels 5 (thin: 1, 4, 1) | — |
 
 ### Background
 

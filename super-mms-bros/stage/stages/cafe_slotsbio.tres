@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="StageData" format=3]
+
+[ext_resource type="Script" path="res://stage/stage_data.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://assets/stage/backgrounds/cafe_slotsbio.png" id="2_background"]
+[ext_resource type="Resource" path="res://stage/styles/yellow_plaster.tres" id="3_style"]
+
+[resource]
+script = ExtResource("1_data")
+id = "cafe_slotsbio"
+display_name = "Cafe Slotsbio"
+background = ExtResource("2_background")
+style = ExtResource("3_style")
+haze_color = Color(0.82, 0.87, 0.93, 1)
+light_color = Color(1, 1, 1, 1)

@@ -61,10 +61,10 @@ horizontal_alignment = 1
 
 [node name="Thumbnails" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 24.0
+offset_left = 28.0
 offset_top = 190.0
-offset_right = 456.0
-offset_bottom = 235.0
+offset_right = 452.0
+offset_bottom = 226.0
 theme_override_constants/separation = 8
 
 [node name="Hint" type="Label" parent="."]

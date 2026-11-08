@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PlatformStyle" format=3]
+
+[ext_resource type="Script" path="res://stage/platform_style.gd" id="1_style"]
+
+[resource]
+script = ExtResource("1_style")
+top = Color(0.7804, 0.6902, 0.6039, 1)
+top_edge = Color(0.8784, 0.8, 0.7176, 1)
+shadow = Color(0.6431, 0.5608, 0.4902, 1)
+far_shadow = Color(0.7098, 0.6235, 0.5490, 1)
+side = Color(0.8078, 0.5882, 0.1255, 1)
+under = Color(0.1686, 0.1843, 0.2118, 1)
+main_bands = [["solid", 2, Color(0.9373, 0.9373, 0.9216, 1)], ["panel", 9, Color(0.9961, 0.7765, 0.1725, 1), Color(0.9294, 0.7020, 0.1294, 1)], ["panel", 5, Color(0.4706, 0.5059, 0.5529, 1), Color(0.4078, 0.4431, 0.4902, 1)]]
+thin_bands = [["solid", 1, Color(0.9373, 0.9373, 0.9216, 1)], ["solid", 4, Color(0.9961, 0.7765, 0.1725, 1)], ["solid", 1, Color(0.4706, 0.5059, 0.5529, 1)]]

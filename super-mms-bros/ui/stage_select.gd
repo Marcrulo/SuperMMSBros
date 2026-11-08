@@ -3,7 +3,7 @@ extends Control
 ## Pick a stage (docs/specs/menus.md#stage-select): a big preview of the highlighted stage and a row
 ## of thumbnails. Back returns to the character select.
 
-const THUMBNAIL := Vector2(80, 45)
+const THUMBNAIL := Vector2(64, 36)
 ## Where the title's top goes in the brush font (its letters then end just above the preview).
 const TITLE_TOP := 2.0
 

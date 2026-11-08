@@ -59,7 +59,7 @@ func test_default_character_uses_the_default_stats() -> void:
 
 
 func test_stage_order() -> void:
-	assert_eq(StageData.ALL_IDS, ["mms", "fc", "slot_sunset", "cafe_station", "lindevej"])
+	assert_eq(StageData.ALL_IDS, ["mms", "fc", "slot_sunset", "cafe_station", "lindevej", "cafe_slotsbio"])
 
 
 # --- Game autoload ---------------------------------------------------------------------------------
@@ -299,11 +299,11 @@ func _stage_select() -> StageSelect:
 func test_a_thumbnail_per_stage_in_order() -> void:
 	var screen: StageSelect = await _stage_select()
 	var tiles := screen.get_tiles()
-	assert_eq(tiles.size(), 5)
-	for i in 5:
+	assert_eq(tiles.size(), 6)
+	for i in 6:
 		assert_eq(tiles[i].stage_id, StageData.ALL_IDS[i])
-	assert_eq(tiles[0].get_global_rect(), Rect2(24, 190, 80, 45))
-	assert_eq(tiles[4].get_global_rect().position, Vector2(376, 190))
+	assert_eq(tiles[0].get_global_rect(), Rect2(28, 190, 64, 36))
+	assert_eq(tiles[5].get_global_rect().position, Vector2(388, 190))
 	assert_true(tiles[0].has_focus())
 
 

@@ -140,7 +140,7 @@ Read from `OS.get_cmdline_user_args()` (arguments after `--`):
 
 | Option | Default | Meaning |
 |---|---|---|
-| `--stage=<id>` | `mms` | Stage to play (`mms`, `fc`, `slot_sunset`, `cafe_station`, `lindevej`) |
+| `--stage=<id>` | `mms` | Stage to play (`mms`, `fc`, `slot_sunset`, `cafe_station`, `lindevej`, `cafe_slotsbio`) |
 | `--hitboxes` | off | Start with the hitbox debug view on (F1 toggles it) |
 | `--p1=human\|cpu` | `human` | Controller for P1 |
 | `--p2=human\|cpu` | `cpu` | Controller for P2 |

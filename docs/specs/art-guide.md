@@ -1,7 +1,7 @@
 # Art Guide
 
 What to draw, at what size, and how to export it so it drops into the game. v1 ships with
-generated placeholder sprites (`tools/gen_placeholder_sprites.py`); this guide is the target for
+generated sprites (`tools/gen_fighter_sprites.py`); this guide is the target for
 the hand-drawn art that replaces them. Replacing a PNG with your own drawing in the same format
 needs no code changes.
 

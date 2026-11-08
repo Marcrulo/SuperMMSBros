@@ -47,7 +47,7 @@ func test_camera_sweep_along_platform_ends_skips_collapsed_faces() -> void:
 
 func test_every_style_draws() -> void:
 	var stage: Stage = add_child_autofree(STAGE_SCENE.instantiate())
-	for id in ["mms", "fc", "slot_sunset", "lindevej"]:
+	for id in ["mms", "fc", "slot_sunset", "lindevej", "cafe_slotsbio"]:
 		stage.apply(StageData.load_stage(id))
 		await wait_process_frames(1)
 	assert_true(true, "drew without script errors")
