@@ -92,7 +92,7 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
   - a dark panel (`#1a1c2c`, slightly see-through) with a 1 px border in the **player color**
     (P1 `#b13e53` red, P2 `#3b5dc9` blue);
   - the **portrait**: the fighter's head, cut from the first `idle` drawing (frame pixels x 14–33,
-    y 16–35) in that player's shirt colors, on a 22×22 square in a darker shade of the player color;
+    y 16–35; in a 64 px strip x 23–42, y 20–39) in that player's shirt colors, on a 22×22 square in a darker shade of the player color;
   - the **name** (`P1`, `P2`; the CPU's card will say `CPU`) at the font's native 8 px, in a light
     shade of the player color;
   - the **damage %** at 16 px (2× the font), as a whole number (`42%`), tinting from `#f4f4f4`

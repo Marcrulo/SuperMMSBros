@@ -7,8 +7,8 @@ const PERCENT_LOW := Color("#f4f4f4")
 const PERCENT_HIGH := Color("#f0524f")
 ## The % at which the number is fully red.
 const PERCENT_RED_AT := 150.0
-## Where the head sits in the first idle drawing (art guide frame pixels).
-const HEAD_REGION := Rect2(14, 16, 20, 20)
+## Where the head sits in the first idle drawing (art guide frame pixels), per frame size.
+const HEAD_REGIONS := {48: Rect2(14, 16, 20, 20), 64: Rect2(23, 20, 20, 20)}
 ## How long (frames) and how far (px) the number jumps when the fighter is hit.
 const BUMP_FRAMES := 6
 const BUMP_HEIGHT := 2.0
@@ -38,6 +38,11 @@ static func percent_color(percent: float) -> Color:
 	return PERCENT_LOW.lerp(PERCENT_HIGH, clampf(percent / PERCENT_RED_AT, 0.0, 1.0))
 
 
+## The head's square in a first idle drawing of this frame size.
+static func head_region(size: int) -> Rect2:
+	return HEAD_REGIONS.get(size, HEAD_REGIONS[48])
+
+
 ## Shows `fighter` under `player_name`, framed in `color`.
 func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 	_fighter = fighter
@@ -52,7 +57,7 @@ func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 	_portrait_box.add_theme_stylebox_override("panel", square)
 	var head := AtlasTexture.new()
 	head.atlas = FighterVisuals.textures_for(fighter.character_id)["idle"]
-	head.region = HEAD_REGION
+	head.region = head_region(FighterVisuals.frame_size(head.atlas))
 	_head.texture = head
 	for icon in _stock_icons:
 		icon.queue_free()

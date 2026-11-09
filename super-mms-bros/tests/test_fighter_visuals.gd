@@ -32,7 +32,7 @@ func test_animation_for_movement_states() -> void:
 func test_every_animation_has_timings_for_its_drawings() -> void:
 	for animation: String in FighterVisuals.ANIMATIONS:
 		var texture := load("res://assets/fighters/slot_01/fighter_%s.png" % animation) as Texture2D
-		var drawings := int(texture.get_width() / 48.0)
+		var drawings := int(texture.get_width() / texture.get_height())
 		assert_eq(FighterVisuals.ANIMATIONS[animation].ticks.size(), drawings, animation)
 
 
@@ -112,3 +112,13 @@ func test_shield_bubble_shrinks_with_health() -> void:
 	assert_almost_eq(FighterVisuals.shield_radius(100.0, 100.0), 16.0, 0.001)
 	assert_almost_eq(FighterVisuals.shield_radius(0.0, 100.0), 6.0, 0.001)
 	assert_almost_eq(FighterVisuals.shield_radius(50.0, 100.0), 11.0, 0.001)
+
+
+func test_frame_size_is_the_strip_height() -> void:
+	assert_eq(FighterVisuals.frame_size(FighterVisuals.textures_for("slot_01")["idle"]), 48)
+	assert_eq(FighterVisuals.frame_size(FighterVisuals.textures_for("slot_05")["idle"]), 64)
+
+
+func test_frame_rect_puts_the_feet_at_the_origin() -> void:
+	assert_eq(FighterVisuals.frame_rect(48), Rect2(-24, -48, 48, 48))
+	assert_eq(FighterVisuals.frame_rect(64), Rect2(-32, -64, 64, 64))

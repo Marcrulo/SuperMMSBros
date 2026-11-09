@@ -1,6 +1,6 @@
 extends GutTest
-## Every character's sprite strips match docs/specs/art-guide.md: 48×48 frames, side by side, in
-## assets/fighters/<id>/.
+## Every character's sprite strips match docs/specs/art-guide.md: 48×48 (or 64×64) frames, side by
+## side, in assets/fighters/<id>/; one frame size per character.
 
 const DIR := "res://assets/fighters/"
 ## Drawings per animation, from the art guide's table.
@@ -16,13 +16,22 @@ const FRAMES := {
 
 func test_every_character_has_every_strip() -> void:
 	for character in Game.roster().characters:
+		var size := 0
 		for animation: String in FRAMES:
 			var path := DIR + "%s/fighter_%s.png" % [character.id, animation]
 			assert_true(ResourceLoader.exists(path), "missing %s" % path)
 			if not ResourceLoader.exists(path):
 				continue
 			var texture := load(path) as Texture2D
-			assert_eq(texture.get_size(), Vector2(48 * FRAMES[animation], 48), path)
+			if size == 0:
+				size = int(texture.get_height())
+				assert_has([48, 64], size, "%s frame size" % character.id)
+			assert_eq(texture.get_size(), Vector2(size * FRAMES[animation], size), path)
+
+
+func test_michael_bech_is_in_the_64_px_style() -> void:
+	var texture := load(DIR + "slot_05/fighter_idle.png") as Texture2D
+	assert_eq(texture.get_size(), Vector2(64 * 4, 64))
 
 
 func test_every_character_has_a_stock_icon() -> void:

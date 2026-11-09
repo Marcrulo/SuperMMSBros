@@ -36,7 +36,7 @@ var _sounds_on := false
 static func portrait(character_id: String = CharacterData.DEFAULT_ID) -> AtlasTexture:
 	var head := AtlasTexture.new()
 	head.atlas = FighterVisuals.textures_for(character_id)["idle"]
-	head.region = PlayerCard.HEAD_REGION
+	head.region = PlayerCard.head_region(FighterVisuals.frame_size(head.atlas))
 	return head
 
 

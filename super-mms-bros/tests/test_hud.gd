@@ -57,9 +57,15 @@ func test_card_shows_the_fighters_percent() -> void:
 
 func test_portrait_is_the_head_in_the_player_colors() -> void:
 	var portrait := _hud.cards[1].get_portrait()
-	assert_eq(portrait.region, Rect2(14, 16, 20, 20))
+	var size := FighterVisuals.frame_size(portrait.atlas)
+	assert_eq(portrait.region, PlayerCard.head_region(size))
 	assert_eq(portrait.atlas, FighterVisuals.textures_for(_match.get_fighter(1).character_id)["idle"],
 			"P2's own strip")
+
+
+func test_head_region_per_frame_size() -> void:
+	assert_eq(PlayerCard.head_region(48), Rect2(14, 16, 20, 20))
+	assert_eq(PlayerCard.head_region(64), Rect2(23, 20, 20, 20))
 
 
 func test_card_shows_a_stock_icon_per_stock() -> void:

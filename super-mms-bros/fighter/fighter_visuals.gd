@@ -1,13 +1,12 @@
 class_name FighterVisuals
 extends Node2D
 ## Draws the parent Fighter from its sprite strips (docs/specs/fighter.md#visuals-fightervisuals,
-## docs/specs/art-guide.md: 48×48 frames, feet at the bottom center, facing right). The animation
+## docs/specs/art-guide.md: 48×48 or 64×64 frames, feet at the bottom center, facing right). The animation
 ## comes from the fighter's state and the frame from its state_frame (ticks), so the drawing stays
 ## in step with the gameplay. Only reads the fighter's state; never changes it.
 
 ## Each character's strips are in <SPRITES_DIR><character id>/.
 const SPRITES_DIR := "res://assets/fighters/"
-const FRAME := 48
 ## Ticks each drawing is shown, per animation (art guide). A non-looping animation holds its last
 ## drawing. For moves, the strike drawing covers exactly the move's active frames.
 const ANIMATIONS := {
@@ -54,6 +53,7 @@ const SHIELD_MAX_RADIUS := 16.0
 const SHIELD_COLORS: Array[Color] = [Color(0.85, 0.3, 0.38, 0.35), Color(0.3, 0.45, 0.95, 0.35)]
 ## The neutral special's charge glow, at the fists (relative to the feet, facing right).
 const CHARGE_GLOW := Color(0.45, 0.94, 0.97, 0.8)
+## In a 48 px frame; scaled with the frame size.
 const FIST := Vector2(7, -14)
 
 ## Debug view of hurtboxes and hitboxes: F1 toggles it, `--hitboxes` turns it on at start.
@@ -123,6 +123,16 @@ static func shield_radius(health: float, max_health: float) -> float:
 	return lerpf(SHIELD_MIN_RADIUS, SHIELD_MAX_RADIUS, clampf(health / max_health, 0.0, 1.0))
 
 
+## A strip's frame size: its height (48 or 64; frames are square, side by side).
+static func frame_size(texture: Texture2D) -> int:
+	return int(texture.get_height())
+
+
+## Where a frame of this size is drawn: 1:1, feet (bottom center) at the fighter's origin.
+static func frame_rect(size: int) -> Rect2:
+	return Rect2(-size / 2.0, -size, size, size)
+
+
 ## Loads every strip and the stock icon of a character.
 static func load_textures(character_id: String) -> Dictionary:
 	var dir := SPRITES_DIR + character_id + "/"
@@ -158,13 +168,14 @@ func _draw() -> void:
 	var texture: Texture2D = textures_for(_fighter.character_id)[animation]
 	var timing: Dictionary = ANIMATIONS[animation]
 	var frame := frame_index(timing.ticks, timing.loop, _fighter.state_frame)
+	var size := frame_size(texture)
 	# Mirror when facing left; the strips are drawn facing right.
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(_fighter.facing, 1))
-	draw_texture_rect_region(texture, Rect2(-FRAME / 2.0, -FRAME, FRAME, FRAME),
-		Rect2(frame * FRAME, 0, FRAME, FRAME), tint(_is_flashing(), _fighter.is_intangible()))
+	draw_texture_rect_region(texture, frame_rect(size), Rect2(frame * size, 0, size, size),
+		tint(_is_flashing(), _fighter.is_intangible()))
 	draw_set_transform(Vector2.ZERO)
 	if _fighter.state == Fighter.State.ATTACK and _fighter.move == &"neutral_special_charge":
-		_draw_charge_glow()
+		_draw_charge_glow(size)
 	if _fighter.state == Fighter.State.SHIELD:
 		_draw_shield()
 	if show_boxes:
@@ -181,9 +192,9 @@ func _draw_shield() -> void:
 
 
 ## A glow on the fists that grows as the neutral special charges.
-func _draw_charge_glow() -> void:
+func _draw_charge_glow(size: int) -> void:
 	var charge := clampf(_fighter.state_frame / float(_fighter.stats.moveset.neutral_special.charge_frames), 0.0, 1.0)
-	var fist := Vector2(FIST.x * _fighter.facing, FIST.y)
+	var fist := Vector2(FIST.x * _fighter.facing, FIST.y) * (size / 48.0)
 	draw_circle(fist, 1.0 + 3.0 * charge, CHARGE_GLOW)
 
 
