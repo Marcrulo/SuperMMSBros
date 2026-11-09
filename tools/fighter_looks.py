@@ -1,11 +1,15 @@
 """Each character's look for tools/gen_fighter_sprites.py: colors taken from their portraits
-(assets/fighters/portraits/), a hair style and a few traits. Everyone shares the same body and poses.
+(assets/fighters/portraits/), a hair style and a few traits. Everyone shares the same body and
+poses.
 
 Keys: skin, hair, shirt, pants (base colors; shades are derived), optional shoes, eye, hands,
-hair_style (short, receding, fringe, bob, long, bun, ponytail, bald, monkey), puff (extra hair
-volume, in head radii), beard, glasses, lens, blush, inner (shirt under an open jacket), stripe
-(reflective bands), dots (a dotted print), sleeves ("short" shows the forearms), hood, skirt, camo (face-paint colors),
-face and tail (the monkey).
+hair_style (short, receding, fringe, bob, long, bun, ponytail, bald, monkey), hair_length (how
+far long hair hangs, in px; default 11), puff (extra hair volume, in head radii), beard, glasses,
+lens, blush, inner (shirt under an open jacket), stripe (reflective bands), dots (a dotted
+print), sleeves ("short" shows the forearms), hood, skirt, camo (face-paint colors), face and
+tail (the monkey). Build: legs, torso (px longer per leg segment / torso), head (head
+radius), arms (px per arm segment), wide (torso px wider at the back), belly (px of belly in
+front), cheeks (head this much wider than tall); negative for smaller.
 """
 
 FAIR = (240, 176, 136)
@@ -14,15 +18,16 @@ DARK = (40, 42, 54)
 BLACK_FRAMES = (20, 20, 28)
 
 LOOKS = {
-    # Pia: short copper-red hair, rosy cheeks, grey top.
+    # Pia: heavier build (same height); short copper-red hair, rosy cheeks, grey top.
     "default": dict(skin=(232, 160, 122), hair=(150, 52, 26), hair_light=(190, 82, 40),
-                    hair_style="bob", blush=(222, 120, 110), shirt=(128, 128, 136), pants=JEANS),
+                    hair_style="bob", blush=(222, 120, 110), shirt=(128, 128, 136), pants=JEANS,
+                    wide=2, belly=2, cheeks=0.6),
     # Gitte: big white hair, magenta jacket.
     "slot_02": dict(skin=FAIR, hair=(236, 240, 244), hair_light=(255, 255, 255), hair_style="bob",
                     puff=0.12, shirt=(226, 48, 120), shirt_shade=(160, 16, 88), pants=DARK),
-    # Trine: grey hair pulled back, thick black glasses, grey blazer.
-    "slot_03": dict(skin=FAIR, hair=(160, 168, 176), hair_style="bun", glasses=BLACK_FRAMES,
-                    shirt=(84, 96, 106), inner=(150, 160, 168), pants=DARK),
+    # Trine: shoulder-length grey hair, thick black glasses, grey blazer.
+    "slot_03": dict(skin=FAIR, hair=(160, 168, 176), hair_style="long", hair_length=9,
+                    glasses=BLACK_FRAMES, shirt=(84, 96, 106), inner=(150, 160, 168), pants=DARK),
     # Nina: long red hair, black top.
     "slot_04": dict(skin=(248, 180, 140), hair=(168, 30, 18), hair_light=(214, 64, 34),
                     hair_style="long", shirt=(36, 32, 40), shirt_light=(70, 62, 74), pants=JEANS),
@@ -33,9 +38,10 @@ LOOKS = {
     # Henrik: receding brown hair, full beard, navy blazer over a white shirt.
     "slot_06": dict(skin=FAIR, hair=(96, 60, 24), hair_style="receding", beard=(128, 96, 56),
                     shirt=(48, 80, 124), inner=(232, 236, 240), pants=DARK),
-    # Stig: short dark-brown hair, dark glasses, grey suit, white shirt.
-    "slot_07": dict(skin=FAIR, hair=(84, 56, 34), glasses=BLACK_FRAMES, shirt=(72, 84, 90),
-                    inner=(232, 236, 240), pants=(60, 68, 74)),
+    # Stig: short receding dark-brown hair (a big forehead), dark glasses, grey suit, white shirt.
+    "slot_07": dict(skin=FAIR, hair=(84, 56, 34), hair_style="receding",
+                    glasses=BLACK_FRAMES, shirt=(72, 84, 90), inner=(232, 236, 240),
+                    pants=(60, 68, 74)),
     # Casper: short brown hair, black top.
     "slot_08": dict(skin=(248, 176, 144), hair=(80, 48, 16), shirt=(30, 30, 36),
                     shirt_light=(64, 64, 72), pants=JEANS),
@@ -59,7 +65,9 @@ LOOKS = {
                     hair_style="monkey", face=(200, 172, 136), eye=(40, 22, 16),
                     shirt=(112, 104, 88), shirt_light=(136, 126, 106), pants=(100, 92, 78),
                     hands=(200, 172, 136), shoes=(170, 146, 112), tail=True),
-    # Magnus: brown hair with a fringe, black glasses. Clothes unknown yet: a teal hoodie.
+    # Magnus: smaller build; brown hair with a fringe, black glasses. Clothes unknown yet:
+    # a teal hoodie.
     "slot_14": dict(skin=(240, 166, 130), hair=(96, 60, 34), hair_light=(130, 86, 50),
-                    hair_style="fringe", glasses=BLACK_FRAMES, shirt=(40, 120, 128), pants=JEANS),
+                    hair_style="fringe", glasses=BLACK_FRAMES, shirt=(40, 120, 128), pants=JEANS,
+                    legs=-0.6, torso=-1.0, head=-0.5, arms=-0.4),
 }

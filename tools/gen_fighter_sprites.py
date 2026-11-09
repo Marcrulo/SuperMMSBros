@@ -119,7 +119,8 @@ def hair_at(style, ux, uy):
 
 def draw_head(c, look, p, cx, cy, eyes):
     style = look.get("hair_style", "short")
-    rx, ry = HEAD["rx"], HEAD["ry"]
+    ry = HEAD["ry"] + look.get("head", 0.0)
+    rx = ry + look.get("cheeks", 0.0)
     fur = style == "monkey"
     # Volume: big hair sticks out past the skull at the top and back.
     puff = look.get("puff", 0.0)
@@ -167,7 +168,8 @@ def draw_head(c, look, p, cx, cy, eyes):
         c.put(cx - rx - 1.0, cy - 3.0, p["hair_light"])
 
     # Eyes (front one bigger), looking forward; closed for the hurt pose.
-    ex, ey = round(cx) + 1, round(cy)
+    # On a smaller head the eyes sit a little further back, so they stay on the face.
+    ex, ey = round(cx + 1 + 1.5 * look.get("head", 0.0)), round(cy)
     if fur:
         ex += 1
     if p["glasses"] and eyes != "shut":
@@ -204,14 +206,21 @@ def draw_frame(pose, look):
     p = palette(look)
     c = Canvas()
     dx, dy = pose.get("lean", 0), pose.get("bob", 0)
-    hip_y = 40.5 + pose.get("crouch", 0)
-    shoulder = (24 + dx, 35 + dy + pose.get("crouch", 0))
+    # Build: legs and torso lengths, head size and torso width can differ per character
+    # (look keys legs, torso, head, wide, arms); the feet always end on the bottom row.
+    leg_len = 3.6 + look.get("legs", 0.0)
+    arm_len = 3.0 + look.get("arms", 0.0)
+    wide = look.get("wide", 0)
+    head_r = HEAD["rx"] + look.get("head", 0.0)
+    hip_y = 47.7 - 2 * leg_len + pose.get("crouch", 0)
+    shoulder = (24 + dx, hip_y - 5.5 - look.get("torso", 0.0) + dy)
     cx = 24.5 + dx + pose.get("head_dx", 0)
-    cy = HEAD["cy"] + dy + pose.get("crouch", 0) + pose.get("head_dy", 0)
+    cy = shoulder[1] - 1.6 - head_r + pose.get("head_dy", 0)
     style = look.get("hair_style", "short")
     short_sleeves = look.get("sleeves") == "short"
 
-    def leg(root, thigh, knee, color, length=3.6):
+    def leg(root, thigh, knee, color):
+        length = leg_len
         k = add(root, down(thigh), length)
         f = add(k, down(thigh - knee), length)
         c.stroke(root, k, 2, color)
@@ -221,7 +230,8 @@ def draw_frame(pose, look):
         for x in range(fx - 1, fx + 2):
             c.put(x, fy, p["shoes"])
 
-    def arm(root, upper, elbow, color, length=3.0, reach=0.0, skin=None):
+    def arm(root, upper, elbow, color, reach=0.0, skin=None):
+        length = arm_len
         e = add(root, down(upper), length + reach)
         h = add(e, down(upper + elbow), length + reach)
         c.stroke(root, e, 2, color)
@@ -230,30 +240,37 @@ def draw_frame(pose, look):
 
     # Long hair hangs down the back, behind everything.
     if style == "long":
-        for y in range(round(cy), round(cy) + 11):
-            w = 4 if y < cy + 8 else 3
-            for x in range(round(cx - HEAD["rx"]) - 1, round(cx - HEAD["rx"]) - 1 + w):
+        length = look.get("hair_length", 11)
+        for y in range(round(cy), round(cy) + length):
+            w = 4 if y < cy + length - 3 else 3
+            back = round(cx - head_r - look.get("cheeks", 0.0)) - 1
+            for x in range(back, back + w):
                 c.put(x, y, p["hair"])
     # A hood bunched up behind the neck.
     if look.get("hood"):
         c.disc(cx - 4.0, cy + 6.0, 2.4, p["shirt_shade"])
     # A monkey's tail, curling up behind.
     if look.get("tail"):
-        tx, ty = 21 + dx * 0.3, hip_y - 1
+        tx, ty = 21 - wide + dx * 0.3, hip_y - 1
         c.stroke((tx, ty), (tx - 3, ty - 1), 1, p["hair"])
         c.stroke((tx - 3, ty - 1), (tx - 5, ty - 4), 1, p["hair"])
         c.stroke((tx - 5, ty - 4), (tx - 4, ty - 7), 1, p["hair"])
 
     # Back limbs (darker), behind everything.
-    leg((23 + dx * 0.3, hip_y), pose["bt"], pose["bk"], p["pants_back"])
-    arm((22 + dx, shoulder[1] + 0.5), pose["ba"], pose["be"], p["shirt_shade"], skin=p["skin_shade"])
+    leg((23 - wide * 0.5 + dx * 0.3, hip_y), pose["bt"], pose["bk"], p["pants_back"])
+    arm((22 - wide + dx, shoulder[1] + 0.5), pose["ba"], pose["be"], p["shirt_shade"], skin=p["skin_shade"])
 
     # Torso: 6 x 7, shaded on the back side, lighter on the front.
     top = int(shoulder[1])
     for y in range(top, int(hip_y) + 1):
-        for x in range(21, 27):
+        # A belly bulges forward below the chest, rounded at its top and bottom.
+        belly = 0
+        if top + 2 <= y < int(hip_y):
+            ends = y == top + 2 or y == int(hip_y) - 1
+            belly = max(look.get("belly", 0) - (1 if ends else 0), 0)
+        for x in range(21 - wide, 27 + belly):
             xx = x + round(dx * (1 - (y - shoulder[1]) / 8))
-            color = p["shirt_shade"] if x == 21 else p["shirt_light"] if x == 26 and y < shoulder[1] + 3 else p["shirt"]
+            color = p["shirt_shade"] if x == 21 - wide else p["shirt_light"] if x == 26 and y < shoulder[1] + 3 else p["shirt"]
             if p["inner"] and x in (24, 25) and y < top + 3 and not (x == 24 and y == top + 2):
                 color = p["inner"]
             if p["stripe"] and y in (top + 3, top + 5):
@@ -273,8 +290,8 @@ def draw_frame(pose, look):
     leg((25.5 + dx * 0.3, hip_y), pose["ft"], pose["fk"], p["pants"])
     if look.get("skirt"):
         for i, y in enumerate(range(int(hip_y) + 1, int(hip_y) + 4)):
-            for x in range(21 - i // 2, 27 + (i + 1) // 2):
-                c.put(x + round(dx * 0.3), y, p["shirt_shade"] if x <= 21 - i // 2 else p["shirt"])
+            for x in range(21 - wide - i // 2, 27 + (i + 1) // 2):
+                c.put(x + round(dx * 0.3), y, p["shirt_shade"] if x <= 21 - wide - i // 2 else p["shirt"])
     if not raised:
         arm((26 + dx, shoulder[1] + 0.5), pose["fa"], pose["fe"], p["shirt"], reach=pose.get("reach", 0), skin=p["skin"])
     return c.image()
