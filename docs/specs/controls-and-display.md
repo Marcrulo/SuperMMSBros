@@ -89,8 +89,8 @@ looks consistent before real art exists. Stage colors are in the platform styles
 |---|---|
 | Clear color behind everything | `#1a1c2c` |
 | Outline | `#1a1c2c` |
-| P1 shirt (red) | `#b13e53` |
-| P2 shirt (blue) | `#3b5dc9` |
+| P1 color (red: HUD card, shield) | `#b13e53` |
+| P2 color (blue: HUD card, shield) | `#3b5dc9` |
 | HUD text | `#f4f4f4` |
 
 ## Audio

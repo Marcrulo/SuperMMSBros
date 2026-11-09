@@ -98,8 +98,8 @@ func test_moving_the_highlight_ticks() -> void:
 func test_choosing_sounds() -> void:
 	var characters: CharacterSelect = add_child_autofree(CHARACTER_SELECT.instantiate())
 	await wait_process_frames(1)
-	characters.choose(3)
-	assert_eq(Game.last_sfx, "menu_locked", "a locked slot buzzes")
+	characters.choose(14)
+	assert_eq(Game.last_sfx, "menu_locked", "the empty slot buzzes")
 	characters.choose(0)
 	assert_eq(Game.last_sfx, "menu_confirm", "locking in a character")
 	var stages: StageSelect = add_child_autofree(STAGE_SELECT.instantiate())

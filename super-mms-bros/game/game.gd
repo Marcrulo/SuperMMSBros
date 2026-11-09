@@ -6,7 +6,9 @@ const CHARACTER_SELECT_PATH := "res://ui/character_select.tscn"
 const STAGE_SELECT_PATH := "res://ui/stage_select.tscn"
 const MATCH_PATH := "res://match/match.tscn"
 const ROSTER_PATH := "res://fighter/characters/roster.tres"
-const DEFAULT_CHARACTER := "default"
+const DEFAULT_CHARACTER := CharacterData.DEFAULT_ID
+## P2's character when the menus were skipped.
+const DEFAULT_P2_CHARACTER := "slot_02"
 ## Seconds the audio engine gets to release the music before quitting.
 const QUIT_DELAY := 0.1
 ## Menu sound effects (docs/specs/menus.md#sound): assets/sfx/<name>.wav.
@@ -21,6 +23,8 @@ const MENU_KEYS := {
 
 ## P1's character, by id.
 var character_id: String = DEFAULT_CHARACTER
+## P2's character, by id: picked at random when P1 chooses (docs/specs/menus.md).
+var p2_character_id: String = DEFAULT_P2_CHARACTER
 ## The chosen stage's id; empty until one is chosen (the Match then uses the default).
 var stage_id: String = ""
 ## Tests turn this off: go_to() then only records where it would go.
@@ -100,10 +104,29 @@ func roster() -> Roster:
 	return load(ROSTER_PATH) as Roster
 
 
-## The chosen character (the default one if the id is unknown or not playable).
+## P1's character (the default one if the id is unknown or not playable).
 func character() -> CharacterData:
-	var chosen := roster().find(character_id)
+	return _playable_or_default(character_id)
+
+
+## P2's character (the default one if the id is unknown or not playable).
+func p2_character() -> CharacterData:
+	return _playable_or_default(p2_character_id)
+
+
+func _playable_or_default(id: String) -> CharacterData:
+	var chosen := roster().find(id)
 	return chosen if chosen != null and chosen.playable else roster().find(DEFAULT_CHARACTER)
+
+
+## Gives P2 a random playable character other than P1's. The menus' own random pick, not the
+## Match's seeded RNG: it happens before the match starts.
+func pick_p2_character() -> void:
+	var others: Array[String] = []
+	for candidate in roster().characters:
+		if candidate.playable and candidate.id != character_id:
+			others.append(candidate.id)
+	p2_character_id = others.pick_random() if not others.is_empty() else character_id
 
 
 ## Plays a menu sound effect (one of SOUNDS), from the start.

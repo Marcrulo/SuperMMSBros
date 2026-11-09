@@ -58,7 +58,8 @@ func test_card_shows_the_fighters_percent() -> void:
 func test_portrait_is_the_head_in_the_player_colors() -> void:
 	var portrait := _hud.cards[1].get_portrait()
 	assert_eq(portrait.region, Rect2(14, 16, 20, 20))
-	assert_eq(portrait.atlas, FighterVisuals.textures_for(1)["idle"], "P2's recolored strip")
+	assert_eq(portrait.atlas, FighterVisuals.textures_for(_match.get_fighter(1).character_id)["idle"],
+			"P2's own strip")
 
 
 func test_card_shows_a_stock_icon_per_stock() -> void:
@@ -67,7 +68,7 @@ func test_card_shows_a_stock_icon_per_stock() -> void:
 	_match.get_fighter(0).stocks = 1
 	card.refresh()
 	assert_eq(card.get_stock_count(), 1)
-	assert_eq(card.get_stock_icon(), FighterVisuals.textures_for(0)["stock_icon"])
+	assert_eq(card.get_stock_icon(), FighterVisuals.textures_for(_match.get_fighter(0).character_id)["stock_icon"])
 
 
 func test_a_hit_bumps_the_percent() -> void:

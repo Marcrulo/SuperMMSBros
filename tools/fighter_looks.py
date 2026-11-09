@@ -12,6 +12,10 @@ radius), arms (px per arm segment), wide (torso px wider at the back), belly (px
 front), cheeks (head this much wider than tall); negative for smaller.
 """
 
+## Characters whose strips have been edited by hand: the generator leaves their folders alone
+## (unless an id is named on its command line). See docs/specs/art-guide.md#generated-characters.
+HAND_EDITED: set[str] = set()
+
 FAIR = (240, 176, 136)
 JEANS = (51, 60, 87)
 DARK = (40, 42, 54)
@@ -19,7 +23,7 @@ BLACK_FRAMES = (20, 20, 28)
 
 LOOKS = {
     # Pia: heavier build (same height); short copper-red hair, rosy cheeks, grey top.
-    "default": dict(skin=(232, 160, 122), hair=(150, 52, 26), hair_light=(190, 82, 40),
+    "slot_01": dict(skin=(232, 160, 122), hair=(150, 52, 26), hair_light=(190, 82, 40),
                     hair_style="bob", blush=(222, 120, 110), shirt=(128, 128, 136), pants=JEANS,
                     wide=2, belly=2, cheeks=0.6),
     # Gitte: big white hair, magenta jacket.

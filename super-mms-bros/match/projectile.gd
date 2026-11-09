@@ -4,7 +4,7 @@ extends Node2D
 ## advanced by the Match, one tick at a time; it has no _process gameplay of its own.
 
 const DELTA := 1.0 / 60.0
-const SPRITE := preload("res://assets/fighters/default/projectile.png")
+const SPRITE := preload("res://assets/fighters/projectile.png")
 const FRAME := 12
 ## Ticks per sprite frame.
 const FRAME_TICKS := 4

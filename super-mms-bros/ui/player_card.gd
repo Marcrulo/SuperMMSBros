@@ -51,7 +51,7 @@ func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 	square.bg_color = color.darkened(0.45)
 	_portrait_box.add_theme_stylebox_override("panel", square)
 	var head := AtlasTexture.new()
-	head.atlas = FighterVisuals.textures_for(fighter.player_index)["idle"]
+	head.atlas = FighterVisuals.textures_for(fighter.character_id)["idle"]
 	head.region = HEAD_REGION
 	_head.texture = head
 	for icon in _stock_icons:
@@ -59,7 +59,7 @@ func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 	_stock_icons.clear()
 	for i in Match.STOCKS:
 		var icon := TextureRect.new()
-		icon.texture = FighterVisuals.textures_for(fighter.player_index)["stock_icon"]
+		icon.texture = FighterVisuals.textures_for(fighter.character_id)["stock_icon"]
 		icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		icon.position = STOCKS_AT + Vector2(STOCK_STEP * i, 0)
 		add_child(icon)

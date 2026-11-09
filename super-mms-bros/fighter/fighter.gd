@@ -26,6 +26,8 @@ const OPEN_ENDED: Array[StringName] = [&"neutral_special_charge", &"down_special
 
 ## 0 for P1, 1 for P2. Set by the Match.
 var player_index: int = 0
+## Which character this is (its sprites are in assets/fighters/<id>/); set by the Match.
+var character_id: String = CharacterData.DEFAULT_ID
 ## 1 = facing right, -1 = facing left.
 var facing: int = 1
 var state: State = State.IDLE

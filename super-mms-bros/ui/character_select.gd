@@ -32,10 +32,10 @@ var _sounds_on := false
 @onready var _tag := $Tag as Label
 
 
-## The head the player cards use, cut from the idle drawing.
-static func portrait() -> AtlasTexture:
+## A character's head as the player cards show it, cut from its idle drawing.
+static func portrait(character_id: String = CharacterData.DEFAULT_ID) -> AtlasTexture:
 	var head := AtlasTexture.new()
-	head.atlas = FighterVisuals.textures_for(0)["idle"]
+	head.atlas = FighterVisuals.textures_for(character_id)["idle"]
 	head.region = PlayerCard.HEAD_REGION
 	return head
 
@@ -74,8 +74,8 @@ func _ready() -> void:
 
 
 ## The tile for `character` (null = an empty slot): its portrait's face (or its silhouette, with
-## SILHOUETTE_PORTRAITS on), else the fighter's head; a locked one without a portrait is the head's
-## silhouette.
+## SILHOUETTE_PORTRAITS on), else its own fighter head; a locked one without a portrait is the
+## default character's head as a silhouette.
 static func make_tile(character: CharacterData) -> SelectTile:
 	var tile := SelectTile.new()
 	tile.locked = character == null or not character.playable
@@ -94,7 +94,7 @@ static func make_tile(character: CharacterData) -> SelectTile:
 	elif tile.locked:
 		tile.setup(TILE, silhouette(portrait(), SILHOUETTE))
 	else:
-		tile.setup(TILE, portrait())
+		tile.setup(TILE, portrait(character.id))
 	return tile
 
 
@@ -210,6 +210,7 @@ func choose(index: int) -> void:
 	var character := roster.character_in_slot(index)
 	Game.play_sfx("menu_confirm")
 	Game.character_id = character.id
+	Game.pick_p2_character()
 	Game.go_to(Game.STAGE_SELECT_PATH)
 
 

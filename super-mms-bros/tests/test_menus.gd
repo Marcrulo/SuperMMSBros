@@ -10,6 +10,7 @@ func before_each() -> void:
 	Game.change_scenes = false
 	Game.requested_scene = ""
 	Game.character_id = Game.DEFAULT_CHARACTER
+	Game.p2_character_id = Game.DEFAULT_P2_CHARACTER
 	Game.stage_id = ""
 
 
@@ -21,41 +22,41 @@ func after_each() -> void:
 # --- Data ----------------------------------------------------------------------------------------
 
 
-const ANNOUNCED_NAMES: Array[String] = ["Gitte", "Trine", "Nina", "Michael Bech", "Henrik", "Stig",
+const NAMES: Array[String] = ["Pia", "Gitte", "Trine", "Nina", "Michael Bech", "Henrik", "Stig",
 		"Casper", "Kim", "Mette", "Mads", "Sjippepigen", "Fidusen",
 		"Magnus"]
 
 
-func test_roster_has_15_slots_14_characters_one_playable() -> void:
+func test_roster_has_15_slots_14_playable_characters() -> void:
 	var roster := Game.roster()
 	assert_eq(roster.slots, 15)
 	assert_eq(roster.characters.size(), 14)
-	assert_eq(roster.characters[0].id, "default")
-	assert_true(roster.characters[0].playable)
-	assert_false(roster.is_locked(0))
-	for i in range(1, 14):
+	for i in range(0, 14):
 		var character := roster.character_in_slot(i)
 		assert_eq(character.id, "slot_%02d" % (i + 1))
-		assert_false(character.playable, character.id)
-		assert_eq(character.display_name, ANNOUNCED_NAMES[i - 1])
+		assert_true(character.playable, character.id)
+		assert_eq(character.display_name, NAMES[i])
 		assert_eq(character.portrait.resource_path,
 				"res://assets/fighters/portraits/slot_%02d.png" % (i + 1))
-		assert_true(roster.is_locked(i))
+		assert_eq(character.stats, load("res://fighter/default_stats.tres"), character.id)
+		assert_false(roster.is_locked(i))
 	for i in [14]:
 		assert_null(roster.character_in_slot(i), "slot %d is empty" % (i + 1))
 		assert_true(roster.is_locked(i), "past the list")
 
 
-func test_an_unplayable_character_falls_back_to_the_default() -> void:
-	Game.character_id = "slot_05"
-	assert_eq(Game.character().id, "default")
+func test_an_unknown_character_falls_back_to_the_default() -> void:
+	Game.character_id = "nobody"
+	assert_eq(Game.character().id, "slot_01")
+	Game.p2_character_id = "nobody"
+	assert_eq(Game.p2_character().id, "slot_01")
 
 
-func test_default_character_uses_the_default_stats() -> void:
-	var character := Game.roster().find("default")
-	assert_eq(character.display_name, "Pia")
-	assert_eq(character.portrait.resource_path, "res://assets/fighters/portraits/default.png")
-	assert_eq(character.stats, load("res://fighter/default_stats.tres"))
+func test_the_default_characters_are_pia_and_gitte() -> void:
+	assert_eq(Game.DEFAULT_CHARACTER, "slot_01")
+	assert_eq(CharacterData.DEFAULT_ID, "slot_01")
+	assert_eq(Game.DEFAULT_P2_CHARACTER, "slot_02")
+	assert_eq(Game.roster().find("slot_01").display_name, "Pia")
 
 
 func test_stage_order() -> void:
@@ -91,9 +92,14 @@ func test_match_plays_the_chosen_stage() -> void:
 	assert_eq(background.texture, StageData.load_stage("fc").background)
 
 
-func test_match_gives_p1_the_chosen_character() -> void:
+func test_match_gives_each_player_their_character() -> void:
+	Game.character_id = "slot_04"
+	Game.p2_character_id = "slot_09"
 	var match_node: Match = add_child_autofree(MATCH_SCENE.instantiate())
-	assert_eq(match_node.get_fighter(0).stats, Game.roster().find("default").stats)
+	assert_eq(match_node.get_fighter(0).character_id, "slot_04")
+	assert_eq(match_node.get_fighter(1).character_id, "slot_09")
+	assert_eq(match_node.get_fighter(0).stats, Game.roster().find("slot_04").stats)
+	assert_eq(match_node.get_fighter(1).stats, Game.roster().find("slot_09").stats)
 
 
 # --- Character select ------------------------------------------------------------------------------
@@ -105,13 +111,13 @@ func _character_select() -> CharacterSelect:
 	return screen
 
 
-func test_twelve_tiles_first_unlocked_rest_locked() -> void:
+func test_fourteen_tiles_unlocked_the_last_locked() -> void:
 	var screen: CharacterSelect = await _character_select()
 	var tiles := screen.get_tiles()
 	assert_eq(tiles.size(), 15)
-	assert_false(tiles[0].locked)
-	for i in range(1, 15):
-		assert_true(tiles[i].locked, "slot %d locked" % (i + 1))
+	for i in range(0, 14):
+		assert_false(tiles[i].locked, "slot %d unlocked" % (i + 1))
+	assert_true(tiles[14].locked, "slot 15 is empty")
 
 
 func test_tiles_are_a_5_by_3_grid() -> void:
@@ -153,7 +159,7 @@ func test_first_slot_is_highlighted_and_named() -> void:
 	assert_eq(screen.get_name_text(), "Pia")
 
 
-func test_highlighting_a_locked_slot_shows_its_name() -> void:
+func test_highlighting_a_slot_shows_its_name() -> void:
 	var screen: CharacterSelect = await _character_select()
 	screen.get_tiles()[3].grab_focus()
 	assert_eq(screen.get_name_text(), "Nina")
@@ -172,7 +178,7 @@ func test_magnus_is_slot_14_and_the_last_is_coming_soon() -> void:
 	var screen: CharacterSelect = await _character_select()
 	screen.get_tiles()[13].grab_focus()
 	assert_eq(screen.get_name_text(), "Magnus")
-	assert_true(screen.get_tiles()[13].locked)
+	assert_false(screen.get_tiles()[13].locked)
 	screen.get_tiles()[14].grab_focus()
 	assert_eq(screen.get_name_text(), "Coming soon")
 	assert_true(screen.get_tiles()[14].locked)
@@ -207,7 +213,7 @@ func test_every_portrait_makes_a_clean_silhouette() -> void:
 
 
 func test_a_portrait_silhouette_is_made_once() -> void:
-	var pia := load("res://assets/fighters/portraits/default.png") as Texture2D
+	var pia := load("res://assets/fighters/portraits/slot_01.png") as Texture2D
 	assert_same(CharacterSelect.portrait_silhouette(pia),
 			CharacterSelect.portrait_silhouette(pia))
 
@@ -242,7 +248,7 @@ func _silhouette_counts(image: Image) -> Dictionary:
 
 
 func test_portrait_square_is_the_top_of_the_picture() -> void:
-	var pia := load("res://assets/fighters/portraits/default.png") as Texture2D
+	var pia := load("res://assets/fighters/portraits/slot_01.png") as Texture2D
 	assert_eq(CharacterSelect.portrait_region(pia), Rect2(0, 6, 221, 221))
 	var small := Image.create(153, 193, false, Image.FORMAT_RGB8)
 	assert_eq(CharacterSelect.portrait_region(ImageTexture.create_from_image(small)),
@@ -251,10 +257,13 @@ func test_portrait_square_is_the_top_of_the_picture() -> void:
 
 func test_an_unlocked_character_without_a_portrait_shows_the_fighter_head() -> void:
 	var character := CharacterData.new()
+	character.id = "slot_06"
 	character.playable = true
 	var tile := CharacterSelect.make_tile(character)
 	add_child_autofree(tile)
 	assert_eq((tile.get_picture() as AtlasTexture).region, PlayerCard.HEAD_REGION)
+	assert_eq((tile.get_picture() as AtlasTexture).atlas, FighterVisuals.textures_for("slot_06")["idle"],
+			"its own head")
 	assert_eq(tile.get_picture_filter(), CanvasItem.TEXTURE_FILTER_NEAREST)
 
 
@@ -276,14 +285,26 @@ func test_a_locked_slot_without_a_portrait_is_a_silhouette() -> void:
 
 func test_choosing_the_character_opens_the_stage_select() -> void:
 	var screen: CharacterSelect = await _character_select()
-	screen.choose(0)
-	assert_eq(Game.character_id, "default")
+	screen.choose(4)
+	assert_eq(Game.character_id, "slot_05")
 	assert_eq(Game.requested_scene, Game.STAGE_SELECT_PATH)
+
+
+func test_choosing_gives_p2_a_different_character() -> void:
+	var screen: CharacterSelect = await _character_select()
+	var seen := {}
+	for i in 60:
+		screen.choose(i % 14)
+		var p2 := Game.p2_character()
+		assert_ne(p2.id, Game.character_id, "P2 never gets P1's character")
+		assert_true(p2.playable)
+		seen[p2.id] = true
+	assert_gt(seen.size(), 5, "P2's pick varies")
 
 
 func test_choosing_a_locked_slot_does_nothing() -> void:
 	var screen: CharacterSelect = await _character_select()
-	screen.choose(4)
+	screen.choose(14)
 	assert_eq(Game.requested_scene, "")
 
 

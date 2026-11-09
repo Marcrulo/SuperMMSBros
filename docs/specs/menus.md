@@ -13,9 +13,10 @@ Character select ──choose──▶ Stage select ──choose──▶ Match
 
 - The game starts on the character select (`ui/character_select.tscn` is the main scene).
 - With `--stage=<id>` on the command line, the menus are skipped and the match starts at once on
-  that stage with the default character (for quick testing; headless runs in M8 use this too).
-- The choices live in the `Game` autoload (`game/game.gd`, always loaded): `character_id` and
-  `stage_id`. The Match reads them when it starts (the `--stage` option wins over `stage_id`).
+  that stage, P1 playing the default character (`slot_01`, Pia) and P2 the second (`slot_02`,
+  Gitte), for quick testing; headless runs in M8 use this too.
+- The choices live in the `Game` autoload (`game/game.gd`, always loaded): `character_id`,
+  `p2_character_id` and `stage_id`. The Match reads them when it starts (the `--stage` option wins over `stage_id`).
   `Game` also changes between the screens.
 
 ## Controls
@@ -36,16 +37,14 @@ from the rightmost wraps to the leftmost (on both screens). Up and down don't wr
 
 - A **`CharacterData`** resource per character (`fighter/characters/<id>.tres`): `id`,
   `display_name`, `playable`, `portrait` (a select-screen picture, optional) and `stats` (its
-  `FighterStats`, which holds its move set; empty for a character that isn't playable yet). The
-  sprites are still the one default set (`assets/fighters/default/`); per-character sprite folders
-  come with the second playable character.
+  `FighterStats`, which holds its move set; empty for a character that isn't playable yet). Its
+  sprites are in `assets/fighters/<id>/` (see [art guide](art-guide.md#export)).
 - The **`Roster`** resource (`fighter/characters/roster.tres`) lists the characters in
   select-screen order and the number of slots: **15**. A slot holding a character that isn't
   `playable`, or past the list, is **locked**.
-- v1 has one playable character, `default`, named **Pia**, using `default_stats.tres`, with a
-  portrait (`assets/fighters/portraits/default.png`), and thirteen announced ones in slots 2–14,
-  `slot_02` … `slot_14`: not playable, each with a portrait
-  (`assets/fighters/portraits/slot_NN.png`). Their names: 2 Gitte,
+- v1 has fourteen playable characters in slots 1–14, `slot_01` … `slot_14`, all using
+  `default_stats.tres` (the same moves and numbers, for now), each with a portrait
+  (`assets/fighters/portraits/slot_NN.png`). Their names: 1 Pia (the default character), 2 Gitte,
   3 Trine, 4 Nina, 5 Michael Bech, 6 Henrik, 7 Stig, 8 Casper, 9 Kim, 10 Mette, 11 Mads,
   12 Sjippepigen (a bronze statue of a girl skipping rope; her portrait is the statue's face with a
   green patina. Two earlier versions are kept unused in `assets/fighters/portraits/`:
@@ -66,7 +65,9 @@ from the rightmost wraps to the leftmost (on both screens). Up and down don't wr
   aren't converted to the game's pixel grid: every conversion tried (k-centroid shrinking, snapping
   to their 3.13 px art grid) deformed the eyes. Instead the select screen shows them near their
   native size (below).
-- Only P1 chooses. P2 (the dummy, later the CPU) plays the default character.
+- Only P1 chooses. When P1 chooses, P2 (the dummy, later the CPU) gets a random other playable
+  character, so the two never play the same one. (The menus' own random pick, not the Match's
+  seeded RNG: it happens before the match.)
 
 ## Character select
 
@@ -89,9 +90,10 @@ Screen layout (480×270, background `#1a1c2c`):
     its top-left 8×8 corner), cleaned up with a 3×3 majority pass so stray specks and thin leaks
     disappear, and becomes transparent; everything else, the person, becomes flat `#29366f`. It's
     drawn the same way as the face, with its own mipmaps.
-  - An **unlocked** character without a portrait shows the fighter's head (the cut used by the
+  - An **unlocked** character without a portrait shows its own fighter head (the cut used by the
     player cards, 20×20) stretched to the picture, nearest-neighbor, on a `#333c57` square.
-  - A **locked** slot without a portrait shows the default head as a flat silhouette in `#29366f`.
+  - A **locked** slot without a portrait shows the default character's head as a flat silhouette
+    in `#29366f`.
     Any locked slot can be highlighted but not chosen.
   - The highlighted tile has a 2 px border in the P1 color `#b13e53` and a small "P1" tag above its
     top-left corner.

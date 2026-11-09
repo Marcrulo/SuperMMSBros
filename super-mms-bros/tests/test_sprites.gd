@@ -1,7 +1,8 @@
 extends GutTest
-## The fighter's sprite strips match docs/specs/art-guide.md: 48×48 frames, side by side.
+## Every character's sprite strips match docs/specs/art-guide.md: 48×48 frames, side by side, in
+## assets/fighters/<id>/.
 
-const DIR := "res://assets/fighters/default/"
+const DIR := "res://assets/fighters/"
 ## Drawings per animation, from the art guide's table.
 const FRAMES := {
 	"idle": 4, "run": 6, "crouch": 2, "jump": 2, "fall": 2, "helpless": 2, "shield": 1,
@@ -13,21 +14,27 @@ const FRAMES := {
 }
 
 
-func test_every_animation_strip_has_its_frames() -> void:
-	for animation: String in FRAMES:
-		var path := DIR + "fighter_%s.png" % animation
-		assert_true(ResourceLoader.exists(path), "missing %s" % path)
-		if not ResourceLoader.exists(path):
-			continue
-		var texture := load(path) as Texture2D
-		assert_eq(texture.get_size(), Vector2(48 * FRAMES[animation], 48), animation)
+func test_every_character_has_every_strip() -> void:
+	for character in Game.roster().characters:
+		for animation: String in FRAMES:
+			var path := DIR + "%s/fighter_%s.png" % [character.id, animation]
+			assert_true(ResourceLoader.exists(path), "missing %s" % path)
+			if not ResourceLoader.exists(path):
+				continue
+			var texture := load(path) as Texture2D
+			assert_eq(texture.get_size(), Vector2(48 * FRAMES[animation], 48), path)
 
 
-func test_stock_icon() -> void:
-	var texture := load(DIR + "stock_icon.png") as Texture2D
-	assert_eq(texture.get_size(), Vector2(8, 8))
+func test_every_character_has_a_stock_icon() -> void:
+	for character in Game.roster().characters:
+		var texture := load(DIR + "%s/stock_icon.png" % character.id) as Texture2D
+		assert_eq(texture.get_size(), Vector2(8, 8), character.id)
 
 
-func test_projectile_strip() -> void:
+func test_the_placeholder_set_is_gone() -> void:
+	assert_false(DirAccess.dir_exists_absolute(DIR + "default"))
+
+
+func test_projectile_strip_is_shared() -> void:
 	var texture := load(DIR + "projectile.png") as Texture2D
 	assert_eq(texture.get_size(), Vector2(36, 12))

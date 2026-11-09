@@ -5,7 +5,8 @@ extends Node2D
 ## comes from the fighter's state and the frame from its state_frame (ticks), so the drawing stays
 ## in step with the gameplay. Only reads the fighter's state; never changes it.
 
-const SPRITE_DIR := "res://assets/fighters/default/"
+## Each character's strips are in <SPRITES_DIR><character id>/.
+const SPRITES_DIR := "res://assets/fighters/"
 const FRAME := 48
 ## Ticks each drawing is shown, per animation (art guide). A non-looping animation holds its last
 ## drawing. For moves, the strike drawing covers exactly the move's active frames.
@@ -40,9 +41,6 @@ const ANIMATIONS := {
 	"side_special": {"ticks": [5, 5, 6, 6], "loop": false},
 	"up_special": {"ticks": [4, 12, 1], "loop": false},
 }
-## The shirt's three shades in the drawings (P1), and what P2 wears instead: the team color swap.
-const SHIRT_COLORS: Array[Color] = [Color8(177, 62, 83), Color8(128, 40, 62), Color8(214, 92, 106)]
-const P2_SHIRT_COLORS: Array[Color] = [Color8(59, 93, 201), Color8(41, 54, 111), Color8(90, 140, 230)]
 const HURTBOX_COLOR := Color(0.3, 0.6, 1.0, 0.35)
 const HITBOX_ACTIVE_COLOR := Color(1.0, 0.15, 0.15, 0.55)
 const HITBOX_IDLE_COLOR := Color(1.0, 0.3, 0.3, 0.5)
@@ -60,8 +58,8 @@ const FIST := Vector2(7, -14)
 
 ## Debug view of hurtboxes and hitboxes: F1 toggles it, `--hitboxes` turns it on at start.
 static var show_boxes := "--hitboxes" in OS.get_cmdline_user_args()
-## Textures per player color (index 0 = P1, 1 = P2), then per animation name.
-static var _textures: Array[Dictionary] = []
+## Textures per character id, then per animation name (and "stock_icon").
+static var _textures: Dictionary[String, Dictionary] = {}
 
 @onready var _fighter := get_parent() as Fighter
 
@@ -125,35 +123,21 @@ static func shield_radius(health: float, max_health: float) -> float:
 	return lerpf(SHIELD_MIN_RADIUS, SHIELD_MAX_RADIUS, clampf(health / max_health, 0.0, 1.0))
 
 
-## Loads every strip and the stock icon; with `shirt` colors given, repaints the shirt's shades.
-static func load_textures(shirt: Array[Color]) -> Dictionary:
+## Loads every strip and the stock icon of a character.
+static func load_textures(character_id: String) -> Dictionary:
+	var dir := SPRITES_DIR + character_id + "/"
 	var textures := {}
 	for animation: String in ANIMATIONS:
-		var texture := load(SPRITE_DIR + "fighter_%s.png" % animation) as Texture2D
-		textures[animation] = _recolored(texture, shirt)
-	textures["stock_icon"] = _recolored(load(SPRITE_DIR + "stock_icon.png") as Texture2D, shirt)
+		textures[animation] = load(dir + "fighter_%s.png" % animation) as Texture2D
+	textures["stock_icon"] = load(dir + "stock_icon.png") as Texture2D
 	return textures
 
 
-## `texture` with the shirt's shades repainted in `shirt` (unchanged if `shirt` is empty).
-static func _recolored(texture: Texture2D, shirt: Array[Color]) -> Texture2D:
-	if shirt.is_empty():
-		return texture
-	var image := texture.get_image()
-	image.decompress()
-	for y in image.get_height():
-		for x in image.get_width():
-			var index := SHIRT_COLORS.find(image.get_pixel(x, y))
-			if index != -1:
-				image.set_pixel(x, y, shirt[index])
-	return ImageTexture.create_from_image(image)
-
-
-## Every strip in a player's colors (0 = P1 red, 1 and up = P2 blue), loaded once and shared.
-static func textures_for(player_index: int) -> Dictionary:
-	if _textures.is_empty():
-		_textures = [load_textures([]), load_textures(P2_SHIRT_COLORS)]
-	return _textures[mini(player_index, 1)]
+## A character's strips, drawn in its own colors (no recoloring), loaded once and shared.
+static func textures_for(character_id: String) -> Dictionary:
+	if not _textures.has(character_id):
+		_textures[character_id] = load_textures(character_id)
+	return _textures[character_id]
 
 
 func _process(_delta: float) -> void:
@@ -171,7 +155,7 @@ func _draw() -> void:
 	if is_hidden(_fighter.state, _fighter.invulnerable_frames):
 		return
 	var animation := animation_for(_fighter.state, _fighter.velocity.y, _fighter.move)
-	var texture: Texture2D = textures_for(_fighter.player_index)[animation]
+	var texture: Texture2D = textures_for(_fighter.character_id)[animation]
 	var timing: Dictionary = ANIMATIONS[animation]
 	var frame := frame_index(timing.ticks, timing.loop, _fighter.state_frame)
 	# Mirror when facing left; the strips are drawn facing right.

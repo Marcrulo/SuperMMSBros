@@ -6,7 +6,8 @@ centered at x=24, body inside x 16-31 / y 24-47, a big head about 13 px tall.
 Usage:
   python3 -I tools/gen_fighter_sprites.py super-mms-bros/assets/fighters          # every character
   python3 -I tools/gen_fighter_sprites.py super-mms-bros/assets/fighters slot_02  # just some
-Each character goes to <out_dir>/<id>/, one PNG strip per animation.
+Each character goes to <out_dir>/<id>/, one PNG strip per animation and a stock icon; the shared
+projectile to <out_dir>/projectile.png. Characters in HAND_EDITED are skipped unless named.
 """
 import math
 import sys
@@ -15,7 +16,7 @@ from pathlib import Path
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fighter_looks import LOOKS  # noqa: E402
+from fighter_looks import HAND_EDITED, LOOKS  # noqa: E402
 
 FRAME = 48
 HEAD = {"rx": 6.4, "ry": 6.4, "cy": 27.0}
@@ -488,17 +489,27 @@ def write_character(look, out):
         for i, pose_ in enumerate(poses):
             strip.paste(draw_frame(pose_, look), (i * FRAME, 0))
         strip.save(out / f"fighter_{name}.png")
+    stock_icon(look).save(out / "stock_icon.png")
+
+
+def write_projectile(out):
+    """The side special's projectile, shared by every character."""
     strip = Image.new("RGBA", (PROJECTILE * 3, PROJECTILE), (0, 0, 0, 0))
     for i in range(3):
         strip.paste(projectile_frame(i), (i * PROJECTILE, 0))
     strip.save(out / "projectile.png")
-    stock_icon(look).save(out / "stock_icon.png")
 
 
 def main(out_dir, ids):
-    for character_id in ids or LOOKS:
-        write_character(LOOKS[character_id], Path(out_dir) / character_id)
+    """Every character (skipping hand-edited ones), or just the ids given (even hand-edited)."""
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    for character_id in ids or [i for i in LOOKS if i not in HAND_EDITED]:
+        write_character(LOOKS[character_id], out / character_id)
         print(character_id)
+    for character_id in sorted(HAND_EDITED - set(ids)):
+        print(character_id, "(hand-edited, left alone)")
+    write_projectile(out)
 
 
 if __name__ == "__main__":

@@ -39,9 +39,10 @@ func _ready() -> void:
 	for child in $Fighters.get_children():
 		var fighter := child as Fighter
 		fighter.player_index = _fighters.size()
-		# P1 plays the character chosen in the menus; P2 the default one.
-		if fighter.player_index == 0:
-			fighter.stats = Game.character().stats
+		# Each player plays their character from the menus (docs/specs/menus.md).
+		var character := Game.character() if fighter.player_index == 0 else Game.p2_character()
+		fighter.character_id = character.id
+		fighter.stats = character.stats
 		_fighters.append(fighter)
 		# P1 plays from the keyboard; everyone else is the dummy until the CPU arrives (M8).
 		if fighter.player_index == 0:

@@ -285,11 +285,12 @@ platforms (staying in hitstun).
 Drawn from the fighter's state; never changes gameplay state.
 
 - **Sprites:** one animation per state or move, from the sprite strips in
-  `assets/fighters/<design>/` (see [art guide](art-guide.md)). The frame is chosen from
+  `assets/fighters/<character id>/` (see [art guide](art-guide.md)). Each fighter knows its
+  `character_id` (set by the Match). The frame is chosen from
   `state_frame`, so a move's strike pose shows exactly on its active frames. Mirrored when facing
   left.
-- **Player color:** P1 as drawn (red shirt); P2's shirt colors are swapped to blue when the
-  textures load.
+- **Player color:** every character is drawn in its own colors; no recoloring. The players are told
+  apart by their shield bubbles and HUD cards (P1 red, P2 blue), and never share a character.
 - **Hit flash:** in hitstun, the sprite brightens on alternate pairs of ticks.
 - **Shield:** a translucent bubble in the player's color around the center, its radius shrinking with
   shield health (16 px at full, 6 px near empty).

@@ -31,20 +31,17 @@ func test_animation_for_movement_states() -> void:
 
 func test_every_animation_has_timings_for_its_drawings() -> void:
 	for animation: String in FighterVisuals.ANIMATIONS:
-		var texture := load("res://assets/fighters/default/fighter_%s.png" % animation) as Texture2D
+		var texture := load("res://assets/fighters/slot_01/fighter_%s.png" % animation) as Texture2D
 		var drawings := int(texture.get_width() / 48.0)
 		assert_eq(FighterVisuals.ANIMATIONS[animation].ticks.size(), drawings, animation)
 
 
-func test_p2_wears_blue() -> void:
-	var textures := FighterVisuals.load_textures(FighterVisuals.P2_SHIRT_COLORS)
-	var image := (textures["idle"] as Texture2D).get_image()
-	var colors := {}
-	for y in image.get_height():
-		for x in image.get_width():
-			colors[image.get_pixel(x, y).to_html(false)] = true
-	assert_false(colors.has("b13e53"), "no red shirt left")
-	assert_true(colors.has("3b5dc9"), "blue shirt")
+func test_textures_are_each_characters_own_and_loaded_once() -> void:
+	var nina := FighterVisuals.textures_for("slot_04")
+	assert_eq((nina["idle"] as Texture2D).resource_path, "res://assets/fighters/slot_04/fighter_idle.png")
+	assert_eq((nina["stock_icon"] as Texture2D).resource_path, "res://assets/fighters/slot_04/stock_icon.png")
+	assert_same(FighterVisuals.textures_for("slot_04"), nina)
+	assert_ne(FighterVisuals.textures_for("slot_05")["idle"], nina["idle"])
 
 
 func test_animation_for_moves_and_hitstun() -> void:

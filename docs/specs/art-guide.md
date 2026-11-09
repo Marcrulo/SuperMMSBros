@@ -79,23 +79,26 @@ Bold numbers are the drawings shown on the active frames.
 
 ### Player colors
 
-Both players use the same fighter. Pick a few palette shades as the fighter's **"team color"** (in the
-placeholder: three shades of red for the shirt) and use them only for the parts that should change
-color. The game swaps exactly those shades to blue for P2 when it loads the strips.
+Every character is drawn in its own colors; the game never recolors the strips. The two players
+never play the same character (see [menus](menus.md#characters-and-the-roster)).
 
 ### Export
 
 - One PNG **horizontal strip** per animation: frames side by side, 48×48 each, no padding.
 - File names: `fighter_<animation>.png`, e.g. `fighter_run.png`.
-- Location: `super-mms-bros/assets/fighters/default/` (a new character gets its own folder).
+- Location: one folder per character, named after its id: `super-mms-bros/assets/fighters/<id>/`
+  (e.g. `slot_01/`), holding its strips and `stock_icon.png`. The projectile is shared by everyone:
+  `super-mms-bros/assets/fighters/projectile.png`.
 
 ### Generated characters
 
 `tools/gen_fighter_sprites.py <out_dir> [ids…]` draws every character on the same body and poses;
 each character's look (colors sampled from its portrait, hair style, traits such as glasses or a
 beard) is in `tools/fighter_looks.py`, keyed by character id, and its strips go to
-`<out_dir>/<id>/`. The generated looks are a base to fine-tune by hand. The game still loads only
-`default/`; wiring per-character folders into the game is the next step.
+`<out_dir>/<id>/` (and the shared projectile to `<out_dir>/projectile.png`). The generated looks
+are a base to fine-tune by hand: once a character's strips are edited by hand, add its id to
+`HAND_EDITED` in `tools/fighter_looks.py`, and the generator leaves that folder alone (unless the id
+is named on the command line).
 
 ## Stages
 
@@ -109,7 +112,7 @@ beard) is in `tools/fighter_looks.py`, keyed by character id, and its strips go 
 
 ## HUD
 
-- **Stock icon:** `stock_icon.png`, 8×8 px: a tiny fighter head with a shirt collar in the team
-  color shades (so P2's is recolored blue like the strips).
+- **Stock icon:** `stock_icon.png`, 8×8 px, one per character: a tiny head with a shirt collar in
+  the character's own colors.
 - **Off-screen arrow:** 8×8 px, pointing right (the game rotates it).
 - **Damage digits:** drawn with the game's pixel font.

@@ -19,6 +19,7 @@ The parked `m3-attack` branch (one attack, fixed knockback, dummy) is reused ins
 | M6b | Launch angles and aerials | feel each move launch along its own angle, use five air attacks, and spike with the Down B dive | [moves](specs/moves.md) |
 | M6d | Ledges and dodges | grab the ledge and climb, jump or let go; roll, spot dodge and air dodge through attacks | [fighter](specs/fighter.md) |
 | M6c | Select screens | pick your fighter (nine more slots locked) and a stage before the match | [menus](specs/menus.md) |
+| M6e | Playable roster | pick any of the 14 characters, each with its own generated sprites; P2 gets a random other one | [menus](specs/menus.md), [art guide](specs/art-guide.md) |
 | M7 | Match rules | play a full match against the dummy: countdown, KOs, stocks, respawn, damage HUD, win/draw, results, pause, restart | [match & stage](specs/match-and-stage.md) |
 | M8 | CPU opponent | play a real match against the CPU; watch CPU vs CPU; run a headless CPU vs CPU match to completion | [cpu](specs/cpu.md), [architecture](specs/architecture.md) |
 | M9 | Tuning and polish | play a match that feels good — **v1 done** | all |
@@ -61,6 +62,10 @@ The parked `m3-attack` branch (one attack, fixed knockback, dummy) is reused ins
 ### M6d — Ledges and dodges
 - `LEDGE` / `LEDGE_CLIMB` with grab rules in the Match; `SPOT_DODGE`, `ROLL`, `AIR_DODGE` with
   intangible frames; three new input fields; five new sprite strips.
+
+### M6e — Playable roster
+- Per-character sprite folders from `tools/gen_fighter_sprites.py`; all 14 playable with the
+  default stats; P2 random; the P2 shirt recolor and the placeholder `default` set removed.
 
 ### M7 — Match rules
 - Done early, from playtest feedback: `KO` state, stocks, respawn with invulnerability, the
