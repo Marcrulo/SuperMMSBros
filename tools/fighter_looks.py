@@ -67,9 +67,9 @@ LOOKS = {
                     shirt=(128, 92, 58), skirt=True, pants=(120, 128, 80), shoes=(88, 64, 40)),
     # Fidusen: a monkey. Grey-brown fur, a beige face, hands and feet.
     "slot_13": dict(skin=(112, 104, 88), hair=(112, 104, 88), hair_light=(136, 126, 106),
-                    hair_style="monkey", face=(200, 172, 136), eye=(40, 22, 16),
+                    hair_style="monkey", face=(232, 218, 176), eye=(14, 10, 10),
                     shirt=(112, 104, 88), shirt_light=(136, 126, 106), pants=(100, 92, 78),
-                    hands=(200, 172, 136), shoes=(170, 146, 112), tail=True),
+                    hands=(125, 80, 45), shoes=(125, 80, 45), tail=True),
     # Magnus: smaller build; brown hair with a fringe, black glasses. Clothes unknown yet:
     # a teal hoodie.
     "slot_14": dict(skin=(240, 166, 130), hair=(96, 60, 34), hair_light=(130, 86, 50),

@@ -34,6 +34,11 @@ RAISED_OUT = 7       # from the torso's center to the shoulder edge it hinges at
 RAISED_MAX = 2.75    # at most this upright, so it leans out past the head
 ARM_W = (4.6, 4.0)
 FIST_R = 2.5
+# A slim build (`build="slim"`, or `slim` from 0 to 1 for a lighter version) at full strength:
+SLIM = 3             # the torso this much narrower on each side (px)...
+SLIM_ARMS = 0.78     # ...arms this much thinner...
+SLIM_LEGS = 0.6      # ...legs this much thinner...
+SLIM_FLARE = 4       # ...and a skirt flaring out this much (instead of 3), so it still reads
 CENTER_X = 31        # torso center when standing
 GROUND = 61          # ankle row when standing; shoes reach row 62, their outline row 63
 
@@ -109,41 +114,52 @@ def limb(points, widths, colors):
     return out
 
 
-def fist(at, p, dim=False):
+def fist(at, p, dim=False, r=FIST_R):
     hand, hand_shade = (p["j"], looks.scale(p["j"], 0.85)) if dim else (p["J"], p["j"])
     out = {}
-    for (x, y) in disc(at[0], at[1], FIST_R):
+    for (x, y) in disc(at[0], at[1], r):
         lower_back = (x + 0.5 - at[0]) - (y + 0.5 - at[1]) < -1.2
         out[(x, y)] = hand_shade if lower_back else hand
     return out
 
 
-def shoe(ankle, p, dim=False):
-    """A shoe pointing forward, its sole at most on GROUND + 1."""
+def shoe(ankle, p, dim=False, small=False):
+    """A shoe pointing forward, its sole at most on GROUND + 1; `small` for a slim build."""
     x0 = round(ankle[0])
     y0 = min(round(ankle[1]) - 1, GROUND - 1)
     dark = looks.scale(p["N"], 0.8) if dim else p["N"]
     light = p["N"] if dim else p["n"]
+    back, front = (2, 3) if small else (3, 5)
     out = {}
-    for x in range(x0 - 2, x0 + 3):
+    for x in range(x0 - back + 1, x0 + front - 2):
         out[(x, y0)] = dark
-    for x in range(x0 - 3, x0 + 5):
-        out[(x, y0 + 1)] = light if x0 - 3 < x < x0 + 4 else dark
-    for x in range(x0 - 3, x0 + 6):
+    for x in range(x0 - back, x0 + front):
+        out[(x, y0 + 1)] = light if x0 - back < x < x0 + front - 1 else dark
+    for x in range(x0 - back, x0 + front + 1):
         out[(x, y0 + 2)] = dark
     return out
 
 
+def torso_half(c):
+    return TORSO_HALF - round(SLIM * slimness(c))
+
+
+def slimness(c):
+    """How slim a character is built: 0 normal, 1 fully slim (`build="slim"`)."""
+    return 1.0 if c.get("build") == "slim" else c.get("slim", 0.0)
+
+
 def torso(c, p, top, top_x, hip, hip_x):
     """The torso from the shoulder row to the hip row, with the collar and clothing details."""
+    half = torso_half(c)
     heavy = c.get("build") == "heavy"
     back_extra = 2 if heavy else 0
     out = {}
     for y in range(top, hip + 1):
         t = (y - top) / max(1, hip - top)
         cx = top_x + (hip_x - top_x) * t
-        left = round(cx - TORSO_HALF) - back_extra
-        right = round(cx + TORSO_HALF)
+        left = round(cx - half) - back_extra
+        right = round(cx + half)
         if heavy and top + 4 <= y < hip:
             right += 1 if y in (top + 4, hip - 1) else 2
         if y == top:
@@ -164,15 +180,25 @@ def torso(c, p, top, top_x, hip, hip_x):
     if collar == "hood":
         # The hood bunched into a roll around the neck, and bulging behind the head.
         for y in range(top - 1, top + 2):
-            for x in range(cx - TORSO_HALF - 1, cx + TORSO_HALF):
-                out[(x, y)] = p["h"] if y == top + 1 or x == cx - TORSO_HALF - 1 else p["H"]
+            for x in range(cx - half - 1, cx + half):
+                out[(x, y)] = p["h"] if y == top + 1 or x == cx - half - 1 else p["H"]
         for (x, y) in disc(cx - 6.5, top - 2.0, 2.2):
             out[(x, y)] = p["h"]
-    else:
+    elif collar == "crew":
         for x in range(cx - 2, cx + 5):
             out[(x, top)] = p["s"]
         for x in range(cx - 2, cx + 6):
             out[(x, top + 1)] = p["h"]
+    if c.get("belly"):
+        # Light fur down the chest and belly, at the front of the body.
+        mid_y = (top + hip) / 2
+        rx, ry = 4.6, (hip - top) / 2 + 0.6
+        for (x, y) in list(out):
+            t = (y - top) / max(1, hip - top)
+            bx = top_x + (hip_x - top_x) * t + 2.5
+            d = ((x + 0.5 - bx) / rx) ** 2 + ((y + 0.5 - mid_y) / ry) ** 2
+            if d <= 1.0 and y < hip:
+                out[(x, y)] = p["y"] if d > 0.62 and (x + 0.5 < bx or y + 0.5 > mid_y) else p["Y"]
     if "inner" in c:
         # An open jacket: the shirt shows in a V at the front.
         for i, (a, b) in enumerate(((-2, 6), (-1, 5), (0, 4), (1, 3))):
@@ -181,15 +207,25 @@ def torso(c, p, top, top_x, hip, hip_x):
     return out
 
 
-def skirt(p, hip, hip_x):
+def skirt(p, hip, hip_x, half=TORSO_HALF, flare=3):
+    """A bell-shaped skirt from the waist down: it flares out quickly (at most `flare` px a side),
+    with folds (light and shaded stripes) and a dark hem."""
     out = {}
     cx = round(hip_x)
     for i in range(5):
         y = hip - 1 + i
-        spread = min(i, 3)
-        left, right = cx - 7 - spread, cx + 6 + spread
+        spread = min(i + (1 if i else 0), flare)
+        left, right = cx - half - spread, cx + half - 1 + spread
         for x in range(left, right + 1):
-            color = p["h"] if i == 4 or x in (left, right) else p["K"] if x == cx + 3 else p["H"]
+            fold = (x - cx) % 3
+            if i == 4 or x in (left, right):
+                color = p["h"]
+            elif i >= 1 and fold == 1:
+                color = p["h"]
+            elif i >= 1 and fold == 0:
+                color = p["K"]
+            else:
+                color = p["H"]
             out[(x, y)] = color
     return out
 
@@ -233,6 +269,11 @@ def draw_frame(pose, c, p, heads):
             top - 1 + round(pose.get("head_dy", 0) * K))
     behind, front = heads[pose.get("face", "normal")]
     dim = lambda color: looks.scale(color, 0.8)
+    t = slimness(c)
+    slim = t >= 0.75     # small shoes and fists, a flared skirt
+    narrow = round(SLIM * t)
+    leg_w = tuple(w * (1 - (1 - SLIM_LEGS) * t) for w in LEG_W)
+    arm_w = tuple(w * (1 - (1 - SLIM_ARMS) * t) for w in ARM_W)
 
     def leg_points(root, thigh, knee):
         k = add(root, down(thigh), leg_len)
@@ -266,31 +307,31 @@ def draw_frame(pose, c, p, heads):
         f.part(tail(p, hip, hip_x))
 
     # Back leg and arm (darker).
-    pts = leg_points((hip_x - 3, hip + 1), pose["bt"], pose["bk"])
-    part = limb(pts, LEG_W, pants_back)
-    part.update(shoe(pts[2], p, dim=True))
+    pts = leg_points((hip_x - 3 + narrow / 2, hip + 1), pose["bt"], pose["bk"])
+    part = limb(pts, leg_w, pants_back)
+    part.update(shoe(pts[2], p, dim=True, small=slim))
     f.part(part)
-    pts = leg_points((hip_x + 3.5, hip + 1), pose["ft"], pose["fk"])
-    part = limb(pts, LEG_W, pants)
-    part.update(shoe(pts[2], p))
+    pts = leg_points((hip_x + 3.5 - narrow / 2, hip + 1), pose["ft"], pose["fk"])
+    part = limb(pts, leg_w, pants)
+    part.update(shoe(pts[2], p, small=slim))
     f.part(part)
     reach = pose.get("reach", 0) * K
-    pts = arm_points((top_x + 5, top + 2), pose["ba"], pose["be"], 0)
-    part = limb(pts[:2], ARM_W[:1], sleeve_back)
-    part.update(limb(pts[1:], ARM_W[1:], fore_back))
-    part.update(fist(pts[2], p, dim=True))
+    pts = arm_points((top_x + 5 - narrow, top + 2), pose["ba"], pose["be"], 0)
+    part = limb(pts[:2], arm_w[:1], sleeve_back)
+    part.update(limb(pts[1:], arm_w[1:], fore_back))
+    part.update(fist(pts[2], p, dim=True, r=FIST_R * (0.85 if slim else 1)))
     f.part(part)
 
     # Torso, skirt.
     f.part(torso(c, p, top, top_x, hip, hip_x))
     if c.get("legs") == "skirt":
-        f.part(skirt(p, hip, hip_x))
+        f.part(skirt(p, hip, hip_x, torso_half(c), SLIM_FLARE if slim else 3))
 
     # Front arm: behind the head when raised, so it never covers the face.
-    pts = arm_points((top_x - 1, top + 3), pose["fa"], pose["fe"], reach)
-    arm = limb(pts[:2], ARM_W[:1], sleeve)
-    arm.update(limb(pts[1:], ARM_W[1:], fore))
-    arm.update(fist(pts[2], p))
+    pts = arm_points((top_x - 1 + narrow / 2, top + 3), pose["fa"], pose["fe"], reach)
+    arm = limb(pts[:2], arm_w[:1], sleeve)
+    arm.update(limb(pts[1:], arm_w[1:], fore))
+    arm.update(fist(pts[2], p, r=FIST_R * (0.85 if slim else 1)))
     # An arm whose fist is above the chin goes behind the head, so it never covers the face.
     raised = pts[2][1] < neck[1]
     if raised:

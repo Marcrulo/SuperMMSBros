@@ -1,0 +1,368 @@
+<title>Super MMS Bros Sprites</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a sticky control bar over a grid of live sprite tiles; a drawer opens one animation frame by frame.
+   One deliberate dark look taken from the game's own Sweetie 16 palette. */
+:root {
+  color-scheme: dark;
+  --ink: #1a1c2c;        /* the sprites' outline color */
+  --panel: #262b44;
+  --raised: #333c57;
+  --line: #44506e;
+  --muted: #94b0c2;
+  --text: #f4f4f4;
+  --accent: #ffcd75;     /* strike frames, selection */
+  --hot: #ef7d57;
+  --stage: #5a6478;      /* the preview ground, like the game's hazed stages */
+  --display: "Silkscreen", "Courier New", monospace;
+  --body: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--ink); color: var(--text); }
+body {
+  font-family: var(--body); font-size: 14px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--ink); }
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 16px; }
+header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+h1 { font-family: var(--display); font-weight: 400; font-size: 26px; letter-spacing: 0.02em; margin: 0; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.sub { color: var(--muted); margin: 0; max-width: 65ch; }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px;
+}
+.group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.label { font-family: var(--display); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button {
+  font: 500 13px var(--body); color: var(--muted); background: transparent; border: 0;
+  padding: 5px 10px; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--raised); color: var(--text); box-shadow: inset 0 -2px 0 var(--accent); }
+button:focus-visible, select:focus-visible, .chip:focus-visible, .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+input[type=range] { accent-color: var(--accent); width: 110px; }
+.val { font-family: var(--mono); font-size: 12px; color: var(--text); min-width: 3.5ch; font-variant-numeric: tabular-nums; }
+
+.picker { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-color: var(--line) transparent; }
+.chip {
+  flex: none; display: grid; justify-items: center; gap: 2px; padding: 6px 8px 5px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; cursor: pointer;
+  color: var(--muted); font: 500 12px var(--body); min-width: 72px;
+}
+.chip canvas { image-rendering: pixelated; width: 48px; height: 48px; }
+.chip[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--raised); }
+.chip.text { min-width: 0; padding: 6px 10px; font-family: var(--mono); }
+
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(var(--tile, 200px), 1fr)); }
+.tile {
+  display: grid; gap: 6px; padding: 8px; background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; cursor: pointer; text-align: left; color: var(--text); font: inherit; min-width: 0;
+}
+.tile:hover { border-color: var(--muted); }
+.tile canvas { width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; display: block; }
+.meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; }
+.name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ticks { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.tag { font-family: var(--display); font-size: 10px; color: var(--ink); background: var(--accent); padding: 1px 5px; border-radius: 2px; }
+
+dialog {
+  width: min(1100px, calc(100vw - 32px)); max-height: calc(100vh - 32px); padding: 0;
+  background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+}
+dialog::backdrop { background: rgba(10, 11, 20, 0.75); }
+.dhead { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.dhead h2 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; }
+.dbody { display: grid; gap: 16px; padding: 16px; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); align-items: start; }
+.big canvas { width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; border-radius: 4px; display: block; }
+.controls { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+.btn { font: 500 13px var(--body); color: var(--text); background: var(--raised); border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
+.btn:hover { border-color: var(--muted); }
+.frames { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+.frame { flex: none; display: grid; gap: 4px; justify-items: center; cursor: pointer; background: none; border: 0; padding: 0; color: var(--muted); font: 12px var(--mono); }
+.frame canvas { width: 160px; height: 160px; image-rendering: pixelated; border: 2px solid transparent; border-radius: 4px; }
+.frame[aria-current="true"] canvas { border-color: var(--text); }
+.frame.strike canvas { box-shadow: 0 0 0 2px var(--accent); }
+.frame.strike span { color: var(--accent); }
+.note { color: var(--muted); font-size: 13px; margin: 8px 0 0; max-width: 65ch; }
+.x { font: 400 20px var(--body); background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 8px; }
+@media (max-width: 720px) {
+  .dbody { grid-template-columns: 1fr; }
+  .big { max-width: 260px; }
+  .frame canvas { width: 120px; height: 120px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Super MMS Bros <span>Sprites</span></h1>
+    <p class="sub" id="sub">64 px strips, playing at game timing (60 ticks per second). Click an animation to step through its frames.</p>
+  </header>
+
+  <div class="bar" role="toolbar" aria-label="View settings">
+    <div class="group">
+      <span class="label">View</span>
+      <div class="seg" id="mode">
+        <button type="button" id="mode-char" data-mode="character" aria-pressed="true">By character</button>
+        <button type="button" id="mode-anim" data-mode="animation" aria-pressed="false">By animation</button>
+      </div>
+    </div>
+    <div class="group">
+      <span class="label">Zoom</span>
+      <input type="range" id="zoom" min="2" max="8" step="1" value="3" aria-label="Zoom">
+      <span class="val" id="zoom-val">3×</span>
+    </div>
+    <div class="group">
+      <span class="label">Speed</span>
+      <div class="seg" id="speed">
+        <button type="button" id="speed-1" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" id="speed-05" data-speed="0.5" aria-pressed="false">½×</button>
+        <button type="button" id="speed-025" data-speed="0.25" aria-pressed="false">¼×</button>
+        <button type="button" id="speed-0" data-speed="0" aria-pressed="false">Pause</button>
+      </div>
+    </div>
+    <div class="group">
+      <span class="label">Ground</span>
+      <div class="seg" id="ground">
+        <button type="button" id="ground-stage" data-ground="stage" aria-pressed="true">Stage</button>
+        <button type="button" id="ground-check" data-ground="check" aria-pressed="false">Checker</button>
+        <button type="button" id="ground-light" data-ground="light" aria-pressed="false">Light</button>
+      </div>
+    </div>
+    <div class="group">
+      <span class="label">Size</span>
+      <div class="seg" id="scale">
+        <button type="button" id="scale-art" data-scale="art" aria-pressed="true">Art 64 px</button>
+        <button type="button" id="scale-game" data-scale="game" aria-pressed="false">In game ¾</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="picker" id="picker" aria-label="Choose"></nav>
+  <main class="grid" id="grid"></main>
+</div>
+
+<dialog id="detail" aria-labelledby="d-title">
+  <div class="dhead">
+    <h2 id="d-title"></h2>
+    <div class="group">
+      <span class="ticks" id="d-ticks"></span>
+      <button type="button" class="x" id="d-close" aria-label="Close">×</button>
+    </div>
+  </div>
+  <div class="dbody">
+    <div class="big">
+      <canvas id="d-canvas" width="64" height="64"></canvas>
+      <div class="controls">
+        <button type="button" class="btn" id="d-prev">◀ Frame</button>
+        <button type="button" class="btn" id="d-play">Pause</button>
+        <button type="button" class="btn" id="d-next">Frame ▶</button>
+      </div>
+    </div>
+    <div style="min-width:0">
+      <div class="frames" id="d-frames"></div>
+      <p class="note" id="d-note"></p>
+    </div>
+  </div>
+</dialog>
+
+<script>
+const DATA = /*DATA*/null;
+const FRAME = 64;
+const PAUSE = 18; // ticks between repeats of a one-shot move
+
+const images = {};
+function strip(cid, anim) {
+  const key = cid + "/" + anim;
+  if (!images[key]) {
+    const img = new Image();
+    img.src = DATA.strips[cid][anim];
+    images[key] = img;
+  }
+  return images[key];
+}
+
+const state = { mode: "character", cid: DATA.characters[4].id, anim: "idle", zoom: 3, speed: 1, ground: "stage", scale: "art" };
+try {
+  const saved = JSON.parse(localStorage.getItem("sprite-viewer") || "{}");
+  for (const k of ["mode", "cid", "anim", "zoom", "speed", "ground", "scale"]) if (k in saved) state[k] = saved[k];
+} catch (e) {}
+function save() { try { localStorage.setItem("sprite-viewer", JSON.stringify(state)); } catch (e) {} }
+
+function drawingAt(anim, tick) {
+  const a = DATA.anims[anim];
+  const total = a.ticks.reduce((s, n) => s + n, 0);
+  let t = a.loop ? tick % total : tick % (total + PAUSE);
+  for (let i = 0; i < a.ticks.length; i++) { if (t < a.ticks[i]) return i; t -= a.ticks[i]; }
+  return a.ticks.length - 1;
+}
+
+const checker = (() => {
+  const c = document.createElement("canvas"); c.width = c.height = 8;
+  const g = c.getContext("2d");
+  g.fillStyle = "#3a3f55"; g.fillRect(0, 0, 8, 8);
+  g.fillStyle = "#2f3346"; g.fillRect(0, 0, 4, 4); g.fillRect(4, 4, 4, 4);
+  return c;
+})();
+function paint(canvas, cid, anim, index) {
+  const g = canvas.getContext("2d");
+  g.imageSmoothingEnabled = false;
+  const w = canvas.width;
+  if (state.ground === "check") { g.fillStyle = g.createPattern(checker, "repeat"); }
+  else g.fillStyle = state.ground === "light" ? "#e8ecf2" : "#5a6478";
+  g.fillRect(0, 0, w, w);
+  const img = strip(cid, anim);
+  if (!img.complete) return;
+  const size = state.scale === "game" ? w * 0.75 : w;
+  const off = (w - size) / 2;
+  g.drawImage(img, index * FRAME, 0, FRAME, FRAME, off, w - size, size, size);
+}
+
+const grid = document.getElementById("grid");
+const picker = document.getElementById("picker");
+let tiles = [];
+
+function renderPicker() {
+  picker.innerHTML = "";
+  if (state.mode === "character") {
+    for (const ch of DATA.characters) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip"; b.setAttribute("aria-pressed", ch.id === state.cid);
+      const c = document.createElement("canvas"); c.width = c.height = 64;
+      b.append(c, document.createTextNode(ch.name));
+      b.onclick = () => { state.cid = ch.id; save(); renderAll(); };
+      picker.append(b);
+      const img = strip(ch.id, "idle");
+      const draw = () => { const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, 64, 64, 0, 0, 64, 64); };
+      img.complete ? draw() : img.addEventListener("load", draw, { once: true });
+    }
+  } else {
+    for (const anim of Object.keys(DATA.anims)) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "chip text"; b.textContent = anim;
+      b.setAttribute("aria-pressed", anim === state.anim);
+      b.onclick = () => { state.anim = anim; save(); renderAll(); };
+      picker.append(b);
+    }
+  }
+  const on = picker.querySelector('[aria-pressed="true"]');
+  if (on) on.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+function renderGrid() {
+  grid.innerHTML = ""; tiles = [];
+  grid.style.setProperty("--tile", (FRAME * state.zoom + 18) + "px");
+  const items = state.mode === "character"
+    ? Object.keys(DATA.anims).map(anim => ({ cid: state.cid, anim, title: anim }))
+    : DATA.characters.map(ch => ({ cid: ch.id, anim: state.anim, title: ch.name }));
+  for (const it of items) {
+    const a = DATA.anims[it.anim];
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "tile";
+    const c = document.createElement("canvas");
+    c.width = c.height = FRAME * state.zoom;
+    const meta = document.createElement("div"); meta.className = "meta";
+    const name = document.createElement("span"); name.className = "name"; name.textContent = it.title;
+    const right = document.createElement("span"); right.className = "ticks";
+    right.textContent = a.ticks.length + (a.ticks.length === 1 ? " drawing" : " drawings");
+    meta.append(name, right);
+    b.append(c, meta);
+    b.onclick = () => openDetail(it.cid, it.anim);
+    grid.append(b);
+    tiles.push({ canvas: c, cid: it.cid, anim: it.anim });
+  }
+}
+
+function setPressed(groupId, attr, value) {
+  for (const b of document.querySelectorAll("#" + groupId + " button")) b.setAttribute("aria-pressed", String(b.dataset[attr] === String(value)));
+}
+function renderAll() {
+  setPressed("mode", "mode", state.mode);
+  setPressed("speed", "speed", state.speed);
+  setPressed("ground", "ground", state.ground);
+  setPressed("scale", "scale", state.scale);
+  document.getElementById("zoom").value = state.zoom;
+  document.getElementById("zoom-val").textContent = state.zoom + "×";
+  renderPicker(); renderGrid();
+}
+
+for (const [id, key, parse] of [["mode", "mode", String], ["speed", "speed", Number], ["ground", "ground", String], ["scale", "scale", String]]) {
+  document.getElementById(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    state[key] = parse(b.dataset[key]); save(); renderAll(); paintDetail();
+  });
+}
+document.getElementById("zoom").addEventListener("input", e => { state.zoom = Number(e.target.value); save(); renderAll(); });
+
+// --- Detail drawer ---------------------------------------------------------
+const dlg = document.getElementById("detail");
+const det = { cid: null, anim: null, index: 0, playing: true };
+function nameOf(cid) { return DATA.characters.find(c => c.id === cid).name; }
+function openDetail(cid, anim) {
+  Object.assign(det, { cid, anim, index: 0, playing: true });
+  const a = DATA.anims[anim];
+  document.getElementById("d-title").textContent = nameOf(cid) + " · " + anim;
+  document.getElementById("d-ticks").textContent = "ticks per drawing: " + a.ticks.join(" · ") + (a.loop ? " (loops)" : "");
+  document.getElementById("d-note").textContent = a.note || "";
+  const frames = document.getElementById("d-frames");
+  frames.innerHTML = "";
+  a.ticks.forEach((n, i) => {
+    const f = document.createElement("button");
+    f.type = "button"; f.className = "frame" + (a.strike.includes(i) ? " strike" : "");
+    const c = document.createElement("canvas"); c.width = c.height = 64 * 4;
+    const label = document.createElement("span");
+    label.textContent = "#" + (i + 1) + " · " + n + "t" + (a.strike.includes(i) ? " · strike" : "");
+    f.append(c, label);
+    f.onclick = () => { det.index = i; det.playing = false; paintDetail(); };
+    frames.append(f);
+  });
+  dlg.showModal();
+  paintDetail();
+}
+function paintDetail() {
+  if (!dlg.open) return;
+  document.getElementById("d-play").textContent = det.playing ? "Pause" : "Play";
+  paint(document.getElementById("d-canvas"), det.cid, det.anim, det.index);
+  [...document.querySelectorAll("#d-frames .frame")].forEach((f, i) => {
+    f.setAttribute("aria-current", String(i === det.index));
+    paint(f.querySelector("canvas"), det.cid, det.anim, i);
+  });
+}
+document.getElementById("d-close").onclick = () => dlg.close();
+dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+document.getElementById("d-play").onclick = () => { det.playing = !det.playing; paintDetail(); };
+function step(d) { const n = DATA.anims[det.anim].ticks.length; det.index = (det.index + d + n) % n; det.playing = false; paintDetail(); }
+document.getElementById("d-prev").onclick = () => step(-1);
+document.getElementById("d-next").onclick = () => step(1);
+dlg.addEventListener("keydown", e => { if (e.key === "ArrowLeft") step(-1); if (e.key === "ArrowRight") step(1); });
+
+// --- Clock: one game tick per 1/60 s, scaled by the speed --------------------
+let tick = 0, last = performance.now(), acc = 0, detTick = 0;
+function frame(now) {
+  const dt = Math.min(100, now - last); last = now;
+  acc += dt * 60 / 1000 * state.speed;
+  const steps = Math.floor(acc); acc -= steps;
+  if (steps > 0 || tick === 0) {
+    tick += steps;
+    for (const t of tiles) paint(t.canvas, t.cid, t.anim, drawingAt(t.anim, tick));
+    if (dlg.open && det.playing) {
+      detTick += steps;
+      const i = drawingAt(det.anim, detTick);
+      if (i !== det.index) { det.index = i; paintDetail(); }
+    }
+  }
+  requestAnimationFrame(frame);
+}
+renderAll();
+requestAnimationFrame(frame);
+</script>

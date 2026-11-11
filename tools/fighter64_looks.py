@@ -108,9 +108,16 @@ GLASSES = [(5, 17, "GGGG..GGGG"), (6, 14, "GGGG..GGGG..G"), (6, 23, "G..G"),
            (7, 17, "G..G..G..G"), (8, 17, "GGGG..GGGG")]
 BLUSH = [(9, 16, "UU"), (10, 15, "UUU"), (9, 27, "U")]
 FRECKLES = [(8, 17, "u.u"), (9, 18, "u"), (8, 26, "u"), (9, 27, "u")]
-MONKEY_FACE = [(4, 18, "yYYYY.YYYy"), (5, 17, "YYYYYYYYYYYY"),
-               *[(r, 16, "YYYYYYYYYYYYYYY") for r in range(6, 13)],
-               (13, 17, "YYYYYYYYYYYY"), (14, 18, "yYYYYYYYYy")]
+# Light fur framing the eyes and the muzzle (Y y), and the muzzle (P p): a rounded snout centered
+# under the eyes, the nose at its top, the monkey's own mouth (smile, or a grimace when hurt).
+MONKEY_FACE = [(4, 18, "yYYYYYYYy"), (5, 17, "YYYYYYYYYYYY"),
+               *[(r, 16, "YYYYYYYYYYYYYY") for r in range(6, 13)],
+               (13, 16, "yYYYYYYYYYYYy"), (14, 17, "yYYYYYYYYYy"), (15, 18, "yyyyyyyy")]
+MONKEY_CLEAR = [(r, 19, "SSSSSSSSS") for r in range(10, 14)]
+MONKEY_MUZZLE = [(9, 19, "PPOOOPP"), (10, 18, "PPPPPPPPP"), (11, 18, "PPPPPPPPP"),
+                 (12, 18, "pPPPPPPPp"), (13, 19, "ppppppp")]
+MONKEY_SMILE = [(11, 19, "O.....O"), (12, 20, "OOOOO")]
+MONKEY_GRIMACE = [(11, 20, "OOOOO"), (12, 20, "OTTTO"), (13, 20, "OOOOO")]
 MONKEY_EAR = [(6, 9, "aAAa"), (7, 8, "aAYYa"), (8, 8, "aYYYa"), (9, 8, "aAYYa"), (10, 9, "aAa")]
 MONKEY_TUFT = [(-2, 18, "a.a"), (-1, 17, "aAaAa")]
 
@@ -131,23 +138,24 @@ WHITE_SHIRT = (232, 236, 240)
 CHARACTERS = {
     "slot_01": dict(name="Pia", skin=(232, 160, 122), hair=(150, 52, 26),
                     hair_light=(190, 82, 40), hair_style="bob", blush=(222, 120, 110), mouth="soft", build="heavy",
-                    shirt=(128, 128, 136), pants=JEANS),
+                    shirt=(132, 78, 182), pants=JEANS),
     "slot_02": dict(name="Gitte", skin=FAIR, hair=(232, 236, 242), hair_shade=(184, 190, 204),
                     hair_light=(255, 255, 255), hair_style="puff", shirt=(226, 48, 120),
                     shirt_shade=(160, 16, 88), inner=(250, 150, 190), lips=(196, 40, 112), pants=DARK),
     "slot_03": dict(name="Trine", skin=FAIR, hair=(160, 168, 176), hair_style="long",
                     hair_length=6, glasses=(20, 20, 28), mouth="soft", big_chin=True, shirt=(84, 96, 106),
                     inner=(150, 160, 168), pants=DARK),
-    "slot_04": dict(name="Nina", skin=(248, 180, 140), hair=(168, 30, 18),
+    "slot_04": dict(name="Nina", skin=(248, 180, 140), hair=(168, 30, 18), slim=0.4,
                     hair_light=(214, 64, 34), hair_style="long", hair_length=12,
-                    freckles=(204, 120, 90), shirt=(36, 32, 40), shirt_light=(70, 62, 74),
+                    freckles=(204, 120, 90), shirt=(232, 234, 238), shirt_shade=(178, 184, 198),
+                    shirt_light=(255, 255, 255),
                     pants=JEANS),
     "slot_05": dict(name="Michael Bech", skin=(240, 128, 112), skin_shade=(196, 92, 84),
                     skin_light=(250, 166, 146), stubble=(214, 104, 94), collar="hood",
                     hair_style="buzz", hair=(178, 104, 86), hair_shade=(160, 90, 76),
                     shirt=(240, 90, 10), shirt_shade=(184, 40, 0), shirt_light=(255, 138, 58),
                     pants=DARK),
-    "slot_06": dict(name="Henrik", skin=FAIR, hair=(96, 60, 24), hair_style="receding",
+    "slot_06": dict(name="Henrik", skin=FAIR, hair=(96, 60, 24), hair_style="short",
                     beard=(128, 96, 56), beard_style="full", shirt=(48, 80, 124),
                     inner=WHITE_SHIRT, pants=DARK),
     "slot_07": dict(name="Stig", skin=FAIR, hair=(84, 56, 34), hair_style="receding",
@@ -158,7 +166,7 @@ CHARACTERS = {
                     pants=JEANS),
     "slot_09": dict(name="Kim", skin=FAIR, beard=(128, 88, 48), beard_style="short",
                     shirt=(160, 168, 176), short_sleeves=True, pants=JEANS),
-    "slot_10": dict(name="Mette", skin=FAIR, hair=(110, 70, 36), hair_light=(146, 98, 54),
+    "slot_10": dict(name="Mette", skin=FAIR, hair=(110, 70, 36), hair_light=(146, 98, 54), slim=0.4,
                     hair_style="long", hair_length=13, shirt=(48, 84, 140),
                     dots=(196, 210, 230), pants=DARK),
     "slot_11": dict(name="Mads", skin=(88, 96, 52), hair=(92, 60, 36), hair_style="short",
@@ -168,15 +176,19 @@ CHARACTERS = {
                     stripe=(170, 178, 200), pants=DARK),
     "slot_12": dict(name="Sjippepigen", skin=(120, 128, 80), skin_shade=(92, 100, 60),
                     hair=(146, 122, 70), hair_light=(182, 160, 100), hair_style="ponytail",
-                    eye=(52, 56, 34), statue=True, mouth="soft", shirt=(128, 92, 58), legs="skirt",
-                    shoes=(88, 64, 40)),
+                    eye=(70, 60, 40), eye_white=(226, 230, 208), statue=True, mouth="small", soft_face=True, shirt=(128, 92, 58),
+                    legs="skirt", pants=(120, 128, 80), shoes=(88, 64, 40), build="slim", head_trim=([14], [12, 16, 22, 27]),
+                    oval_head=(8.8, 17.6, 7.7, 8.6)),
     "slot_13": dict(name="Fidusen", monkey=True, skin=(112, 104, 88), hair=(112, 104, 88),
-                    hair_light=(136, 126, 106), face=(200, 172, 136), eye=(40, 22, 16),
-                    shirt=(112, 104, 88), shirt_light=(136, 126, 106), pants=(100, 92, 78),
-                    hands=(200, 172, 136), shoes=(170, 146, 112)),
+                    hair_light=(136, 126, 106), face=(232, 218, 176), muzzle=(184, 170, 146),
+                    iris=(128, 72, 46), mouth="soft",
+                    eye=(14, 10, 10), shirt=(112, 104, 88), shirt_light=(136, 126, 106),
+                    pants=(100, 92, 78), hands=(125, 80, 45), shoes=(125, 80, 45),
+                    collar="none", belly=True),
     "slot_14": dict(name="Magnus", skin=(240, 166, 130), hair=(96, 60, 34),
                     hair_light=(130, 86, 50), hair_style="fringe", glasses=(20, 20, 28),
-                    collar="hood", shirt=(40, 120, 128), pants=JEANS, build="small"),
+                    shirt=(40, 120, 128), pants=JEANS, build="small",
+                    head_trim=([2, 14], [12, 21])),
 }
 
 
@@ -218,14 +230,23 @@ def palette(c):
         p["u"] = c["freckles"]
     p["m"] = (120, 40, 48)
     if c.get("statue"):
-        p["W"] = p["L"]
+        p["W"] = c.get("eye_white", p["L"])
         p["T"] = p["L"]
     if c.get("monkey"):
-        p["Y"], p["y"] = c["face"], scale(c["face"], 0.8)
-        p["W"] = c["face"]
+        p["Y"], p["y"] = c["face"], scale(c["face"], 0.85)
+        p["P"], p["p"] = c["muzzle"], scale(c["muzzle"], 0.85)
+        p["W"] = c["iris"]      # red-brown eyes with black pupils
         p["L"] = p["Z"]
     return p
 
+
+# A softer face: thin high brows, eyes (white, iris, pupil), no nose bump, light on the cheekbones.
+SOFT_FACE = [(3, 18, "ss....ss"), (4, 18, "SSSSSSSSS"), (5, 17, "SSSSSSSSSS"),
+             (6, 18, "WB....WB"), (7, 18, "WO....WO"), (8, 26, "Ss"), (9, 26, "SS"),
+             (9, 16, "L"), (9, 27, "L")]
+SOFT_FACE_CUT = [(8, 29), (9, 29)]
+SMALL_SMILE = [(10, 19, "SSOSSSOSS"), (11, 19, "SSSOOOSSS"), (12, 19, "SSSSsSSSS"),
+               (13, 21, "SSSSS")]
 
 SHUT_EYES = [(6, 18, "SS....SS"), (7, 18, "OO....OO")]
 HURT_MOUTH = [(10, 19, "SSSSSSSSS"), (11, 20, "OOOOOOO"), (12, 20, "OTOTOTO"), (13, 20, "OOOOOOO")]
@@ -257,12 +278,21 @@ def build_head(c, face="normal"):
         paint(cells, BIG_CHIN)
     if face == "hurt":
         paint(cells, HURT_MOUTH)
+    elif c.get("mouth") == "small":
+        paint(cells, SMALL_SMILE)
     elif c.get("mouth") == "soft":
         paint(cells, SOFT_MOUTH)
+    if c.get("soft_face"):
+        paint(cells, SOFT_FACE)
+        for key in SOFT_FACE_CUT:
+            cells.pop(key, None)
     if "lips" in c and face != "hurt":
         paint(cells, LIPS)
     if c.get("monkey"):
-        paint(cells, MONKEY_FACE, only=set("SLX"))
+        paint(cells, MONKEY_CLEAR)
+        paint(cells, MONKEY_FACE, only=set("SsLX"))
+        paint(cells, MONKEY_MUZZLE)
+        paint(cells, MONKEY_GRIMACE if face == "hurt" else MONKEY_SMILE)
         paint(cells, MONKEY_EAR)
         paint(cells, MONKEY_TUFT)
     if face in ("shut", "hurt"):
@@ -291,7 +321,82 @@ def build_head(c, face="normal"):
     behind = {}
     if style == "long":
         paint(behind, long_back(c.get("hair_length", 11)))
+    if "head_trim" in c:
+        cells = trim(cells, *c["head_trim"])
+        behind = trim(behind, *c["head_trim"])
+    if c.get("jaw_taper"):
+        cells = taper_jaw(cells, c["jaw_taper"])
+    if c.get("oval_head"):
+        cells = oval_head(cells, *c["oval_head"])
     return behind, cells
+
+
+def oval_head(cells, cy, cx, ry, rx, lean=0.3, jaw=0.45):
+    """A smooth, rounded head: the skin becomes an even oval (center row cy, column cx, radii ry,
+    rx) with one soft shadow along the back and bottom edge, a highlight on the upper front and a
+    simple ear; the features (eyes, mouth) and hair stay. Removes the shared head's carved shading.
+    `lean`: the lower half shifts forward (this many width radii at the bottom), so the chin comes
+    out; `jaw`: below the middle, the back is cut away by up to this many width radii, so the jaw
+    curves up to the ear instead of making a thick neck."""
+    feature = set("OWBTMmUuGRrYyPp")
+    out = {k: ch for k, ch in cells.items() if ch in "AaZ" or (ch in feature and k[0] < 15)}
+    for r in range(int(cy - ry) - 1, int(cy + ry) + 2):
+        for col in range(int(cx - rx) - 1, int(cx + rx) + 2):
+            v = (r + 0.5 - cy) / ry
+            u = (col + 0.5 - cx) / rx - lean * max(v, 0.0)
+            d = u * u + v * v
+            # Behind the face, only where the head already was (keeps the gap to a ponytail).
+            if d > 1.0 or (r, col) in out or (col < cx and (r, col) not in cells):
+                continue
+            if v > 0.15 and u < -1.0 + jaw * (v - 0.15) / 0.85 * 2:
+                continue
+            if d > 0.62 and (u < -0.2 or v > 0.45):
+                out[(r, col)] = "s"
+            elif d < 0.35 and v < -0.45 and u > -0.1:
+                out[(r, col)] = "L"
+            else:
+                out[(r, col)] = "S"
+    # The shadow follows the jaw's back edge too.
+    for (r, col), ch in list(out.items()):
+        if ch == "S" and r > cy and (r, col - 1) not in out:
+            out[(r, col)] = "s"
+    ex, ey = round(cx - rx * 0.5), round(cy - 0.5)
+    for (r, col) in ((ey - 1, ex), (ey - 1, ex + 1), (ey, ex), (ey + 1, ex), (ey + 1, ex + 1)):
+        if out.get((r, col)) in ("S", "s", "L"):
+            out[(r, col)] = "s"
+    return out
+
+
+def taper_jaw(cells, cuts):
+    """A slimmer chin: from the bottom row of the head up, drop this many pixels at the back of
+    each row (the jaw curves back up toward the ear). The outline is redrawn around it."""
+    bottom = max(r for (r, col), ch in cells.items() if ch not in "AaZ")
+    for i, n in enumerate(cuts):
+        r = bottom - i
+        row = sorted(col for (rr, col), ch in cells.items() if rr == r and ch not in "AaZ")
+        for col in row[:n]:
+            del cells[(r, col)]
+    return cells
+
+
+def trim(cells, rows, cols):
+    """A smaller head: drop these grid rows and columns, closing the gaps toward NECK (rows above
+    move down, columns move toward the neck's column), so the head still sits on the neck."""
+    nr, nc = NECK
+    for gone in sorted(rows, reverse=True):
+        cells = {((r + 1) if r < gone else r, col): ch for (r, col), ch in cells.items() if r != gone}
+    for gone in cols:
+        moved = {}
+        for (r, col), ch in cells.items():
+            if col == gone:
+                continue
+            if gone < nc and col < gone:
+                col += 1
+            elif gone > nc and col > gone:
+                col -= 1
+            moved[(r, col)] = ch
+        cells = moved
+    return cells
 
 
 def camo_color(c, x, y):
