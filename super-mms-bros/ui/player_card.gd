@@ -20,6 +20,8 @@ var player_color: Color
 var _fighter: Fighter
 var _bump_frames_left: int = 0
 var _stock_icons: Array[TextureRect] = []
+## Gitte's stance sign, on the portrait's bottom-right corner (only for a fighter with stances).
+var _stance_badge: StanceBadge
 
 @onready var _portrait_box := $Portrait as Panel
 @onready var _head := $Portrait/Head as TextureRect
@@ -38,9 +40,19 @@ static func percent_color(percent: float) -> Color:
 	return PERCENT_LOW.lerp(PERCENT_HIGH, clampf(percent / PERCENT_RED_AT, 0.0, 1.0))
 
 
-## The head's square in a first idle drawing of this frame size.
-static func head_region(size: int) -> Rect2:
-	return HEAD_REGIONS.get(size, HEAD_REGIONS[48])
+## The head's square in a first idle drawing of this frame size (a bigger canvas holds the 64×64
+## frame at its bottom center).
+static func head_region(height: int, width: int = 0) -> Rect2:
+	var base := 48 if height == 48 else 64
+	var region: Rect2 = HEAD_REGIONS[base]
+	region.position += Vector2(((width if width > 0 else height) - base) / 2, height - base)
+	return region
+
+
+## The head's square in a character's idle strip.
+static func head_region_of(idle: Texture2D) -> Rect2:
+	var drawings: int = FighterVisuals.ANIMATIONS["idle"].ticks.size()
+	return head_region(FighterVisuals.frame_size(idle), FighterVisuals.frame_width(idle, drawings))
 
 
 ## Shows `fighter` under `player_name`, framed in `color`.
@@ -57,8 +69,17 @@ func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 	_portrait_box.add_theme_stylebox_override("panel", square)
 	var head := AtlasTexture.new()
 	head.atlas = FighterVisuals.textures_for(fighter.character_id)["idle"]
-	head.region = head_region(FighterVisuals.frame_size(head.atlas))
+	head.region = head_region_of(head.atlas)
 	_head.texture = head
+	if _stance_badge != null:
+		_stance_badge.queue_free()
+		_stance_badge = null
+	if fighter.stance_data() != null:
+		_stance_badge = StanceBadge.new()
+		_stance_badge.border = color
+		_stance_badge.position = _portrait_box.position + _portrait_box.size \
+				- Vector2(StanceBadge.SIZE, StanceBadge.SIZE) + Vector2(2, 2)
+		add_child(_stance_badge)
 	for icon in _stock_icons:
 		icon.queue_free()
 	_stock_icons.clear()
@@ -79,6 +100,8 @@ func refresh() -> void:
 	_percent.text = percent_text(_fighter.percent)
 	_percent.add_theme_color_override("font_color", percent_color(_fighter.percent))
 	_percent.position.y = _percent_y + bump_offset()
+	if _stance_badge != null and _stance_badge.stance != _fighter.stance:
+		_stance_badge.stance = _fighter.stance
 
 
 ## Makes the number jump (the fighter was just hit).
@@ -93,6 +116,15 @@ func advance_bump() -> void:
 ## How far the number is lifted right now.
 func bump_offset() -> float:
 	return -BUMP_HEIGHT if _bump_frames_left > 0 else 0.0
+
+
+func has_stance_badge() -> bool:
+	return _stance_badge != null
+
+
+## The stance the badge shows.
+func get_shown_stance() -> Fighter.Stance:
+	return _stance_badge.stance
 
 
 func get_name_text() -> String:

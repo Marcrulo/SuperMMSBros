@@ -14,6 +14,8 @@ signal stepped
 signal fighter_ko(player_index: int)
 ## A KO'd fighter with stocks left came back at its spawn point.
 signal fighter_respawned(player_index: int)
+## A summoned hand reached the floor (its owner's index; docs/specs/sound.md).
+signal hand_landed(player_index: int)
 
 ## Match rules (docs/specs/match-and-stage.md#kos-stocks-and-respawn), in ticks.
 const STOCKS := 3
@@ -25,11 +27,20 @@ const INVULNERABLE_FRAMES := 120
 
 ## Ticks since the match started.
 var tick: int = 0
+## The match's one RNG (docs/specs/architecture.md rule 6) and its seed; set by reset().
+var rng := RandomNumberGenerator.new()
+var seed_value: int = 0
 
 var _fighters: Array[Fighter] = []
 var _controllers: Array[Controller] = []
 ## Projectiles in flight, in the order they were fired.
 var _projectiles: Array[Projectile] = []
+## Summoned hands, in the order they appeared.
+var _hands: Array[Hand] = []
+## Banana peels, in the order they were placed.
+var _peels: Array[Peel] = []
+## Gitte's pyramids (rising or sinking), in the order they appeared.
+var _pyramids: Array[Pyramid] = []
 ## Per fighter: ticks until a KO'd fighter respawns (0 = not waiting).
 var _respawn_frames_left: Array[int] = []
 
@@ -46,7 +57,7 @@ func _ready() -> void:
 		# Each player plays their character from the menus (docs/specs/menus.md).
 		var character := Game.character() if fighter.player_index == 0 else Game.p2_character()
 		fighter.character_id = character.id
-		fighter.stats = character.stats
+		fighter.stats = character.fighter_stats()
 		_fighters.append(fighter)
 		# P1 plays from the keyboard; everyone else is the dummy until the CPU arrives (M8).
 		if fighter.player_index == 0:
@@ -79,6 +90,14 @@ func _chosen_stage_id() -> String:
 	return Game.stage_id if Game.stage_id != "" else StageData.DEFAULT_ID
 
 
+## `--seed=N`, else a new random seed.
+func _seed_from_options() -> int:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--seed="):
+			return int(arg.trim_prefix("--seed="))
+	return randi()
+
+
 ## Advances the game by one tick (docs/specs/architecture.md#tick-order).
 ## Must run inside a physics frame (see Fighter.tick()).
 func step() -> void:
@@ -87,11 +106,20 @@ func step() -> void:
 		inputs.append(controller.get_input(null))
 	for fighter in _fighters:
 		fighter.has_projectile = _projectile_of(fighter.player_index) != null
+		fighter.has_hand = _hand_of(fighter.player_index) != null
 	for i in _fighters.size():
 		_fighters[i].tick(inputs[i])
 	_grab_ledges()
+	_start_vines()
+	_advance_pyramids()
+	_start_pyramids()
 	_advance_projectiles()
 	_spawn_projectiles()
+	_advance_hands()
+	_spawn_hands()
+	_advance_peels()
+	_spawn_peels()
+	_trip_on_peels()
 	_resolve_hits()
 	_check_kos_and_respawns()
 	_advance_timers()
@@ -130,8 +158,13 @@ func _projectile_of(player_index: int) -> Projectile:
 ## Moves every projectile one tick and removes the ones past their lifetime or out of bounds.
 func _advance_projectiles() -> void:
 	for projectile in _projectiles.duplicate():
+		var before: Vector2 = projectile.global_position
 		projectile.advance()
-		if projectile.is_expired(_stage.blast_zone):
+		# A thrown one (with gravity) is gone when it lands on the main platform (it passes
+		# through the pass-through platforms).
+		var landed: bool = projectile.data.projectile_gravity > 0.0 \
+				and projectile.global_position.y >= _stage.floor_below(before)
+		if landed or projectile.is_expired(_stage.blast_zone):
 			_remove_projectile(projectile)
 
 
@@ -141,16 +174,183 @@ func _spawn_projectiles() -> void:
 		if not fighter.wants_projectile():
 			continue
 		var data := fighter.stats.moveset.side_special
-		var projectile := Projectile.new()
-		$Projectiles.add_child(projectile)
 		var offset := Vector2(data.hitbox_center.x * fighter.facing, data.hitbox_center.y)
-		projectile.setup(fighter.player_index, fighter.facing, fighter.global_position + offset, data)
-		_projectiles.append(projectile)
+		var at := fighter.global_position + offset * fighter.size_scale()
+		var angle := _kick_angle(fighter, at, data)
+		var thrown := fighter.projectile_data(data)
+		# A volley: the first straight at `angle`, the others fanned out above and below it.
+		for i in maxi(data.projectile_count, 1):
+			var fan := ceili(i / 2.0) * data.projectile_spread_deg * (1 if i % 2 == 1 else -1)
+			var projectile := Projectile.new()
+			$Projectiles.add_child(projectile)
+			projectile.setup(fighter.player_index, fighter.facing, at, thrown, angle + fan,
+				fighter.character_id)
+			_projectiles.append(projectile)
+
+
+## A projectile's flight angle: straight ahead, or (an aimed one) at the nearest fighter it can
+## see, else a random angle in its cone (docs/specs/moves.md#michael-bech--football).
+func _kick_angle(fighter: Fighter, at: Vector2, data: MoveData) -> float:
+	if data.aim_cone_deg <= 0.0:
+		return data.projectile_angle_deg
+	var targets: Array[Vector2] = []
+	for other in _fighters:
+		if other != fighter and other.state != Fighter.State.KO:
+			targets.append(other.get_center())
+	var angle := Projectile.aim_angle(at, fighter.facing, targets, data.aim_cone_deg, data.aim_range)
+	return angle if not is_nan(angle) else rng.randf_range(-data.aim_cone_deg, data.aim_cone_deg)
 
 
 func _remove_projectile(projectile: Projectile) -> void:
 	_projectiles.erase(projectile)
 	projectile.queue_free()
+
+
+func get_hands() -> Array[Hand]:
+	return _hands
+
+
+func _hand_of(player_index: int) -> Hand:
+	for hand in _hands:
+		if hand.owner_index == player_index:
+			return hand
+	return null
+
+
+## Moves every hand one tick (hover, slam, impact); removes the finished ones and those that fell
+## out of the blast zone.
+func _advance_hands() -> void:
+	for hand in _hands.duplicate():
+		if hand.advance():
+			hand_landed.emit(hand.owner_index)
+		if hand.finished or not _stage.blast_zone.has_point(hand.global_position):
+			_remove_hand(hand)
+
+
+## Adds a hand for every fighter whose summon reached its spawn frame this tick.
+func _spawn_hands() -> void:
+	for fighter in _fighters:
+		if not fighter.wants_hand():
+			continue
+		var data := fighter.stats.moveset.neutral_special.hand
+		var at := fighter.global_position + Vector2(data.offset.x * fighter.facing, data.offset.y)
+		var hand := Hand.new()
+		$Projectiles.add_child(hand)
+		hand.setup(fighter.player_index, fighter.facing, at, data, _stage.floor_below(at),
+			fighter.character_id)
+		_hands.append(hand)
+
+
+func _remove_hand(hand: Hand) -> void:
+	_hands.erase(hand)
+	hand.queue_free()
+
+
+## A vine up special on its choice frame: pulled to the nearest free ledge in reach that the
+## fighter is beside or below, else a swing (docs/specs/moves.md#fidusen--banana-book-vine).
+func _start_vines() -> void:
+	for fighter in _fighters:
+		if not fighter.wants_vine():
+			continue
+		var vine := fighter.stats.moveset.up_special.vine
+		var best: Ledge = null
+		var best_distance := INF
+		for ledge in _stage.get_ledges():
+			var distance := fighter.get_center().distance_to(ledge.point)
+			var beside := (fighter.global_position.x - ledge.point.x) * ledge.side >= -4.0
+			var below := fighter.global_position.y >= ledge.point.y - 4.0
+			if distance <= vine.ledge_range and beside and below and not _is_ledge_held(ledge) \
+					and distance < best_distance:
+				best = ledge
+				best_distance = distance
+		if best != null:
+			fighter.start_vine_pull(best)
+		else:
+			fighter.start_vine_swing()
+
+
+func get_pyramids() -> Array[Pyramid]:
+	return _pyramids
+
+
+## Every pyramid rises while its owner rides it, else sinks; the sunk ones are removed.
+func _advance_pyramids() -> void:
+	for pyramid in _pyramids.duplicate():
+		pyramid.advance(_fighters[pyramid.owner_index].is_riding_pyramid())
+		if pyramid.finished:
+			_remove_pyramid(pyramid)
+
+
+## A pyramid up special on its choice frame: a pyramid out of the floor below if it's in reach,
+## else a hop (docs/specs/moves.md#gitte--scissors-and-stances).
+func _start_pyramids() -> void:
+	for fighter in _fighters:
+		if not fighter.wants_pyramid():
+			continue
+		var data := fighter.stats.moveset.up_special.pyramid
+		var feet := fighter.global_position
+		var floor_y := _stage.floor_below(feet - Vector2(0.0, 1.0), true)
+		if floor_y - feet.y > data.reach:  # Also no floor at all (INF).
+			fighter.start_pyramid_hop()
+			continue
+		fighter.start_pyramid(floor_y)
+		var pyramid := Pyramid.new()
+		$Pyramids.add_child(pyramid)
+		pyramid.setup(fighter.player_index, Vector2(feet.x, floor_y), data, fighter.character_id)
+		_pyramids.append(pyramid)
+
+
+func _remove_pyramid(pyramid: Pyramid) -> void:
+	_pyramids.erase(pyramid)
+	pyramid.queue_free()
+
+
+func get_peels() -> Array[Peel]:
+	return _peels
+
+
+## Peels fall to their floor and age; the expired ones and those out of the blast zone go.
+func _advance_peels() -> void:
+	for peel in _peels.duplicate():
+		peel.advance()
+		if peel.is_expired(_stage.blast_zone):
+			_remove_peel(peel)
+
+
+## A peel for every fighter whose down special reached its frame; past max_out, the oldest goes.
+func _spawn_peels() -> void:
+	for fighter in _fighters:
+		if not fighter.wants_peel():
+			continue
+		var data := fighter.stats.moveset.down_special.peel
+		var at := fighter.global_position + Vector2(8.0 * fighter.facing, 0.0)
+		var peel := Peel.new()
+		$Projectiles.add_child(peel)
+		peel.setup(fighter.player_index, at, data, _stage.floor_below(at, true), fighter.character_id)
+		_peels.append(peel)
+		var own := _peels.filter(func(p: Peel) -> bool: return p.owner_index == fighter.player_index)
+		if own.size() > data.max_out:
+			_remove_peel(own[0])
+
+
+## A landed peel trips the first other fighter on the ground that touches it, and is gone.
+func _trip_on_peels() -> void:
+	for peel in _peels.duplicate():
+		if not peel.landed:
+			continue
+		for victim in _fighters:
+			if victim.player_index == peel.owner_index or not victim.can_trip():
+				continue
+			if peel.get_trip_rect().intersects(victim.get_hurtbox_rect()):
+				victim.trip(peel.data)
+				fighter_hit.emit(victim.player_index)
+				_remove_peel(peel)
+				break
+
+
+func _remove_peel(peel: Peel) -> void:
+	_peels.erase(peel)
+	peel.queue_free()
 
 
 ## Collects every hit for this tick — moves and projectiles — then applies them all, so two
@@ -163,7 +363,8 @@ func _resolve_hits() -> void:
 		if not attacker.is_hitbox_active():
 			continue
 		var hitbox := attacker.get_hitbox_rect()
-		var data := attacker.current_move()
+		var normal := attacker.move in Fighter.NORMALS
+		var data := attacker.boosted(attacker.current_move(), not normal)
 		for victim in _fighters:
 			if victim == attacker or not victim.can_be_hit() or attacker.has_hit(victim.player_index):
 				continue
@@ -174,6 +375,7 @@ func _resolve_hits() -> void:
 					"move": data,
 					"side": attacker.knockback_side(data, victim.get_center()),
 					"attacker_x": attacker.global_position.x,
+					"normal": normal,
 				})
 	for projectile in _projectiles:
 		for victim in _fighters:
@@ -188,10 +390,27 @@ func _resolve_hits() -> void:
 					"attacker_x": projectile.global_position.x,
 				})
 				break
+	for hand in _hands:
+		var hitbox := hand.get_hitbox_rect()
+		for victim in _fighters:
+			if victim.player_index == hand.owner_index or not victim.can_be_hit() \
+					or hand.has_hit(victim.player_index):
+				continue
+			if hitbox.intersects(victim.get_hurtbox_rect()):
+				var dx := victim.get_center().x - hand.global_position.x
+				hits.append({
+					"hand": hand,
+					"victim": victim,
+					"move": hand.current_hit(),
+					"side": hand.facing if is_zero_approx(dx) else int(signf(dx)),
+					"attacker_x": hand.global_position.x,
+				})
 	for hit in hits:
 		var victim := hit.victim as Fighter
 		if hit.has("attacker"):
 			(hit.attacker as Fighter).register_hit(victim.player_index)
+		elif hit.has("hand"):
+			(hit.hand as Hand).register_hit(victim.player_index)
 		else:
 			_remove_projectile(hit.projectile)
 		if victim.state == Fighter.State.SHIELD:
@@ -199,6 +418,11 @@ func _resolve_hits() -> void:
 			fighter_blocked.emit(victim.player_index)
 		else:
 			victim.take_hit(hit.move, hit.side, hit.attacker_x)
+			if hit.get("normal", false):
+				# − stance: a normal attack that lands heals the attacker.
+				var attacker := hit.attacker as Fighter
+				var heal: float = (hit.move as MoveData).damage * attacker.lifesteal()
+				attacker.percent = maxf(attacker.percent - heal, 0.0)
 			fighter_hit.emit(victim.player_index)
 
 
@@ -215,9 +439,12 @@ func _check_kos_and_respawns() -> void:
 		elif not _stage.blast_zone.has_point(fighter.get_center()):
 			fighter.stocks -= 1
 			fighter.knock_out()
-			var projectile := _projectile_of(i)
-			if projectile != null:
-				_remove_projectile(projectile)
+			for projectile in _projectiles.duplicate():
+				if projectile.owner_index == i:
+					_remove_projectile(projectile)
+			var hand := _hand_of(i)
+			if hand != null:
+				_remove_hand(hand)
 			_respawn_frames_left[i] = RESPAWN_FRAMES
 			fighter_ko.emit(i)
 
@@ -229,10 +456,18 @@ func _advance_timers() -> void:
 
 
 ## Puts everything back to the start of a match, without reloading the scene.
-func reset() -> void:
+func reset(new_seed: int = -1) -> void:
 	tick = 0
+	seed_value = new_seed if new_seed != -1 else _seed_from_options()
+	rng.seed = seed_value
 	for projectile in _projectiles.duplicate():
 		_remove_projectile(projectile)
+	for hand in _hands.duplicate():
+		_remove_hand(hand)
+	for peel in _peels.duplicate():
+		_remove_peel(peel)
+	for pyramid in _pyramids.duplicate():
+		_remove_pyramid(pyramid)
 	_respawn_frames_left.clear()
 	for i in _fighters.size():
 		_fighters[i].spawn_at(_stage.get_spawn_position(i), _stage.get_spawn_facing(i))

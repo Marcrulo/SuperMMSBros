@@ -127,6 +127,101 @@ A bigger, more detailed style; every character uses it.
   timing. Every character is in `HAND_EDITED` (`tools/fighter_looks.py`), so the old 48 px
   generator leaves their folders alone.
 
+### Weapons
+
+A character can carry a weapon (Henrik: an acoustic guitar). It's drawn into the character's
+strips like any body part, by the 64 px generator from the poses, so it follows the body.
+
+- **Bigger canvas:** a swung weapon reaches past a 64×64 frame, so such a character's frames are
+  bigger (Henrik: **112×80**). The body is the same size and in the same place relative to the
+  feet: the 64×64 frame sits at the bottom center of the canvas (Henrik: 24 px of extra room on
+  each side, 16 px above). The game draws any frame size at ¾, feet at the origin. A character's
+  frames all share one size; the frame width is the strip width divided by the drawings.
+- **Henrik's guitar:** acoustic, natural wood top with a dark sound hole, a brown neck and
+  headstock, about 35 px long. On his back it's slung close: the body pressed against his back,
+  the neck rising behind his head on the back side. In jab, side tilt and the neutral special his own poses swing it (held
+  by the neck); in every other animation it stays on his back.
+- His move hitboxes are fitted to where the guitar is drawn in the strike drawing (see
+  [moves](moves.md#henrik--guitar)).
+- **Gitte's scissors:** a large pair, about 30 px long: two steel blades (light grey, shaded) on a
+  pivot screw, two big red handle loops (about 8 px across, with a visible hole) so they read as
+  scissors even small. Her frames are a 112×80 canvas too. On her back they hang closed, diagonally like
+  a sword in a back sheath: the handles stick out behind her neck (both loops clearly visible), the
+  blades slant down and forward behind her body, and just the tip pokes out in front of her hip. In her neutral special she holds
+  them out in front: open while charging (the blades about 40° apart), snapped shut in the strike
+  drawing. Her stance switch (`down_special`, 5 drawings) is her own pose: hands crossed in front,
+  then flung out wide. Her volley's picture (`projectile.png`): a small pair of scissors, 3
+  drawings of 16×16 turned 120° further each.
+- **Stances ÷ and ×** draw her frames at ×0.75 / ×1.25 of the usual ¾ size, feet at the origin.
+
+### Gitte's pyramid
+
+`assets/fighters/slot_02/pyramid.png`, one drawing, 168×128, drawn at ¾ (126×96 game px) by the
+64 px generator: a **stepped pyramid of sandstone blocks**, not a plain triangle. 8 courses
+(rows) of 16 px, each 10 px narrower on both sides than the one below it, with a single capstone
+block on top (28 px wide; its top row is the tip she stands on). Every course is a row of
+rectangular blocks (about 20–30 px wide, joints staggered from the course below like brickwork),
+each block a slightly different sand tone with grainy speckles (lighter and darker pixels), a
+light top edge, a darker bottom edge, a 1 px dark-sand joint between blocks, and chipped
+(missing) corner pixels so they read as rough-cut stone. The step tops catch the light. The usual
+dark outline goes around the whole pyramid. The colors are fixed (sand, not per character).
+
+In the game the drawing's bottom center sits on the floor top, and only the part above the floor
+is drawn: rising, it comes up out of the floor, and sinking, it goes back down into it, shaking
+1 px left and right every 2 ticks. Drawn behind the fighters, in front of the stage.
+
+Her own **up special** pose (3 drawings): a crouch with the front hand out low over the ground
+(calling the pyramid up), then standing with her fist raised forward and up (riding the tip; shown
+for the whole rise), then the same with the legs tucked (the pop). Her back arm stays hidden
+behind her body in this view, so the poses read through the front arm.
+
+### Fidusen's peel and book
+
+Drawn by the 64 px generator in the same style (outline, three tones), at ¾ in the game:
+
+- `assets/fighters/slot_13/peel.png`: a banana peel lying on the floor, 16×8, one drawing:
+  yellow with brown tips, three floppy flaps; its bottom center is the peel's position.
+- `assets/fighters/slot_13/projectile.png`: a book, 3 drawings of 16×16 turned 120° further each
+  (it spins): a red cover with white page edges.
+- His own **down special** pose (5 drawings: bend, drop, crouch, rise, stand) and **side special**
+  pose (4 drawings: wind back, throw over the shoulder, follow-through, stand).
+
+### Sjippepigen's arms
+
+Sjippepigen has **3 pairs of arms** (`arm_pairs=3` in `tools/fighter64_looks.py`). The main pair
+is drawn as usual (sleeves of her dress); the two extra pairs are bare (her bronze-green skin),
+start just below the shoulders (1.5 px lower per pair) and copy the main arms' pose, evenly
+fanned from the main arm toward a limit: out toward the horizontal, or down toward hanging when
+the main arm is already out in front; a raised main arm's extras step back down to the
+horizontal. An extra arm (and its forearm) never points above the horizontal unless the main arm
+is raised, so no arm goes up on its own. Visual only: her hurtbox and moves are the
+default ones.
+
+### Michael's football
+
+`assets/fighters/slot_05/projectile.png` (a character's own projectile picture; without one, the
+shared `assets/fighters/projectile.png` is used): a black-and-white football, 16×16 per drawing,
+3 drawings side by side, each turned a little further (it spins, 4 ticks per drawing, toward its
+flight direction). In the 64 px style (outline, shading), drawn at ¾ (12 game px), centered on the
+ball's position.
+
+Michael's kick (`side_special`, 4 drawings) is his own: kicking leg back, swinging through,
+leg up high in front (the follow-through), back to standing.
+
+### Michael's hand
+
+`assets/fighters/slot_05/hand.png`: his summoned hand, a giant **white glove** drawn by the 64 px
+generator (white with grey shading, a rolled cuff, the same outline as the bodies), seen from the
+side, palm down, fingers pointing forward, cuff at the back. Two drawings side by side, 56×44
+each: **open** (hovering: fingers close together, fanning out slightly, knuckle creases, the
+thumb hanging below) and **flat** (slamming: fingers together, palm flat on the bottom row). The palm's bottom center
+is at the bottom center of the drawing; drawn at ¾ like the fighters, mirrored to Michael's
+facing. While hovering it bobs 1 px every 8 ticks, and a shadow (a dark ellipse) on the floor
+below it shows where it will land.
+
+Michael's summon pose (`neutral_special`, 4 drawings) is his own: arm thrown forward and up,
+palm open.
+
 ## Stages
 
 - **Backgrounds:** one image per stage, **528×297** (the 480×270 screen plus 10% for parallax

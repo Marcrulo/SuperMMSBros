@@ -23,7 +23,7 @@ Pausing is not a phase: it stops the whole scene tree (see [Pause](#pause)).
 Checked every tick after hits are resolved (see [architecture](architecture.md)):
 
 1. A fighter not in `KO` whose **center** is outside the stage's blast zone rectangle is KO'd:
-   `stocks −= 1`, state `KO`, velocity zero, hidden, collision off. Its projectile disappears. The
+   `stocks −= 1`, state `KO`, velocity zero, hidden, collision off. Its projectile and hand disappear. The
    Match emits `fighter_ko(index)`.
 2. If that fighter still has stocks, it respawns **60 ticks** later at its own spawn point: facing
    its starting direction, velocity zero, state `IDLE`, **0 %**, jumps and up special restored,
@@ -54,7 +54,7 @@ scene:
   is printed;
 - every fighter at its spawn point: starting facing, velocity zero, state `IDLE`, 3 stocks, 0 %,
   full shield, jumps restored, no invulnerability, no timers, collision mask restored, visible;
-- no projectiles;
+- no projectiles and no summoned hands;
 - every controller's `reset()` is called;
 - the Match emits `match_reset`.
 
@@ -100,6 +100,9 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
     6 frames.
   - one **stock icon** (8×8, the fighter's head in its player colors) per remaining stock, in a
     row on the name's line, starting at x 60 of the card, 10 px apart.
+  - for a fighter with **stances** (Gitte): a 9×9 badge on the portrait's bottom-right corner
+    (dark `#1a1c2c` square, 1 px border in the player color) with her current stance's sign drawn
+    in light lines: `+`, `−`, `÷` (a line and two dots) or `×`.
 - **Stage name:** the stage's name in the top-left corner for the first 3 seconds of a match.
 - **Countdown:** large text in the center ("3", "2", "1", "GO!").
 - **Off-screen arrows:** when a fighter (not `KO`) is fully outside the visible screen, a small
@@ -180,7 +183,10 @@ Battlefield            (Node2D, stage/stage.gd)
 `stage.gd` exports the blast zone as a `Rect2`, applies a `StageData` (`apply(data)`), provides
 the platform rectangles for the snapshot, and the ledges (`get_ledges()`, computed from the main
 platform's collision shape: its two top corners; see [fighter](fighter.md#ledge)). Pass-through platforms have a 4 px tall one-way collision
-shape at their top edge.
+shape at their top edge. `floor_below(point, platforms = false)` returns the y of the nearest floor top at or below
+`point` whose x range holds `point.x`, or `INF`: the main platform only (Michael's hand goes
+through the pass-through platforms), or with `platforms` also the pass-through platforms
+(Fidusen's peels land on them; his books, like Michael's hand, go through them).
 
 ### Platform look (perspective)
 

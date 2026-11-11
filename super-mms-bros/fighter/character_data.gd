@@ -14,3 +14,20 @@ const DEFAULT_ID := "slot_01"
 @export var portrait: Texture2D
 ## Its movement and shield numbers, and its move set (empty while it isn't playable).
 @export var stats: FighterStats
+## Its own move set, used instead of the one in `stats` (optional; docs/specs/moves.md#character-move-sets).
+@export var moveset: MoveSet
+## Where the neutral special's charge glow is drawn (relative to the feet, facing right).
+@export var charge_glow := Vector2(7, -14)
+
+## The stats with its own move set applied (made once).
+var _fighter_stats: FighterStats
+
+
+## The stats a fighter playing this character uses: `stats`, or a copy of it with `moveset`.
+func fighter_stats() -> FighterStats:
+	if moveset == null or stats == null:
+		return stats
+	if _fighter_stats == null:
+		_fighter_stats = stats.duplicate() as FighterStats
+		_fighter_stats.moveset = moveset
+	return _fighter_stats

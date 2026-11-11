@@ -112,6 +112,7 @@ action. Shield, crouch and charging act while their button is *held*.
 | `LEDGE` | Hanging from a ledge |
 | `LEDGE_CLIMB` | Climbing up from a ledge onto the stage |
 | `KO` | Knocked out; hidden and inactive until the Match respawns it |
+| `TRIPPED` | Slipped on a banana peel: lying on the floor, can't act (see [moves](moves.md#fidusen--banana-book-vine)) |
 
 Every fighter also tracks `state_frame`: ticks spent in the current state, starting at 1 on the tick
 the state is entered.
@@ -150,6 +151,9 @@ Checked in this order on each tick; the first that applies happens:
 - up special → `HELPLESS` when the fighter stops rising → `IDLE` on landing.
 - any state except `KO` → `HITSTUN`: hit while not shielding, invulnerable or intangible.
 - `HITSTUN` → `IDLE`/`AIR`: when hitstun runs out.
+- a grounded state (not `LEDGE`, `LEDGE_CLIMB`, `KO`, `TRIPPED`) → `TRIPPED`: touching an enemy's
+  banana peel while on the ground and hittable; `TRIPPED` → `IDLE`/`AIR` after the trip's ticks.
+  While tripped the fighter slides to a stop, uses the crouching hurtbox, and can be hit as usual.
 - any state → `KO`: set by the Match when the fighter leaves the blast zone.
 
 ## Movement rules
@@ -294,7 +298,18 @@ Drawn from the fighter's state; never changes gameplay state.
 - **Hit flash:** in hitstun, the sprite brightens on alternate pairs of ticks.
 - **Shield:** a translucent bubble in the player's color around the center, its radius shrinking with
   shield health (16 px at full, 6 px near empty).
-- **Charge:** the fists glow brighter as the neutral special charges.
+- **Size:** a fighter's frames are drawn at its size scale (Gitte's `÷` / `×` stances: ×0.75 /
+  ×1.25), feet at the origin.
+- **Tripped:** the hurt drawing, tipped over backward onto the floor (turning 90° over the first
+  6 ticks, pivoting at the feet).
+- **Vine:** while Fidusen's vine pulls or swings him, the up special's last drawing (arms up) and a
+  green vine from his hands to where it hangs (the ledge corner, or straight on up past the
+  anchor, off the top of the view).
+- **Pyramid:** while Gitte rides her pyramid up (`pyramid_rise`), her up special's second drawing
+  (arms up); the pyramid itself is drawn by its own node (see
+  [art guide](art-guide.md#gittes-pyramid)).
+- **Charge:** a glow grows as the neutral special charges, at the character's
+  `CharacterData.charge_glow` point (the fists by default; Henrik: his raised guitar).
 - **Invulnerable:** the whole fighter blinks (hidden 4 ticks, shown 4 ticks).
 - **Intangible** (dodges, ledge): the sprite is drawn pale and see-through.
 - **KO:** hidden.

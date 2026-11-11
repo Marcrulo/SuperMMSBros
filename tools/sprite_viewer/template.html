@@ -69,7 +69,7 @@ input[type=range] { accent-color: var(--accent); width: 110px; }
   border-radius: 6px; cursor: pointer; text-align: left; color: var(--text); font: inherit; min-width: 0;
 }
 .tile:hover { border-color: var(--muted); }
-.tile canvas { width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; border-radius: 3px; display: block; }
+.tile canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 3px; display: block; }
 .meta { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; min-width: 0; }
 .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ticks { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
@@ -83,13 +83,13 @@ dialog::backdrop { background: rgba(10, 11, 20, 0.75); }
 .dhead { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line); }
 .dhead h2 { font-family: var(--display); font-weight: 400; font-size: 18px; margin: 0; }
 .dbody { display: grid; gap: 16px; padding: 16px; grid-template-columns: minmax(0, 280px) minmax(0, 1fr); align-items: start; }
-.big canvas { width: 100%; height: auto; aspect-ratio: 1; image-rendering: pixelated; border-radius: 4px; display: block; }
+.big canvas { width: 100%; height: auto; image-rendering: pixelated; border-radius: 4px; display: block; }
 .controls { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
 .btn { font: 500 13px var(--body); color: var(--text); background: var(--raised); border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; cursor: pointer; }
 .btn:hover { border-color: var(--muted); }
 .frames { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
 .frame { flex: none; display: grid; gap: 4px; justify-items: center; cursor: pointer; background: none; border: 0; padding: 0; color: var(--muted); font: 12px var(--mono); }
-.frame canvas { width: 160px; height: 160px; image-rendering: pixelated; border: 2px solid transparent; border-radius: 4px; }
+.frame canvas { width: 160px; height: auto; image-rendering: pixelated; border: 2px solid transparent; border-radius: 4px; }
 .frame[aria-current="true"] canvas { border-color: var(--text); }
 .frame.strike canvas { box-shadow: 0 0 0 2px var(--accent); }
 .frame.strike span { color: var(--accent); }
@@ -98,7 +98,7 @@ dialog::backdrop { background: rgba(10, 11, 20, 0.75); }
 @media (max-width: 720px) {
   .dbody { grid-template-columns: 1fr; }
   .big { max-width: 260px; }
-  .frame canvas { width: 120px; height: 120px; }
+  .frame canvas { width: 120px; height: auto; }
 }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
 </style>
@@ -106,7 +106,7 @@ dialog::backdrop { background: rgba(10, 11, 20, 0.75); }
 <div class="wrap">
   <header>
     <h1>Super MMS Bros <span>Sprites</span></h1>
-    <p class="sub" id="sub">64 px strips, playing at game timing (60 ticks per second). Click an animation to step through its frames.</p>
+    <p class="sub" id="sub">64 px strips (Henrik and Gitte on a bigger canvas for their guitar and scissors), playing at game timing (60 ticks per second). Gitte’s volley scissors and pyramid, Michael’s glove and football and Fidusen’s banana peel and book are extra tiles. Click an animation to step through its frames.</p>
   </header>
 
   <div class="bar" role="toolbar" aria-label="View settings">
@@ -179,6 +179,11 @@ dialog::backdrop { background: rgba(10, 11, 20, 0.75); }
 <script>
 const DATA = /*DATA*/null;
 const FRAME = 64;
+// Every tile shows this window (art px), so all characters share one scale; a frame is drawn at its
+// own size, bottom-centred (feet at the bottom middle), like the game does.
+const [VIEW_W, VIEW_H] = DATA.view;
+// An animation's data: a strip, or one of a character's extra pictures (hand, projectile).
+function animOf(cid, anim) { return (DATA.extras[cid] || {})[anim] || DATA.anims[anim]; }
 const PAUSE = 18; // ticks between repeats of a one-shot move
 
 const images = {};
@@ -186,7 +191,8 @@ function strip(cid, anim) {
   const key = cid + "/" + anim;
   if (!images[key]) {
     const img = new Image();
-    img.src = DATA.strips[cid][anim];
+    const extra = (DATA.extras[cid] || {})[anim];
+    img.src = extra ? extra.src : DATA.strips[cid][anim];
     images[key] = img;
   }
   return images[key];
@@ -199,8 +205,8 @@ try {
 } catch (e) {}
 function save() { try { localStorage.setItem("sprite-viewer", JSON.stringify(state)); } catch (e) {} }
 
-function drawingAt(anim, tick) {
-  const a = DATA.anims[anim];
+function drawingAt(cid, anim, tick) {
+  const a = animOf(cid, anim);
   const total = a.ticks.reduce((s, n) => s + n, 0);
   let t = a.loop ? tick % total : tick % (total + PAUSE);
   for (let i = 0; i < a.ticks.length; i++) { if (t < a.ticks[i]) return i; t -= a.ticks[i]; }
@@ -217,15 +223,15 @@ const checker = (() => {
 function paint(canvas, cid, anim, index) {
   const g = canvas.getContext("2d");
   g.imageSmoothingEnabled = false;
-  const w = canvas.width;
+  const w = canvas.width, h = canvas.height;
   if (state.ground === "check") { g.fillStyle = g.createPattern(checker, "repeat"); }
   else g.fillStyle = state.ground === "light" ? "#e8ecf2" : "#5a6478";
-  g.fillRect(0, 0, w, w);
+  g.fillRect(0, 0, w, h);
   const img = strip(cid, anim);
   if (!img.complete) return;
-  const size = state.scale === "game" ? w * 0.75 : w;
-  const off = (w - size) / 2;
-  g.drawImage(img, index * FRAME, 0, FRAME, FRAME, off, w - size, size, size);
+  const fw = img.naturalWidth / animOf(cid, anim).ticks.length, fh = img.naturalHeight;
+  const s = (w / VIEW_W) * (state.scale === "game" ? 0.75 : 1);
+  g.drawImage(img, index * fw, 0, fw, fh, (w - fw * s) / 2, h - fh * s, fw * s, fh * s);
 }
 
 const grid = document.getElementById("grid");
@@ -243,7 +249,12 @@ function renderPicker() {
       b.onclick = () => { state.cid = ch.id; save(); renderAll(); };
       picker.append(b);
       const img = strip(ch.id, "idle");
-      const draw = () => { const g = c.getContext("2d"); g.imageSmoothingEnabled = false; g.drawImage(img, 0, 0, 64, 64, 0, 0, 64, 64); };
+      // The 64×64 body at the bottom centre of the first idle drawing.
+      const draw = () => {
+        const g = c.getContext("2d"); g.imageSmoothingEnabled = false;
+        const fw = img.naturalWidth / DATA.anims.idle.ticks.length, fh = img.naturalHeight;
+        g.drawImage(img, (fw - 64) / 2, fh - 64, 64, 64, 0, 0, 64, 64);
+      };
       img.complete ? draw() : img.addEventListener("load", draw, { once: true });
     }
   } else {
@@ -261,16 +272,17 @@ function renderPicker() {
 
 function renderGrid() {
   grid.innerHTML = ""; tiles = [];
-  grid.style.setProperty("--tile", (FRAME * state.zoom + 18) + "px");
+  grid.style.setProperty("--tile", (VIEW_W * state.zoom + 18) + "px");
   const items = state.mode === "character"
-    ? Object.keys(DATA.anims).map(anim => ({ cid: state.cid, anim, title: anim }))
+    ? Object.keys(DATA.anims).concat(Object.keys(DATA.extras[state.cid] || {}))
+        .map(anim => ({ cid: state.cid, anim, title: anim }))
     : DATA.characters.map(ch => ({ cid: ch.id, anim: state.anim, title: ch.name }));
   for (const it of items) {
-    const a = DATA.anims[it.anim];
+    const a = animOf(it.cid, it.anim);
     const b = document.createElement("button");
     b.type = "button"; b.className = "tile";
     const c = document.createElement("canvas");
-    c.width = c.height = FRAME * state.zoom;
+    c.width = VIEW_W * state.zoom; c.height = VIEW_H * state.zoom;
     const meta = document.createElement("div"); meta.className = "meta";
     const name = document.createElement("span"); name.className = "name"; name.textContent = it.title;
     const right = document.createElement("span"); right.className = "ticks";
@@ -310,7 +322,8 @@ const det = { cid: null, anim: null, index: 0, playing: true };
 function nameOf(cid) { return DATA.characters.find(c => c.id === cid).name; }
 function openDetail(cid, anim) {
   Object.assign(det, { cid, anim, index: 0, playing: true });
-  const a = DATA.anims[anim];
+  const big = document.getElementById("d-canvas"); big.width = VIEW_W; big.height = VIEW_H;
+  const a = animOf(cid, anim);
   document.getElementById("d-title").textContent = nameOf(cid) + " · " + anim;
   document.getElementById("d-ticks").textContent = "ticks per drawing: " + a.ticks.join(" · ") + (a.loop ? " (loops)" : "");
   document.getElementById("d-note").textContent = a.note || "";
@@ -319,7 +332,7 @@ function openDetail(cid, anim) {
   a.ticks.forEach((n, i) => {
     const f = document.createElement("button");
     f.type = "button"; f.className = "frame" + (a.strike.includes(i) ? " strike" : "");
-    const c = document.createElement("canvas"); c.width = c.height = 64 * 4;
+    const c = document.createElement("canvas"); c.width = VIEW_W * 4; c.height = VIEW_H * 4;
     const label = document.createElement("span");
     label.textContent = "#" + (i + 1) + " · " + n + "t" + (a.strike.includes(i) ? " · strike" : "");
     f.append(c, label);
@@ -341,7 +354,7 @@ function paintDetail() {
 document.getElementById("d-close").onclick = () => dlg.close();
 dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
 document.getElementById("d-play").onclick = () => { det.playing = !det.playing; paintDetail(); };
-function step(d) { const n = DATA.anims[det.anim].ticks.length; det.index = (det.index + d + n) % n; det.playing = false; paintDetail(); }
+function step(d) { const n = animOf(det.cid, det.anim).ticks.length; det.index = (det.index + d + n) % n; det.playing = false; paintDetail(); }
 document.getElementById("d-prev").onclick = () => step(-1);
 document.getElementById("d-next").onclick = () => step(1);
 dlg.addEventListener("keydown", e => { if (e.key === "ArrowLeft") step(-1); if (e.key === "ArrowRight") step(1); });
@@ -354,10 +367,10 @@ function frame(now) {
   const steps = Math.floor(acc); acc -= steps;
   if (steps > 0 || tick === 0) {
     tick += steps;
-    for (const t of tiles) paint(t.canvas, t.cid, t.anim, drawingAt(t.anim, tick));
+    for (const t of tiles) paint(t.canvas, t.cid, t.anim, drawingAt(t.cid, t.anim, tick));
     if (dlg.open && det.playing) {
       detTick += steps;
-      const i = drawingAt(det.anim, detTick);
+      const i = drawingAt(det.cid, det.anim, detTick);
       if (i !== det.index) { det.index = i; paintDetail(); }
     }
   }

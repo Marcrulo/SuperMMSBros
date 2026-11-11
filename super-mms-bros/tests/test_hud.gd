@@ -57,8 +57,7 @@ func test_card_shows_the_fighters_percent() -> void:
 
 func test_portrait_is_the_head_in_the_player_colors() -> void:
 	var portrait := _hud.cards[1].get_portrait()
-	var size := FighterVisuals.frame_size(portrait.atlas)
-	assert_eq(portrait.region, PlayerCard.head_region(size))
+	assert_eq(portrait.region, PlayerCard.head_region_of(portrait.atlas))
 	assert_eq(portrait.atlas, FighterVisuals.textures_for(_match.get_fighter(1).character_id)["idle"],
 			"P2's own strip")
 

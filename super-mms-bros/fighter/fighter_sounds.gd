@@ -57,6 +57,8 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 			out.append(&"charge")
 		elif move == &"down_special_dive":
 			out.append(&"dive")
+		elif move == &"pyramid_rise":
+			out.append(&"burst")  # Gitte's pyramid starts rising.
 	var was_charging: bool = before.state == Fighter.State.ATTACK and before.move == &"neutral_special_charge"
 	if was_charging and not (state == Fighter.State.ATTACK and move == &"neutral_special_charge"):
 		out.append(&"charge_stop")
@@ -64,8 +66,9 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 		out.append(&"zap")
 	if move == &"down_special" and after.hitbox_active and not before.hitbox_active:
 		out.append(&"burst")
-	if move == &"up_special" and state == Fighter.State.ATTACK and before.velocity.y >= 0.0 \
-			and after.velocity.y < -BOOST_SPEED:
+	var popped: bool = before.move == &"pyramid_rise"  # Off the pyramid's tip.
+	if move == &"up_special" and state == Fighter.State.ATTACK \
+			and (before.velocity.y >= 0.0 or popped) and after.velocity.y < -BOOST_SPEED:
 		out.append(&"boost")
 	if state == Fighter.State.RUN:
 		var step: Variant = FOOT_PLANTS.get((int(after.state_frame) - 1) % RUN_CYCLE)
@@ -126,6 +129,7 @@ func _ready() -> void:
 	_match.fighter_blocked.connect(_on_blocked)
 	_match.fighter_ko.connect(_on_ko)
 	_match.fighter_respawned.connect(_on_respawned)
+	_match.hand_landed.connect(_on_hand_landed)
 	# The first "before": once the Match has placed the fighters (after everyone's _ready).
 	_take_snapshot.call_deferred()
 
@@ -216,6 +220,11 @@ func _on_ko(player_index: int) -> void:
 	if player_index == _fighter.player_index:
 		_charge_player.stop()
 		_play_flat(&"ko")
+
+
+func _on_hand_landed(player_index: int) -> void:
+	if player_index == _fighter.player_index:
+		play(&"burst")
 
 
 func _on_respawned(player_index: int) -> void:

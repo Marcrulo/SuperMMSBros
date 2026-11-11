@@ -54,14 +54,25 @@ const INTANGIBLE := Color(1.6, 1.6, 1.8, 0.55)
 const SHIELD_MIN_RADIUS := 6.0
 const SHIELD_MAX_RADIUS := 16.0
 const SHIELD_COLORS: Array[Color] = [Color(0.85, 0.3, 0.38, 0.35), Color(0.3, 0.45, 0.95, 0.35)]
-## The neutral special's charge glow, at the fists (relative to the feet, facing right).
+## The neutral special's charge glow, by default at the fists (relative to the feet, facing right;
+## a character can set its own: CharacterData.charge_glow).
 const CHARGE_GLOW := Color(0.45, 0.94, 0.97, 0.8)
 const FIST := Vector2(7, -14)
+## A tripped fighter tips over backward onto the floor in this many ticks, lifted this much so the
+## lying body rests on the floor.
+const TRIP_TICKS := 6.0
+const TRIP_LIFT := 8.0
+## The vine: its colors, and where it leaves the hands (relative to the feet, facing right).
+const VINE := Color(0.24, 0.54, 0.23)
+const VINE_DARK := Color(0.1, 0.11, 0.17)
+const VINE_HANDS := Vector2(2, -36)
 
 ## Debug view of hurtboxes and hitboxes: F1 toggles it, `--hitboxes` turns it on at start.
 static var show_boxes := "--hitboxes" in OS.get_cmdline_user_args()
 ## Textures per character id, then per animation name (and "stock_icon").
 static var _textures: Dictionary[String, Dictionary] = {}
+## Each character's charge glow point (CharacterData.charge_glow), looked up once.
+static var _charge_glows: Dictionary[String, Vector2] = {}
 
 @onready var _fighter := get_parent() as Fighter
 
@@ -85,8 +96,10 @@ static func frame_index(durations: Array, loop: bool, ticks: int) -> int:
 static func animation_for(state: Fighter.State, velocity_y: float, move: StringName = &"") -> String:
 	match state:
 		Fighter.State.ATTACK:
+			if move in Fighter.VINE_PHASES or move == &"pyramid_rise":
+				return "up_special"
 			return String(move) if ANIMATIONS.has(String(move)) else "jab"
-		Fighter.State.HITSTUN:
+		Fighter.State.HITSTUN, Fighter.State.TRIPPED:
 			return "hurt"
 		Fighter.State.SHIELD, Fighter.State.SHIELD_DROP:
 			return "shield"
@@ -125,14 +138,26 @@ static func shield_radius(health: float, max_health: float) -> float:
 	return lerpf(SHIELD_MIN_RADIUS, SHIELD_MAX_RADIUS, clampf(health / max_health, 0.0, 1.0))
 
 
-## A strip's frame size: its height (48 or 64; frames are square, side by side).
+## A strip's frame height (48 or 64, or a bigger canvas for a character with a weapon).
 static func frame_size(texture: Texture2D) -> int:
 	return int(texture.get_height())
 
 
-## Where a frame is drawn: DRAWN_SIZE square, feet (bottom center) at the fighter's origin.
-static func frame_rect() -> Rect2:
-	return Rect2(-DRAWN_SIZE / 2.0, -DRAWN_SIZE, DRAWN_SIZE, DRAWN_SIZE)
+## A strip's frame width: the strip's width shared by its drawings (side by side).
+static func frame_width(texture: Texture2D, drawings: int) -> int:
+	return int(texture.get_width()) / drawings
+
+
+## Game pixels per frame pixel: a 48 px frame 1:1, the 64 px style (any canvas) at 3/4.
+static func pixel_scale(height: int) -> float:
+	return 1.0 if height == 48 else DRAWN_SIZE / 64.0
+
+
+## Where a frame is drawn: at pixel_scale, feet (bottom center) at the fighter's origin
+## (a 64×64 frame fills DRAWN_SIZE square).
+static func frame_rect(width: int = 64, height: int = 64) -> Rect2:
+	var s := pixel_scale(height)
+	return Rect2(-width * s / 2.0, -height * s, width * s, height * s)
 
 
 ## Loads every strip and the stock icon of a character.
@@ -150,6 +175,14 @@ static func textures_for(character_id: String) -> Dictionary:
 	if not _textures.has(character_id):
 		_textures[character_id] = load_textures(character_id)
 	return _textures[character_id]
+
+
+## Where a character's charge glow is drawn (relative to the feet, facing right).
+static func charge_glow_for(character_id: String) -> Vector2:
+	if not _charge_glows.has(character_id):
+		var character := Game.roster().find(character_id)
+		_charge_glows[character_id] = character.charge_glow if character else FIST
+	return _charge_glows[character_id]
 
 
 func _process(_delta: float) -> void:
@@ -170,12 +203,27 @@ func _draw() -> void:
 	var texture: Texture2D = textures_for(_fighter.character_id)[animation]
 	var timing: Dictionary = ANIMATIONS[animation]
 	var frame := frame_index(timing.ticks, timing.loop, _fighter.state_frame)
-	var size := frame_size(texture)
-	# Mirror when facing left; the strips are drawn facing right.
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2(_fighter.facing, 1))
-	draw_texture_rect_region(texture, frame_rect(), Rect2(frame * size, 0, size, size),
-		tint(_is_flashing(), _fighter.is_intangible()))
+	var vine := _fighter.state == Fighter.State.ATTACK and _fighter.move in Fighter.VINE_PHASES
+	if vine:
+		frame = timing.ticks.size() - 1  # Arms up, holding the vine.
+	elif _fighter.state == Fighter.State.ATTACK and _fighter.move == &"pyramid_rise":
+		frame = 1  # Arms up, riding the pyramid's tip.
+	var width := frame_width(texture, timing.ticks.size())
+	var height := frame_size(texture)
+	# Mirror when facing left; the strips are drawn facing right. Tripped: tipped over backward.
+	var tipped := 0.0
+	if _fighter.state == Fighter.State.TRIPPED:
+		tipped = minf(_fighter.state_frame / TRIP_TICKS, 1.0)
+	draw_set_transform(Vector2(0.0, -TRIP_LIFT * tipped), -_fighter.facing * PI / 2.0 * tipped,
+		Vector2(_fighter.facing, 1))
+	# Drawn at the fighter's size (Gitte's ÷ / × stances), from the feet.
+	var rect := frame_rect(width, height)
+	var s := _fighter.size_scale()
+	draw_texture_rect_region(texture, Rect2(rect.position * s, rect.size * s),
+		Rect2(frame * width, 0, width, height), tint(_is_flashing(), _fighter.is_intangible()))
 	draw_set_transform(Vector2.ZERO)
+	if vine:
+		_draw_vine()
 	if _fighter.state == Fighter.State.ATTACK and _fighter.move == &"neutral_special_charge":
 		_draw_charge_glow()
 	if _fighter.state == Fighter.State.SHIELD:
@@ -193,11 +241,21 @@ func _draw_shield() -> void:
 	draw_arc(center, radius, 0.0, TAU, 24, color.lightened(0.5), 1.0)
 
 
-## A glow on the fists that grows as the neutral special charges.
+## The vine from the hands to where it hangs: the ledge corner, or on up past the anchor.
+func _draw_vine() -> void:
+	var hands := Vector2(VINE_HANDS.x * _fighter.facing, VINE_HANDS.y)
+	var to := _fighter.vine_anchor - _fighter.global_position
+	if _fighter.move == &"vine_swing":
+		to += (to - hands).normalized() * 400.0
+	draw_line(hands, to, VINE_DARK, 4.0)
+	draw_line(hands, to, VINE, 2.0)
+
+
+## A glow that grows as the neutral special charges, at the character's charge glow point.
 func _draw_charge_glow() -> void:
 	var charge := clampf(_fighter.state_frame / float(_fighter.stats.moveset.neutral_special.charge_frames), 0.0, 1.0)
-	var fist := Vector2(FIST.x * _fighter.facing, FIST.y)
-	draw_circle(fist, 1.0 + 3.0 * charge, CHARGE_GLOW)
+	var point := charge_glow_for(_fighter.character_id) * _fighter.size_scale()
+	draw_circle(Vector2(point.x * _fighter.facing, point.y), 1.0 + 3.0 * charge, CHARGE_GLOW)
 
 
 ## The sprite's color: pale and see-through while intangible, bright on a hit flash, else as drawn.

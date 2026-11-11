@@ -8,6 +8,8 @@ import json
 import sys
 from pathlib import Path
 
+from PIL import Image
+
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent))
 import fighter64_looks as looks  # noqa: E402
@@ -32,6 +34,15 @@ ANIMS = {
 STRIKE = {"jab": [2], "down_tilt": [2], "up_tilt": [2], "side_tilt": [2], "neutral_air": [2],
           "forward_air": [2], "back_air": [2], "up_air": [2], "down_air": [2],
           "neutral_special": [1], "down_special": [2], "up_special": [1]}
+# Pictures a character has besides its strips, shown as extra tiles: file, ticks per drawing, loop.
+EXTRAS = {
+    "hand.png": ("summoned hand", [60, 13], True,
+                 "Hovers (open) for 60 ticks, then slams (flat). The game adds the shadow and bob."),
+    "projectile.png": ("projectile", [4, 4, 4], True, "Spins while flying."),
+    "peel.png": ("banana peel", [60], True, "Lies on the floor until someone slips on it."),
+    "pyramid.png": ("pyramid", [60], True,
+                    "Rises out of the floor under her (only the part above the floor shows), then sinks back."),
+}
 NOTES = {
     "side_special": "The projectile appears at the start of drawing 3 (the game draws it).",
     "neutral_special_charge": "The game adds a growing glow on the fists while charging.",
@@ -44,16 +55,27 @@ NOTES = {
 
 def main(strips_dir, out):
     strips_dir = Path(strips_dir)
-    data = {"characters": [], "anims": {}, "strips": {}}
+    data = {"characters": [], "anims": {}, "strips": {}, "extras": {}, "view": [64, 64]}
     for name, (ticks, loop) in ANIMS.items():
         data["anims"][name] = {"ticks": ticks, "loop": loop, "strike": STRIKE.get(name, []),
                                "note": NOTES.get(name, "")}
     for cid, c in looks.CHARACTERS.items():
         data["characters"].append({"id": cid, "name": c["name"]})
         data["strips"][cid] = {}
-        for name in ANIMS:
-            png = (strips_dir / cid / f"fighter_{name}.png").read_bytes()
+        for name, (ticks, _) in ANIMS.items():
+            path = strips_dir / cid / f"fighter_{name}.png"
+            png = path.read_bytes()
             data["strips"][cid][name] = "data:image/png;base64," + base64.b64encode(png).decode()
+            with Image.open(path) as img:
+                # The view fits the biggest frame (a character with a weapon has a bigger canvas).
+                data["view"] = [max(data["view"][0], img.width // len(ticks)),
+                                max(data["view"][1], img.height)]
+        for file, (title, ticks, loop, note) in EXTRAS.items():
+            path = strips_dir / cid / file
+            if path.exists():
+                data["extras"].setdefault(cid, {})[title] = {
+                    "src": "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode(),
+                    "ticks": ticks, "loop": loop, "strike": [], "note": note}
     html = (HERE / "template.html").read_text().replace("/*DATA*/null", json.dumps(data))
     Path(out).write_text(html)
     print(f"{out}: {len(html) / 1e6:.1f} MB")

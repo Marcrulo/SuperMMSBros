@@ -16,23 +16,27 @@ const FRAMES := {
 
 func test_every_character_has_every_strip() -> void:
 	for character in Game.roster().characters:
-		var size := 0
+		var size := Vector2.ZERO
 		for animation: String in FRAMES:
 			var path := DIR + "%s/fighter_%s.png" % [character.id, animation]
 			assert_true(ResourceLoader.exists(path), "missing %s" % path)
 			if not ResourceLoader.exists(path):
 				continue
 			var texture := load(path) as Texture2D
-			if size == 0:
-				size = int(texture.get_height())
-				assert_has([48, 64], size, "%s frame size" % character.id)
-			assert_eq(texture.get_size(), Vector2(size * FRAMES[animation], size), path)
+			if size == Vector2.ZERO:
+				size = Vector2(texture.get_width() / FRAMES[animation], texture.get_height())
+				assert_true(size.y in [48.0, 64.0] or size.y > 64.0 and size.x > 64.0,
+					"%s frame size %s" % [character.id, size])
+			assert_eq(texture.get_size(), Vector2(size.x * FRAMES[animation], size.y), path)
 
 
+## 64×64 frames, or a bigger canvas for a character with a weapon (art guide: weapons).
 func test_every_character_is_in_the_64_px_style() -> void:
 	for character in Game.roster().characters:
 		var texture := load(DIR + "%s/fighter_idle.png" % character.id) as Texture2D
-		assert_eq(texture.get_size(), Vector2(64 * 4, 64), character.id)
+		var weapon: bool = character.id in ["slot_06", "slot_02"]  # Henrik's guitar, Gitte's scissors
+		var canvas := Vector2(112, 80) if weapon else Vector2(64, 64)
+		assert_eq(texture.get_size(), Vector2(canvas.x * 4, canvas.y), character.id)
 
 
 func test_every_character_has_a_stock_icon() -> void:

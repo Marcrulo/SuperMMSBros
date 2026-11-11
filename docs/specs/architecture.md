@@ -31,10 +31,11 @@ test and a future trained agent all be swapped freely.
 ```
 Match                  (match/match.tscn, match.gd)
 ├── Stage              (stage/stage.tscn, stage.gd)
+├── Pyramids           (Node2D container; Gitte's pyramids, drawn behind the fighters)
 ├── Fighters           (Node2D container)
 │   ├── Fighter P1     (fighter/fighter.tscn)
 │   └── Fighter P2     (fighter/fighter.tscn)
-├── Projectiles        (Node2D container; projectiles are added and removed by the Match)
+├── Projectiles        (Node2D container; projectiles and hands are added and removed by the Match)
 ├── Camera2D           (match/match_camera.gd — follows and zooms; presentation only)
 └── HUD                (ui/hud.tscn — CanvasLayer)
 ```
@@ -53,6 +54,8 @@ the Match and assigned one per fighter.
 | `FighterStats` | `Resource` | All fighter tuning numbers and its `MoveSet`. One `.tres` file per fighter design. |
 | `MoveSet` / `MoveData` | `Resource` | The eight moves of a design and each move's frame data, hitbox and knockback (see [moves](moves.md)). |
 | `Projectile` | `Node2D` | The side special's projectile: position, direction, owner, age; advanced by the Match. |
+| `Hand` / `HandData` | `Node2D` / `Resource` | Michael's summoned hand (hover, slam, impact) and its tuning; advanced by the Match (see [moves](moves.md#michael-bech--big-hand)). |
+| `Pyramid` / `PyramidData` | `Node2D` / `Resource` | Gitte's rising pyramid (rise, sink) and its up special's tuning; advanced by the Match (see [moves](moves.md#gitte--scissors-and-stances)). |
 | `FighterVisuals` | `Node2D` (child of Fighter) | Draws the fighter's sprite from its state, plus shield, charge glow and the debug view. |
 | `FighterInput` | `RefCounted` | One tick of input (see [fighter](fighter.md#input)). |
 | `Controller` | `RefCounted` (base class) | `get_input(state) -> FighterInput`, `reset()`. |
@@ -80,10 +83,16 @@ Every tick, `step()` does, in this order:
 4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2.
    Then **ledge grabs**: each fighter that can grab a ledge (P1, P2 order) grabs a free one
    whose corner is inside its grab box (see [fighter](fighter.md#ledge)).
+   Then **up special choices**: a vine up special on its choice frame starts a pull or a swing; a
+   pyramid up special on its choice frame raises a pyramid (added to `Pyramids`) or hops. Then
+   every pyramid advances (rising while its owner rides it, else sinking) and the sunk ones are
+   removed.
 5. Advance each existing projectile (in the order they were created) and remove those past their
    lifetime or outside the blast zone. Then add a projectile for every fighter whose side special
    reached its spawn frame this tick (P1, P2 order); a new projectile first moves next tick.
-6. Resolve hits: first collect every hit for this tick — move hitboxes and projectiles against
+   The same for hands: advance each (hover, slam, impact), remove the finished ones, then add a
+   hand for every fighter whose summon reached its spawn frame.
+6. Resolve hits: first collect every hit for this tick — move hitboxes, projectiles and hands against
    hurtboxes — then apply them all (blocked by a shield, or damage + knockback). Two fighters can
    hit each other on the same tick (a trade).
 7. Check KOs (fighter center outside the blast zone), stocks, respawns and the win condition.
@@ -144,7 +153,7 @@ Read from `OS.get_cmdline_user_args()` (arguments after `--`):
 | `--hitboxes` | off | Start with the hitbox debug view on (F1 toggles it) |
 | `--p1=human\|cpu` | `human` | Controller for P1 |
 | `--p2=human\|cpu` | `cpu` | Controller for P2 |
-| `--seed=N` | random | RNG seed (printed at match start) |
+| `--seed=N` | random | RNG seed (printed at match start; used by Michael's random football kicks) |
 | `--autoquit` | off | When the match ends, print the result and quit |
 | `--speed=N` | 1 | Run N× faster than real time (sets `Engine.physics_ticks_per_second = 60·N` and `Engine.time_scale = N`, so each tick is still 1/60 s of game time) |
 | `--max-ticks=N` | none | End the match as a timeout after N ticks (exit code 1 with `--autoquit`) |

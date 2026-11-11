@@ -10,6 +10,7 @@ Strips go to <out_dir>/<id>/; --preview also writes <out_dir>/<id>_preview.png (
 The game's strips: python3 -I tools/gen_fighter_sprites64.py super-mms-bros/assets/fighters slot_05
 """
 import math
+import random
 import sys
 from pathlib import Path
 
@@ -33,6 +34,33 @@ RAISED_LIFT = 5      # how much higher (px)
 RAISED_OUT = 7       # from the torso's center to the shoulder edge it hinges at (px)
 RAISED_MAX = 2.75    # at most this upright, so it leans out past the head
 ARM_W = (4.6, 4.0)
+ARM_PAIR_GAP = 1.5   # extra pairs of arms: each this much lower on the torso (px)...
+ARM_PAIR_ELBOW = 0.4  # ...with straighter elbows (bend × this), and bare (skin)
+ARM_PAIR_OUT = 1.5    # extra arms never go past this (rad from hanging): below the horizontal...
+ARM_PAIR_IN = -0.2    # ...nor further back than this
+ARM_PAIR_FORWARD = 0.75  # a main arm already this far out gets its extras fanned downward
+
+
+def fanned(angle, k, side, extras):
+    """Extra arm k's (1..extras) upper-arm angle on its side (1 = front, -1 = back): evenly spaced
+    from the main arm's angle toward a limit, never raised unless the main arm is. Fanned out
+    toward the horizontal (ARM_PAIR_OUT), or down toward hanging (ARM_PAIR_IN) when the main arm
+    is already out; a raised main arm's extras step back down to the horizontal."""
+    out = side * angle
+    if out > RAISED or out < ARM_PAIR_FORWARD:
+        target = ARM_PAIR_OUT
+    else:
+        target = ARM_PAIR_IN
+    return side * (out + (target - out) * k / extras)
+
+
+def fanned_elbow(upper, elbow, main_upper):
+    """An extra arm's elbow bend: straighter than the main arm's, and its forearm never above the
+    horizontal unless the main arm is raised."""
+    e = elbow * ARM_PAIR_ELBOW
+    if abs(main_upper) <= RAISED and abs(upper + e) > math.pi / 2:
+        e = math.copysign(math.pi / 2, upper + e) - upper
+    return e
 FIST_R = 2.5
 # A slim build (`build="slim"`, or `slim` from 0 to 1 for a lighter version) at full strength:
 SLIM = 3             # the torso this much narrower on each side (px)...
@@ -66,11 +94,14 @@ class Frame:
                     self.px[n] = OUTLINE
         self.px.update(pixels)
 
-    def image(self):
-        img = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
+    def image(self, canvas=(FRAME, FRAME)):
+        """The frame on a canvas of this size, the 64x64 frame at its bottom center."""
+        w, h = canvas
+        ox, oy = (w - FRAME) // 2, h - FRAME
+        img = Image.new("RGBA", canvas, (0, 0, 0, 0))
         for (x, y), color in self.px.items():
-            if 0 <= x < FRAME and 0 <= y < FRAME:
-                img.putpixel((x, y), color + (255,))
+            if 0 <= x + ox < w and 0 <= y + oy < h:
+                img.putpixel((x + ox, y + oy), color + (255,))
         return img
 
 
@@ -295,10 +326,18 @@ def draw_frame(pose, c, p, heads):
     pants_back = (dim(p["D"]), dim(p["d"]), p["D"])
     sleeve = (p["H"], p["h"], p["K"])
     sleeve_back = (p["h"], dim(p["h"]), p["H"])
+    bare, bare_back = (p["S"], p["s"], p["L"]), (p["s"], dim(p["s"]), p["S"])
     if c.get("short_sleeves"):
         fore, fore_back = (p["S"], p["s"], p["L"]), (p["s"], dim(p["s"]), p["S"])
     else:
         fore, fore_back = sleeve, sleeve_back
+
+    # Weapon on the back, or held behind the body: behind everything.
+    weapon = WEAPONS.get(c.get("weapon"))
+    hold = pose.get("hold")
+    if weapon and not hold:
+        (bx, by), back_angle = weapon["back"]
+        f.part(weapon["draw"]((top_x + bx, top + by), back_angle, 0))
 
     # Behind everything: long hair down the back, a tail.
     if behind:
@@ -316,16 +355,36 @@ def draw_frame(pose, c, p, heads):
     part.update(shoe(pts[2], p, small=slim))
     f.part(part)
     reach = pose.get("reach", 0) * K
+    fist_r = FIST_R * (0.85 if slim else 1)
+    # Extra pairs of arms (the furthest fanned first, so the main arms overlap them), from just
+    # below the shoulders, fanned out from the main arms' pose.
+    extra = range(c.get("arm_pairs", 1) - 1, 0, -1)
+    for k in extra:
+        upper = fanned(pose["ba"], k, -1, len(extra))
+        pts = arm_points((top_x + 5 - narrow, top + 2 + ARM_PAIR_GAP * k), upper,
+                         fanned_elbow(upper, pose["be"], pose["ba"]), 0)
+        part = limb(pts, arm_w, bare_back)
+        part.update(fist(pts[2], p, dim=True, r=fist_r))
+        f.part(part)
     pts = arm_points((top_x + 5 - narrow, top + 2), pose["ba"], pose["be"], 0)
     part = limb(pts[:2], arm_w[:1], sleeve_back)
     part.update(limb(pts[1:], arm_w[1:], fore_back))
-    part.update(fist(pts[2], p, dim=True, r=FIST_R * (0.85 if slim else 1)))
+    part.update(fist(pts[2], p, dim=True, r=fist_r))
     f.part(part)
 
     # Torso, skirt.
     f.part(torso(c, p, top, top_x, hip, hip_x))
     if c.get("legs") == "skirt":
         f.part(skirt(p, hip, hip_x, torso_half(c), SLIM_FLARE if slim else 3))
+
+    # Extra front arms, under the main one.
+    for k in extra:
+        upper = fanned(pose["fa"], k, 1, len(extra))
+        pts = arm_points((top_x - 1 + narrow / 2, top + 3 + ARM_PAIR_GAP * k), upper,
+                         fanned_elbow(upper, pose["fe"], pose["fa"]), reach)
+        part = limb(pts, arm_w, bare)
+        part.update(fist(pts[2], p, r=fist_r))
+        f.part(part)
 
     # Front arm: behind the head when raised, so it never covers the face.
     pts = arm_points((top_x - 1 + narrow / 2, top + 3), pose["fa"], pose["fe"], reach)
@@ -334,12 +393,22 @@ def draw_frame(pose, c, p, heads):
     arm.update(fist(pts[2], p, r=FIST_R * (0.85 if slim else 1)))
     # An arm whose fist is above the chin goes behind the head, so it never covers the face.
     raised = pts[2][1] < neck[1]
+    held = None
+    if weapon and hold:
+        # Choked up: the hand this far down the neck from the usual grip.
+        a = math.radians(hold[0])
+        grip = (pts[2][0] + math.sin(a) * hold[2], pts[2][1] - math.cos(a) * hold[2])
+        held = weapon["draw"](grip, hold[0], hold[3])
+    if held and not hold[1]:
+        f.part(held)     # held behind the body
     if raised:
         f.part(arm)
     f.part(head_pixels(c, p, front, neck))
+    if held and hold[1]:
+        f.part(held)     # swung in front, under the fist
     if not raised:
         f.part(arm)
-    return f.image()
+    return f.image(c.get("canvas", (FRAME, FRAME)))
 
 
 # --- Poses ------------------------------------------------------------------------------------
@@ -483,23 +552,511 @@ ANIMATIONS = {
 }
 
 
+# --- Weapons (docs/specs/art-guide.md#weapons) -----------------------------------------------
+
+# Acoustic guitar: natural top (base, shade, light), sound hole, brown neck and headstock.
+WOOD = ((226, 170, 96), (178, 118, 58), (246, 206, 140))
+NECK = ((132, 80, 40), (96, 56, 28))
+HOLE = (44, 30, 22)
+# On the back: the grip (on the neck) from the torso top, and the angle it hangs at: the body
+# against his back, the neck rising behind his head on the back side.
+BACK_GRIP = (-15, -19)
+BACK_ANGLE = -18
+
+
+def guitar(grip, angle, opening=0):
+    """The guitar's pixels, held at `grip` (on the neck below the headstock) and turned by
+    `angle` degrees: 0 = hanging straight down from the grip, -90 = pointing forward, 180 =
+    straight up (clockwise on screen)."""
+    a = math.radians(angle)
+    ax, ay = -math.sin(a), math.cos(a)        # along the guitar, grip -> body
+    cx_, cy_ = -ay, ax                        # across
+    out = {}
+    gx, gy = grip
+    for y in range(int(gy) - 40, int(gy) + 41):
+        for x in range(int(gx) - 40, int(gx) + 41):
+            dx, dy = x + 0.5 - gx, y + 0.5 - gy
+            u = dx * ax + dy * ay             # along
+            v = dx * cx_ + dy * cy_           # across
+            lit = dx - dy                     # up and right is lit
+            color = None
+            upper = (u - 19) ** 2 + v * v
+            lower = (u - 27.5) ** 2 + v * v
+            if upper <= 5.2 ** 2 or lower <= 6.8 ** 2:
+                if (u - 21) ** 2 + v * v <= 2.0 ** 2:
+                    color = HOLE
+                elif 28.5 <= u < 29.7 and abs(v) <= 2.6:
+                    color = NECK[1]
+                else:
+                    edge = min(5.2 - math.sqrt(upper), 6.8 - math.sqrt(lower)) \
+                        if upper <= 5.2 ** 2 and lower <= 6.8 ** 2 else \
+                        (5.2 - math.sqrt(upper) if upper <= 5.2 ** 2 else 6.8 - math.sqrt(lower))
+                    color = WOOD[0] if edge > 1.2 else WOOD[2] if lit > 0 else WOOD[1]
+            elif -1 <= u <= 15 and abs(v) <= 1.3:
+                color = NECK[0] if v * (cx_ - cy_) >= 0 else NECK[1]
+            elif -5.5 <= u < -1 and abs(v) <= 2.0:
+                color = NECK[1]
+            if color:
+                out[(x, y)] = color
+    return out
+
+
+def held(angle, front=True, choke=0, opening=0, **changes):
+    """A drawing with the weapon in the front fist at `angle`, the back hand on it too; `front`
+    draws it over the body (swung), else behind (wound up); `choke` holds it that many px further
+    down the neck (a shorter swing); `opening` opens a weapon that opens (scissors: degrees between
+    the blades)."""
+    ps = pose(**changes)
+    if "ba" not in changes:
+        ps["ba"], ps["be"] = ps["fa"] - 0.25, ps["fe"]
+    ps["hold"] = (angle, front, choke, opening)
+    return ps
+
+
+# Henrik's guitar swings (the drawing counts and the strike drawing as in ANIMATIONS).
+GUITAR_ANIMATIONS = {
+    "jab": [held(110, False, 9, lean=-1, fa=-0.7, fe=0.6, ft=0.2, bt=-0.2),
+            held(125, False, 9, lean=-1, fa=-0.9, fe=0.5, ft=0.3, bt=-0.3),
+            held(-80, True, 9, lean=1, fa=1.2, fe=0.0, ft=0.45, fk=0.2, bt=-0.4, bk=0.2),
+            held(-40, False, 9, lean=1, fa=0.8, fe=0.2, ft=0.3, bt=-0.3),
+            held(-20, False, 9, fa=0.6, fe=0.3, ft=0.15, bt=-0.15)],
+    "side_tilt": [held(105, False, lean=-1, fa=-0.8, fe=0.6, ft=-0.2, fk=0.6),
+                  held(115, False, lean=-2, fa=-1.1, fe=0.4, ft=0.3, fk=1.0, bt=-0.2),
+                  held(-90, lean=3, fa=1.57, fe=0.0, reach=2.4, ft=0.7, fk=0.3, bt=-0.5, bk=0.2),
+                  held(-60, lean=2, fa=1.3, fe=0.0, reach=1.2, ft=0.5, fk=0.3, bt=-0.4),
+                  held(-25, fa=0.7, fe=0.3, ft=0.2, bt=-0.2)],
+    "neutral_special_charge": [
+        held(150, False, crouch=1, lean=-1, fa=-2.7, fe=0.0, ft=0.35, bt=-0.3),
+        held(160, False, crouch=2, lean=-2, fa=-2.75, fe=0.0, ft=0.4, bt=-0.35)],
+    "neutral_special": [held(180, False, lean=-1, fa=3.0, fe=0.0, ft=0.3, bt=-0.3),
+                        held(-105, lean=2, fa=2.5, fe=0.0, reach=1.0, ft=0.6, fk=0.2, bt=-0.6,
+                             bk=0.2),
+                        held(-40, lean=3, crouch=1, fa=1.5, fe=0.0, reach=1.0, ft=0.6, fk=0.4,
+                             bt=-0.6, bk=0.2),
+                        held(-20, lean=1, fa=0.8, fe=0.3, ft=0.3, bt=-0.3)],
+}
+# --- Gitte's scissors -------------------------------------------------------------------------
+
+STEEL = ((200, 206, 216), (140, 148, 164), (236, 240, 246))
+SCISSOR_HANDLE = ((204, 52, 52), (150, 30, 40), (236, 96, 90))
+SCREW = (60, 62, 76)
+SCISSOR_PIVOT = 7      # from the grip (the handles) to the pivot screw, px
+SCISSOR_BLADE = 24     # from the pivot to a blade's tip
+SCISSOR_RING = 3.9     # finger loop radius
+SCISSOR_RING_BACK = 7  # loop centre: behind the pivot …
+SCISSOR_RING_OUT = 3.6 # … and out to its side
+
+
+def scissors(grip, angle, opening=0):
+    """A large pair of scissors held by the handles at `grip`, pointing at `angle` (as the guitar:
+    0 = hanging straight down, -90 = forward), the blades `opening` degrees apart."""
+    a = math.radians(angle)
+    d = (-math.sin(a), math.cos(a))
+    pivot = (grip[0] + d[0] * SCISSOR_PIVOT, grip[1] + d[1] * SCISSOR_PIVOT)
+    out = {}
+    half = math.radians(opening) / 2
+    for side in (1, -1):
+        # A blade turned one way, its handle loop on the other side, behind the pivot.
+        b = a + side * half
+        bd = (-math.sin(b), math.cos(b))
+        mid = (pivot[0] + bd[0] * SCISSOR_BLADE * 0.5, pivot[1] + bd[1] * SCISSOR_BLADE * 0.5)
+        tip = (pivot[0] + bd[0] * SCISSOR_BLADE, pivot[1] + bd[1] * SCISSOR_BLADE)
+        blade = shaded(segment_pixels(pivot, mid, 3.4), 3.4, *STEEL)
+        blade.update(shaded(segment_pixels(mid, tip, 2.2), 2.2, *STEEL))
+        nx, ny = -d[1] * side, d[0] * side
+        ring_at = (pivot[0] - bd[0] * SCISSOR_RING_BACK + nx * SCISSOR_RING_OUT,
+                   pivot[1] - bd[1] * SCISSOR_RING_BACK + ny * SCISSOR_RING_OUT)
+        outer = disc(ring_at[0], ring_at[1], SCISSOR_RING)
+        hole = disc(ring_at[0], ring_at[1], SCISSOR_RING - 1.7)
+        handle = {k: SCISSOR_HANDLE[1] for k in segment_pixels(ring_at, pivot, 2.4)}
+        handle.update({k: SCISSOR_HANDLE[0] for k in outer - hole})
+        # A light edge on the loop's upper side so it reads as a rounded plastic handle.
+        handle.update({k: SCISSOR_HANDLE[2] for k in outer - hole
+                       if k[1] < ring_at[1] - SCISSOR_RING * 0.55})
+        for k in hole:
+            handle.pop(k, None)
+        out.update(handle)
+        out.update(blade)
+    out.update({k: SCREW for k in disc(pivot[0], pivot[1], 1.0)})
+    return out
+
+
+# Gitte's scissor cut: held out in front, open while charging, snapped shut on the strike.
+SCISSOR_ANIMATIONS = {
+    "neutral_special_charge": [
+        held(-80, crouch=1, lean=-1, fa=1.35, fe=0.1, ft=0.35, bt=-0.3, opening=40),
+        held(-80, crouch=1, lean=-1, fa=1.35, fe=0.1, ft=0.4, bt=-0.35, opening=50)],
+    "neutral_special": [held(-85, lean=1, fa=1.45, fe=0.0, reach=0.8, ft=0.4, bt=-0.4, opening=50),
+                        held(-90, lean=3, fa=1.57, fe=0.0, reach=2.0, ft=0.6, fk=0.2, bt=-0.6,
+                             bk=0.2),
+                        held(-90, lean=2, fa=1.5, fe=0.0, reach=1.4, ft=0.45, bt=-0.45),
+                        held(-60, fa=1.0, fe=0.3, ft=0.15, bt=-0.15)],
+    # Stance switch: hands crossed in front, then flung out wide.
+    "down_special": [pose(fa=1.2, fe=1.6, ba=1.0, be=1.8, crouch=1),
+                     pose(fa=1.1, fe=1.7, ba=0.9, be=1.9, crouch=2, lean=-1),
+                     pose(fa=1.45, fe=0.0, reach=1.0, ba=-1.45, be=0.0, lean=1),
+                     pose(fa=1.35, fe=0.2, reach=0.6, ba=-1.35, be=-0.2),
+                     pose(fa=0.6, fe=0.6, ba=-0.4)],
+}
+
+WEAPONS = {
+    "guitar": dict(draw=guitar, animations=GUITAR_ANIMATIONS, back=(BACK_GRIP, BACK_ANGLE)),
+    "scissors": dict(draw=scissors, animations=SCISSOR_ANIMATIONS, back=((-13, -7), -55)),
+}
+
+
+def mini_scissors_image():
+    """Gitte's volley: a small pair of scissors, 3 drawings of 16×16 turned 120° further each."""
+    out = Image.new("RGBA", (48, 16), (0, 0, 0, 0))
+    for i in range(3):
+        f = Frame()
+        a = math.radians(120 * i + 30)
+        d = (math.cos(a), math.sin(a))
+        pivot = (8 - d[0] * 1, 8 - d[1] * 1)
+        for side in (1, -1):
+            b = a + side * 0.3
+            bd = (math.cos(b), math.sin(b))
+            tip = (pivot[0] + bd[0] * 6.5, pivot[1] + bd[1] * 6.5)
+            f.part(shaded(segment_pixels(pivot, tip, 1.8), 1.8, *STEEL))
+            ring = (pivot[0] - bd[0] * 4.0, pivot[1] - bd[1] * 4.0)
+            f.part({k: SCISSOR_HANDLE[0]
+                    for k in disc(ring[0], ring[1], 2.4) - disc(ring[0], ring[1], 0.9)})
+        frame = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for (x, y), color in f.px.items():
+            if 0 <= x < 16 and 0 <= y < 16:
+                frame.putpixel((x, y), color + (255,))
+        out.paste(frame, (i * 16, 0))
+    return out
+
+
+# --- Summoned hand (docs/specs/art-guide.md#michaels-hand) --------------------------------------
+
+HAND_DRAWING = (56, 44)
+GLOVE = ((242, 243, 248), (190, 196, 214), (255, 255, 255))
+GLOVE_CREASE = (150, 156, 178)
+
+
+def _finger(base, angle, length, width):
+    """A gloved finger from `base` at `angle` degrees (0 = forward, positive = down), with a
+    knuckle crease across it."""
+    a = math.radians(angle)
+    d = (math.cos(a), math.sin(a))
+    tip = (base[0] + d[0] * length, base[1] + d[1] * length)
+    px = shaded(segment_pixels(base, tip, width), width, *GLOVE)
+    k = (base[0] + d[0] * length * 0.55, base[1] + d[1] * length * 0.55)
+    n = (-d[1], d[0])
+    for t in (-0.3, -0.1, 0.1, 0.3):
+        x, y = k[0] + n[0] * width * t * 1.6, k[1] + n[1] * width * t * 1.6
+        if (int(x), int(y)) in px:
+            px[(int(x), int(y))] = GLOVE_CREASE
+    return px
+
+
+def hand_image(c):
+    """The summoned hand, a giant white glove: open (hovering) and flat (slamming), side by side;
+    seen from the side, palm down, fingers forward (right), the cuff at the back. The palm's
+    bottom is the drawing's bottom row."""
+    w, h = HAND_DRAWING
+    out = Image.new("RGBA", (w * 2, h), (0, 0, 0, 0))
+    for i, open_hand in enumerate((True, False)):
+        f = Frame()
+        if open_hand:
+            cuff = ((9, 21), (9, 33))
+            blob = disc(22, 28, 9.5) | disc(28, 29, 8.5)
+            fingers = [((33, 22.5), -14, 14), ((35, 26.5), -5, 16), ((35, 30.5), 5, 15),
+                       ((33, 34.5), 14, 11)]
+            width = 6.0
+            thumb = ((22, 34), 62, 7)
+        else:
+            cuff = ((9, 30), (9, 37))
+            blob = {(x, y) for (x, y) in disc(23, 35, 10) | disc(29, 35, 9) if y < h}
+            fingers = [((34, 30), 2, 15), ((35, 33.5), 1, 17), ((35, 37), 0, 16),
+                       ((33, 40.5), 0, 13)]
+            width = 4.6
+            thumb = ((25, 41), 4, 8)
+        # Rolled cuff: a flared band with a lighter rim at the front.
+        band = segment_pixels(cuff[0], cuff[1], 12)
+        f.part({k: GLOVE[1] if v < -3.5 else GLOVE[0] for k, v in band.items()})
+        rim = {(x, y): GLOVE[2] for (x, y) in band if x >= int(cuff[0][0]) + 3}
+        f.part(rim)
+        cx = sum(x for x, _ in blob) / len(blob)
+        f.part({(x, y): GLOVE[1] if y > 36 + (2 if not open_hand else 0) else
+                GLOVE[2] if y < 26 and x > cx else GLOVE[0] for (x, y) in blob})
+        for base, angle, length in fingers:
+            f.part(_finger(base, angle, length, width))
+        f.part(_finger(thumb[0], thumb[1], thumb[2], width + 0.6))
+        frame = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        for (x, y), color in f.px.items():
+            if 0 <= x < w and 0 <= y < h:
+                frame.putpixel((x, y), color + (255,))
+        out.paste(frame, (i * w, 0))
+    return out
+
+
+# --- Football (docs/specs/art-guide.md#michaels-football) ----------------------------------------
+
+BALL_FRAME = 16
+BALL_WHITE = ((240, 240, 244), (184, 190, 206), (255, 255, 255))
+BALL_BLACK = (34, 36, 46)
+
+
+def ball_image():
+    """A black-and-white football, 3 drawings each turned 40° further (it spins)."""
+    out = Image.new("RGBA", (BALL_FRAME * 3, BALL_FRAME), (0, 0, 0, 0))
+    c = BALL_FRAME / 2
+    r = 6.6
+    for i in range(3):
+        f = Frame()
+        turn = math.radians(40 * i)
+        # Patch centers: one in the middle, five around (pentagons as small discs).
+        patches = [(0.0, 0.0, 1.8)] + [(math.cos(turn + k * 2 * math.pi / 5) * 5.4,
+                                         math.sin(turn + k * 2 * math.pi / 5) * 5.4, 1.3)
+                                        for k in range(5)]
+        px = {}
+        for (x, y) in disc(c, c, r):
+            dx, dy = x + 0.5 - c, y + 0.5 - c
+            black = any((dx - pxx) ** 2 + (dy - pyy) ** 2 <= pr * pr for pxx, pyy, pr in patches)
+            lit = dx - dy
+            edge = r - math.hypot(dx, dy)
+            px[(x, y)] = BALL_BLACK if black else BALL_WHITE[2] if lit < -4 and edge > 1 \
+                else BALL_WHITE[1] if lit > 4 and edge < 2.2 else BALL_WHITE[0]
+        f.part(px)
+        frame = Image.new("RGBA", (BALL_FRAME, BALL_FRAME), (0, 0, 0, 0))
+        for (x, y), color in f.px.items():
+            if 0 <= x < BALL_FRAME and 0 <= y < BALL_FRAME:
+                frame.putpixel((x, y), color + (255,))
+        out.paste(frame, (i * BALL_FRAME, 0))
+    return out
+
+
+# Michael's kick: leg back, swinging through, leg up high in front (follow-through), standing.
+KICK_ANIMATIONS = {
+    "side_special": [pose(lean=-1, ft=-0.9, fk=1.4, bt=0.1, bk=0.2, fa=0.6, fe=0.8, ba=-0.7),
+                     pose(lean=0, ft=0.3, fk=0.9, bt=-0.1, bk=0.2, fa=-0.4, fe=0.6, ba=0.6),
+                     pose(lean=-2, ft=1.9, fk=0.1, bt=-0.15, bk=0.3, fa=-0.9, fe=0.5, ba=1.0),
+                     pose(ft=0.4, fk=0.4, bt=-0.2, fa=0.2, ba=-0.2)],
+}
+
+
+# --- Fidusen's peel and book (docs/specs/art-guide.md#fidusens-peel-and-book) ----------------------
+
+BANANA = ((246, 214, 60), (206, 160, 30), (255, 240, 140))
+BANANA_TIP = (110, 74, 34)
+BOOK_COVER = ((178, 46, 52), (124, 28, 40), (220, 82, 80))
+BOOK_PAGES = ((240, 236, 222), (200, 194, 178))
+
+
+def peel_image():
+    """A banana peel lying on the floor (16×8): a stub in the middle, three floppy flaps."""
+    f = Frame()
+    body = {}
+    # Two flaps drooping to the sides, a shorter one in front, all from the top of the peel.
+    for a, b, w in (((7.5, 3.6), (2.2, 6.8), 2.8), ((8.5, 3.6), (13.8, 6.8), 2.8),
+                    ((8, 3.8), (9.2, 6.8), 2.6)):
+        f.part(shaded(segment_pixels(a, b, w), w, *BANANA))
+    stub = {(x, y): BANANA[1] for (x, y) in segment_pixels((8, 3.2), (8, 1.2), 1.8)}
+    stub.update({(x, y): BANANA_TIP for (x, y) in segment_pixels((8, 1.6), (8, 0.8), 1.8)})
+    f.part(stub)
+    img = Image.new("RGBA", (16, 8), (0, 0, 0, 0))
+    for (x, y), color in f.px.items():
+        if 0 <= x < 16 and 0 <= y < 8:
+            img.putpixel((x, y), color + (255,))
+    return img
+
+
+def book_image():
+    """A book, 3 drawings of 16×16 each turned 120° further (it spins): a red cover with white
+    page edges."""
+    out = Image.new("RGBA", (48, 16), (0, 0, 0, 0))
+    for i in range(3):
+        f = Frame()
+        a = math.radians(120 * i + 15)
+        ux, uy = math.cos(a), math.sin(a)        # along the spine
+        vx, vy = -uy, ux                          # across the cover
+        px = {}
+        for y in range(16):
+            for x in range(16):
+                dx, dy = x + 0.5 - 8, y + 0.5 - 8
+                u, v = dx * ux + dy * uy, dx * vx + dy * vy
+                if abs(u) <= 5.2 and abs(v) <= 4.0:
+                    if v > 2.6:
+                        px[(x, y)] = BOOK_PAGES[0] if u > -4 else BOOK_PAGES[1]
+                    else:
+                        px[(x, y)] = BOOK_COVER[2] if v < -2.6 else BOOK_COVER[0] \
+                            if abs(u) < 4 else BOOK_COVER[1]
+        f.part(px)
+        frame = Image.new("RGBA", (16, 16), (0, 0, 0, 0))
+        for (x, y), color in f.px.items():
+            if 0 <= x < 16 and 0 <= y < 16:
+                frame.putpixel((x, y), color + (255,))
+        out.paste(frame, (i * 16, 0))
+    return out
+
+
+# Fidusen's drop (down special: bend, drop, crouch, rise, stand) and throw (side special: wind
+# back, throw over the shoulder, follow-through, stand).
+FIDUSEN_ANIMATIONS = {
+    "down_special": [pose(crouch=1, lean=1, fa=0.5, fe=0.6, ba=-0.3),
+                     pose(crouch=3, lean=2, ft=0.9, fk=1.7, bt=0.5, bk=1.5, fa=0.9, fe=0.2,
+                          reach=0.6, ba=-0.2),
+                     pose(crouch=3, lean=2, ft=0.9, fk=1.7, bt=0.5, bk=1.5, fa=0.7, fe=0.4,
+                          ba=-0.2),
+                     pose(crouch=1, lean=1, ft=0.4, fk=0.8, bt=0.2, bk=0.6, fa=0.4, fe=0.6),
+                     pose()],
+    "side_special": [pose(lean=-2, fa=-2.0, fe=0.8, ba=0.6, ft=0.3, bt=-0.3),
+                     pose(lean=1, fa=2.0, fe=0.1, reach=0.8, ba=-0.6, ft=0.45, fk=0.2,
+                          bt=-0.45, bk=0.2),
+                     pose(lean=2, fa=1.2, fe=0.1, reach=1.0, ba=-0.7, ft=0.5, fk=0.2,
+                          bt=-0.5, bk=0.2),
+                     pose(fa=0.6, fe=0.6, ft=0.15, bt=-0.15)],
+}
+
+
+# --- Gitte's pyramid (docs/specs/art-guide.md#gittes-pyramid) -------------------------------------
+
+PYRAMID_DRAWING = (168, 128)
+PYRAMID_COURSES = 8          # rows of blocks, each COURSE_H tall...
+COURSE_H = 16
+PYRAMID_STEP = 10            # ...and this much narrower on each side than the one below
+SAND = dict(base=(216, 180, 116), shade=(176, 138, 82), light=(240, 214, 156),
+            grain_dark=(194, 156, 98), grain_light=(230, 198, 138), joint=(146, 108, 64),
+            dark_end=(188, 150, 92))
+
+
+def _sand_block(px, x0, x1, y0, y1, rng, exposed_top):
+    """One rough-cut sandstone block over x0..x1-1, y0..y1-1: its own tone, grainy speckles, a
+    light top edge (brighter where the step top is open to the sky), a darker bottom edge, a
+    darker right end (the sun is on the left), and chipped corners (left out)."""
+    tone = rng.randint(-10, 8)
+
+    def tint(color, extra=0):
+        return tuple(max(0, min(255, v + tone + extra)) for v in color)
+
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            corner = (x in (x0, x1 - 1)) and (y in (y0, y1 - 1))
+            if corner:
+                continue
+            if y == y0:
+                color = tint(SAND["light"], 6 if exposed_top(x) else -6)
+            elif y == y0 + 1 and exposed_top(x):
+                color = tint(SAND["grain_light"])
+            elif y == y1 - 1:
+                color = tint(SAND["shade"])
+            elif x >= x1 - 2:
+                color = tint(SAND["dark_end"])
+            else:
+                r = rng.random()
+                color = tint(SAND["grain_dark"] if r < 0.16 else SAND["grain_light"] if r < 0.30
+                             else SAND["base"])
+            px[(x, y)] = color
+
+
+def pyramid_image():
+    """Gitte's pyramid: a stepped pyramid of sandstone blocks, 8 courses, a capstone on top;
+    its bottom center is the drawing's bottom center (on the floor). Fixed seed: always the same."""
+    w, h = PYRAMID_DRAWING
+    rng = random.Random(2026)
+    px = {}
+    for course in range(PYRAMID_COURSES):
+        left = 1 + course * PYRAMID_STEP
+        right = w - 1 - course * PYRAMID_STEP           # exclusive
+        y1 = h - course * COURSE_H
+        y0 = y1 - COURSE_H
+        above = (left + PYRAMID_STEP, right - PYRAMID_STEP) if course < PYRAMID_COURSES - 1 \
+            else (right, right)
+
+        def exposed_top(x, above=above):
+            return not (above[0] <= x < above[1])
+
+        # Blocks 20-30 px wide; the first one's width varies per course so joints stagger.
+        if course == PYRAMID_COURSES - 1:
+            edges = [left, right]
+        else:
+            edges = [left]
+            x = left + rng.randint(10, 22)
+            while right - x > 14:
+                edges.append(x)
+                x += rng.randint(20, 30)
+            edges.append(right)
+        for a, b in zip(edges, edges[1:]):
+            _sand_block(px, a, b - 1, y0, y1, rng, exposed_top)
+            if b != right:
+                for y in range(y0 + 1, y1 - 1):   # the joint
+                    px[(b - 1, y)] = SAND["joint"]
+    f = Frame()
+    f.part(px)
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    for (x, y), color in f.px.items():
+        if 0 <= x < w and 0 <= y < h:
+            img.putpixel((x, y), color + (255,))
+    return img
+
+
+# Gitte's pyramid call (up special): crouched, the front hand out low over the ground (calling it
+# up); then riding the tip with her fist raised forward and up (shown for the whole rise); then the
+# same with the legs tucked (the pop). Her back arm is hidden behind her body in this view.
+PYRAMID_ANIMATIONS = {
+    "up_special": [pose(crouch=2, lean=1, ft=0.5, fk=1.0, bt=0.3, bk=0.8, fa=1.3, fe=0.0,
+                        reach=1.0, ba=-1.5, be=0.0),
+                   pose(fa=2.0, fe=-0.2, reach=1.0, ba=-2.0, be=0.2, ft=0.06, fk=0.05, bt=-0.06,
+                        bk=0.05),
+                   pose(fa=1.8, fe=0.2, reach=1.0, ba=-1.9, be=-0.2, ft=0.3, fk=0.6, bt=-0.2,
+                        bk=0.5)],
+}
+
+
+# Michael's summon: wind up, thrust the open hand forward and up, hold, come back (4 drawings; the
+# hand appears on frame 10, in the hold).
+SUMMON_ANIMATIONS = {
+    "neutral_special": [pose(lean=-1, crouch=1, fa=-0.9, fe=1.4, ba=0.6, be=1.2, ft=0.3, bt=-0.3),
+                        pose(lean=2, fa=2.35, fe=-0.3, reach=1.2, ba=-0.6, ft=0.5, fk=0.2,
+                             bt=-0.5, bk=0.2),
+                        pose(lean=2, fa=2.35, fe=-0.3, reach=1.0, ba=-0.5, ft=0.45, fk=0.2,
+                             bt=-0.45, bk=0.2),
+                        pose(fa=0.8, fe=0.6, ft=0.15, bt=-0.15)],
+}
+
+
 # --- Output -----------------------------------------------------------------------------------
 
 
 def frames_for(c):
     p = looks.palette(c)
     heads = {face: looks.build_head(c, face) for face in ("normal", "shut", "hurt")}
-    return {name: [draw_frame(ps, c, p, heads) for ps in poses]
+    weapon = WEAPONS.get(c.get("weapon"))
+    own = dict(weapon["animations"]) if weapon else {}
+    if c.get("hand"):
+        own.update(SUMMON_ANIMATIONS)
+    if c.get("football"):
+        own.update(KICK_ANIMATIONS)
+    if c.get("peel"):
+        own.update(FIDUSEN_ANIMATIONS)
+    if c.get("pyramid"):
+        own.update(PYRAMID_ANIMATIONS)
+    return {name: [draw_frame(ps, c, p, heads) for ps in own.get(name, poses)]
             for name, poses in ANIMATIONS.items()}
 
 
 def write_character(c, out):
     out.mkdir(parents=True, exist_ok=True)
     for name, frames in frames_for(c).items():
-        strip = Image.new("RGBA", (FRAME * len(frames), FRAME), (0, 0, 0, 0))
+        w, h = frames[0].size
+        strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
         for i, frame in enumerate(frames):
-            strip.paste(frame, (i * FRAME, 0))
+            strip.paste(frame, (i * w, 0))
         strip.save(out / f"fighter_{name}.png")
+    if c.get("hand"):
+        hand_image(c).save(out / "hand.png")
+    if c.get("football"):
+        ball_image().save(out / "projectile.png")
+    if c.get("weapon") == "scissors":
+        mini_scissors_image().save(out / "projectile.png")
+    if c.get("pyramid"):
+        pyramid_image().save(out / "pyramid.png")
+    if c.get("peel"):
+        peel_image().save(out / "peel.png")
+        book_image().save(out / "projectile.png")
 
 
 def preview_sheet(c, path, zoom=3):
@@ -507,16 +1064,17 @@ def preview_sheet(c, path, zoom=3):
     frames = frames_for(c)
     cols = max(len(f) for f in frames.values())
     label = 110
-    cell = FRAME * zoom
-    out = Image.new("RGBA", (label + cols * (cell + 2), len(frames) * (cell + 2)), (60, 66, 84, 255))
+    fw, fh = next(iter(frames.values()))[0].size
+    cw, ch = fw * zoom, fh * zoom
+    out = Image.new("RGBA", (label + cols * (cw + 2), len(frames) * (ch + 2)), (60, 66, 84, 255))
     draw = ImageDraw.Draw(out)
     for row, (name, fs) in enumerate(frames.items()):
-        y = row * (cell + 2)
-        draw.text((4, y + cell // 2 - 6), name, fill=(240, 240, 240))
+        y = row * (ch + 2)
+        draw.text((4, y + ch // 2 - 6), name, fill=(240, 240, 240))
         for i, frame in enumerate(fs):
             bg = Image.new("RGBA", frame.size, (90, 100, 120, 255))
             bg.alpha_composite(frame)
-            out.paste(bg.resize((cell, cell), Image.NEAREST), (label + i * (cell + 2), y))
+            out.paste(bg.resize((cw, ch), Image.NEAREST), (label + i * (cw + 2), y))
     out.save(path)
 
 

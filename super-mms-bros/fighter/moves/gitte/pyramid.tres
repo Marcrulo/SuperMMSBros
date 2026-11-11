@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="PyramidData" format=3]
+
+[ext_resource type="Script" path="res://fighter/pyramid_data.gd" id="1_pyramid"]
+[ext_resource type="Resource" path="res://fighter/moves/gitte/pyramid_tip_hit.tres" id="2_tip"]
+
+[resource]
+script = ExtResource("1_pyramid")
+reach = 64.0
+height = 96.0
+rise_frames = 18
+pop_speed = 180.0
+hop_speed = 200.0
+sink_frames = 20
+tip_hit = ExtResource("2_tip")

@@ -28,6 +28,22 @@ func get_ledges() -> Array[Ledge]:
 	return _ledges
 
 
+## The y of the nearest floor top at or below `point` whose x range holds point.x, else INF: the
+## main platform only, or with `platforms` also the pass-through platforms.
+func floor_below(point: Vector2, platforms := false) -> float:
+	var bodies: Array[Node] = [$MainPlatform]
+	if platforms:
+		bodies.append_array($Platforms.get_children())
+	var best := INF
+	for body in bodies:
+		var shape := body.get_node("CollisionShape2D") as CollisionShape2D
+		var size := (shape.shape as RectangleShape2D).size
+		var top_left := shape.global_position - size / 2.0
+		if point.x >= top_left.x and point.x <= top_left.x + size.x and top_left.y >= point.y:
+			best = minf(best, top_left.y)
+	return best
+
+
 func get_spawn_facing(player_index: int) -> int:
 	return spawn_facings[player_index]
 

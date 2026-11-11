@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="HandData" format=3]
+
+[ext_resource type="Script" path="res://fighter/hand_data.gd" id="1_hand"]
+[ext_resource type="Resource" path="res://fighter/moves/michael/hand_hover_hit.tres" id="2_hover"]
+[ext_resource type="Resource" path="res://fighter/moves/michael/hand_slam_hit.tres" id="3_slam"]
+
+[resource]
+script = ExtResource("1_hand")
+offset = Vector2(60, -50)
+size = Vector2(28, 20)
+hover_frames = 60
+slam_speed = 600.0
+impact_frames = 8
+hover_hit = ExtResource("2_hover")
+slam_hit = ExtResource("3_slam")

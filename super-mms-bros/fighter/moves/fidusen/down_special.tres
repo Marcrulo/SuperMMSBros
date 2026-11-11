@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://fighter/moves/fidusen/peel.tres" id="2_peel"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 8
+active = 0
+recovery = 10
+peel = ExtResource("2_peel")

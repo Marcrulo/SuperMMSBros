@@ -42,6 +42,27 @@ enum Direction { FACING, AWAY }
 ## values; it appears at hitbox_center on frame `startup`).
 @export var projectile_speed: float
 @export var projectile_lifetime: int
+## Side special: a fixed launch angle (degrees, up) and gravity (px/s², 0 = none) for a thrown
+## projectile; it's gone when it lands on a floor top.
+@export var projectile_angle_deg: float
+@export var projectile_gravity: float
+## Side special: the projectile flies at an angle within ±aim_cone_deg (0 = straight ahead):
+## at the nearest other fighter in that cone within aim_range px, else at a random angle.
+@export var aim_cone_deg: float
+@export var aim_range: float
+## Side special: how many projectiles at once, fanned out this many degrees apart (0 or 1 = one).
+@export var projectile_count: int
+@export var projectile_spread_deg: float
+## Down special: switches stance (no dive, no hitbox) on frame `startup`.
+@export var stances: StanceData
+## Down special: places a banana peel (no dive).
+@export var peel: PeelData
+## Up special: a vine (to a nearby ledge, or a swing) instead of the jump boost.
+@export var vine: VineData
+## Up special: a pyramid rises out of the floor below (or a hop) instead of the jump boost.
+@export var pyramid: PyramidData
+## Neutral special as a summon (no charge): the hand it summons on frame `startup`.
+@export var hand: HandData
 
 func total_frames() -> int:
 	return startup + active + recovery

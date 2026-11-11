@@ -257,12 +257,12 @@ func test_portrait_square_is_the_top_of_the_picture() -> void:
 
 func test_an_unlocked_character_without_a_portrait_shows_the_fighter_head() -> void:
 	var character := CharacterData.new()
-	character.id = "slot_06"
+	character.id = "slot_05"
 	character.playable = true
 	var tile := CharacterSelect.make_tile(character)
 	add_child_autofree(tile)
 	assert_eq((tile.get_picture() as AtlasTexture).region, PlayerCard.head_region(64))
-	assert_eq((tile.get_picture() as AtlasTexture).atlas, FighterVisuals.textures_for("slot_06")["idle"],
+	assert_eq((tile.get_picture() as AtlasTexture).atlas, FighterVisuals.textures_for("slot_05")["idle"],
 			"its own head")
 	assert_eq(tile.get_picture_filter(), CanvasItem.TEXTURE_FILTER_NEAREST)
 

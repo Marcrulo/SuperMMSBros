@@ -27,12 +27,14 @@ retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
 | Hit, heavy | ... launched at 400 px/s or more | `hit_heavy` |
 | Blocked | a hit lands on a shield (new signal `Match.fighter_blocked`) | `block` |
 | Swing | a normal attack (jab, tilts, aerials) starts | `swing` |
-| Charged punch | the neutral special's punch starts | `swing_heavy` |
+| Charged punch | the neutral special's punch starts (Michael: his summon starts) | `swing_heavy` |
 | Charging | while the neutral special charges (loops; stops when the charge ends) | `charge` |
 | Projectile | the side special's projectile appears | `zap` |
+| Hand slam | Michael's hand reaches the floor (`Match.hand_landed`, owner's sounds) | `burst` |
 | Burst | the down special's ground burst starts its active frames | `burst` |
 | Dive | the down special's air dive starts | `dive` |
-| Boost | the up special launches (its frame 5) | `boost` |
+| Boost | the up special launches (its frame 5; Gitte: her hop, or her pop off the pyramid's tip) | `boost` |
+| Pyramid | Gitte's pyramid starts rising (her move becomes `pyramid_rise`) | `burst` |
 | Footstep | in `RUN`, on the two foot plants of the run cycle: `(state_frame - 1) % 30` is 0 or 15 | `step_1`, `step_2` (alternating) |
 | Jump | a ground jump (the fighter leaves the ground going up, not from a hit) | `jump` |
 | Double jump | an air jump (`jumps_left` drops in the air) | `double_jump` |
