@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="FightSounds" load_steps=24 format=3]
+
+[ext_resource type="Script" path="res://match/fight_sounds.gd" id="1_script"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/hit_light.wav" id="s_hit_light"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/hit_medium.wav" id="s_hit_medium"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/hit_heavy.wav" id="s_hit_heavy"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/block.wav" id="s_block"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/swing.wav" id="s_swing"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/swing_heavy.wav" id="s_swing_heavy"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/charge.wav" id="s_charge"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/zap.wav" id="s_zap"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/burst.wav" id="s_burst"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/dive.wav" id="s_dive"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/boost.wav" id="s_boost"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/step_1.wav" id="s_step_1"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/step_2.wav" id="s_step_2"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/jump.wav" id="s_jump"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/double_jump.wav" id="s_double_jump"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/land.wav" id="s_land"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/shield_on.wav" id="s_shield_on"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/shield_break.wav" id="s_shield_break"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/dodge.wav" id="s_dodge"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/ledge_grab.wav" id="s_ledge_grab"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/ko.wav" id="s_ko"]
+[ext_resource type="AudioStream" path="res://assets/sfx/fight/respawn.wav" id="s_respawn"]
+
+[resource]
+script = ExtResource("1_script")
+streams = Dictionary[StringName, AudioStream]({&"hit_light": ExtResource("s_hit_light"), &"hit_medium": ExtResource("s_hit_medium"), &"hit_heavy": ExtResource("s_hit_heavy"), &"block": ExtResource("s_block"), &"swing": ExtResource("s_swing"), &"swing_heavy": ExtResource("s_swing_heavy"), &"charge": ExtResource("s_charge"), &"zap": ExtResource("s_zap"), &"burst": ExtResource("s_burst"), &"dive": ExtResource("s_dive"), &"boost": ExtResource("s_boost"), &"step_1": ExtResource("s_step_1"), &"step_2": ExtResource("s_step_2"), &"jump": ExtResource("s_jump"), &"double_jump": ExtResource("s_double_jump"), &"land": ExtResource("s_land"), &"shield_on": ExtResource("s_shield_on"), &"shield_break": ExtResource("s_shield_break"), &"dodge": ExtResource("s_dodge"), &"ledge_grab": ExtResource("s_ledge_grab"), &"ko": ExtResource("s_ko"), &"respawn": ExtResource("s_respawn")})
+volume_db = Dictionary[StringName, float]({&"hit_light": -2.0, &"hit_medium": 0.0, &"hit_heavy": 2.0, &"block": -3.0, &"swing": -8.0, &"swing_heavy": -4.0, &"charge": -10.0, &"zap": -6.0, &"burst": -2.0, &"dive": -6.0, &"boost": -6.0, &"step_1": -14.0, &"step_2": -14.0, &"jump": -9.0, &"double_jump": -9.0, &"land": -8.0, &"shield_on": -8.0, &"shield_break": -2.0, &"dodge": -9.0, &"ledge_grab": -8.0, &"ko": 2.0, &"respawn": -6.0})

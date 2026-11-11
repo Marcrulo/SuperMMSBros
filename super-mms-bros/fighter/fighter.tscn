@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://fighter/fighter.gd" id="1_fighter"]
 [ext_resource type="Resource" path="res://fighter/default_stats.tres" id="2_stats"]
 [ext_resource type="Script" path="res://fighter/fighter_visuals.gd" id="3_visuals"]
+[ext_resource type="Script" path="res://fighter/fighter_sounds.gd" id="4_sounds"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(16, 24)
@@ -40,3 +41,6 @@ disabled = true
 
 [node name="Visuals" type="Node2D" parent="."]
 script = ExtResource("3_visuals")
+
+[node name="Sounds" type="Node2D" parent="."]
+script = ExtResource("4_sounds")

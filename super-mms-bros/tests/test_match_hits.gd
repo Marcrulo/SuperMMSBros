@@ -134,3 +134,29 @@ func test_percent_adds_up() -> void:
 		_p2.velocity = Vector2.ZERO
 		_steps(20)
 	assert_eq(_p2.percent, 9.0)
+
+
+func _shielding(count: int) -> Array[FighterInput]:
+	var inputs: Array[FighterInput] = []
+	for i in count:
+		var input := FighterInput.new()
+		input.shield_held = true
+		input.shield_pressed = i == 0
+		inputs.append(input)
+	return inputs
+
+
+func test_stepped_once_per_step() -> void:
+	await wait_physics_frames(1)
+	watch_signals(_match)
+	_steps(3)
+	assert_signal_emit_count(_match, "stepped", 3)
+
+
+func test_blocked_hit_is_announced() -> void:
+	await _place(Vector2(230, 192), 1, Vector2(250, 192), -1, _jabs(), _shielding(20))
+	watch_signals(_match)
+	_steps(8)
+	assert_eq(_p2.state, Fighter.State.SHIELD, "the jab hit the shield")
+	assert_signal_emitted_with_parameters(_match, "fighter_blocked", [1])
+	assert_signal_not_emitted(_match, "fighter_hit", "a blocked hit isn't a hit")

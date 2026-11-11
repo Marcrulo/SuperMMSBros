@@ -6,6 +6,10 @@ extends Node2D
 
 ## A fighter took a hit (not a blocked one). The HUD bumps its card.
 signal fighter_hit(player_index: int)
+## A hit landed on a fighter's shield (docs/specs/sound.md).
+signal fighter_blocked(player_index: int)
+## The end of every step(): one tick of the match is done (presentation reads it, per tick).
+signal stepped
 ## A fighter left the blast zone and lost a stock.
 signal fighter_ko(player_index: int)
 ## A KO'd fighter with stocks left came back at its spawn point.
@@ -92,6 +96,7 @@ func step() -> void:
 	_check_kos_and_respawns()
 	_advance_timers()
 	tick += 1
+	stepped.emit()
 
 
 ## Every fighter that can grab a ledge nobody else holds grabs it, P1 first
@@ -191,6 +196,7 @@ func _resolve_hits() -> void:
 			_remove_projectile(hit.projectile)
 		if victim.state == Fighter.State.SHIELD:
 			victim.block_hit(hit.move, hit.side)
+			fighter_blocked.emit(victim.player_index)
 		else:
 			victim.take_hit(hit.move, hit.side, hit.attacker_x)
 			fighter_hit.emit(victim.player_index)

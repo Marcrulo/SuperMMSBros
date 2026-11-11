@@ -110,3 +110,11 @@ func test_choosing_sounds() -> void:
 	assert_eq(Game.last_sfx, "menu_back")
 	stages.choose(0)
 	assert_eq(Game.last_sfx, "menu_confirm", "locking in a stage")
+
+
+func test_every_fight_sound_exists_and_is_credited() -> void:
+	var credits := FileAccess.get_file_as_string("res://assets/sfx/CREDITS.txt")
+	for sound_name in FightSounds.NAMES:
+		var path := "res://assets/sfx/fight/%s.wav" % sound_name
+		assert_not_null(load(path) as AudioStream, path)
+		assert_string_contains(credits, "fight/%s.wav" % sound_name)

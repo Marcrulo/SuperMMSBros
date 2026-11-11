@@ -7,3 +7,53 @@ menu_move.wav
 
 menu_back.wav, menu_locked.wav
   Made for this game by tools/gen_menu_sfx.py.
+
+# Fight sounds (tools/gen_fight_sfx.py)
+
+All CC0 (public domain): http://creativecommons.org/publicdomain/zero/1.0/
+Changes: cut where noted, silence trimmed, loudness normalized, 44.1 kHz WAV.
+
+fight/hit_light.wav
+  "hit15.mp3.flac" from "37 hits/punches" by qubodup, https://opengameart.org/content/37-hitspunches
+fight/hit_medium.wav
+  "hit29.mp3.flac" from "37 hits/punches" by qubodup, https://opengameart.org/content/37-hitspunches
+fight/hit_heavy.wav
+  "hit33.mp3.flac" from "37 hits/punches" by qubodup, https://opengameart.org/content/37-hitspunches
+fight/block.wav
+  "impact.8.ogg" from "10 Impact/Shield Blocks" by StarNinjas, https://opengameart.org/content/10-impactshield-blocks
+fight/swing.wav
+  "swish-3.wav" from "Swishes Sound Pack" by artisticdude, https://opengameart.org/content/swishes-sound-pack
+fight/swing_heavy.wav
+  "swish-8.wav" from "Swishes Sound Pack" by artisticdude, https://opengameart.org/content/swishes-sound-pack
+fight/dodge.wav
+  "swish-9.wav" from "Swishes Sound Pack" by artisticdude, https://opengameart.org/content/swishes-sound-pack
+fight/double_jump.wav
+  "swish-1.wav" from "Swishes Sound Pack" by artisticdude, https://opengameart.org/content/swishes-sound-pack
+fight/dive.wav
+  "whoosh2_0.wav" from "Air whoosh" by pyranostudios, https://opengameart.org/content/air-whoosh, cut to 0.6 s with a fade-out
+fight/jump.wav
+  "cloth2.ogg" from "50 RPG sound effects" by Kenney, https://opengameart.org/content/50-rpg-sound-effects
+fight/land.wav
+  "dropLeather.ogg" from "50 RPG sound effects" by Kenney, https://opengameart.org/content/50-rpg-sound-effects
+fight/step_1.wav
+  "footstep06.ogg" from "50 RPG sound effects" by Kenney, https://opengameart.org/content/50-rpg-sound-effects
+fight/step_2.wav
+  "footstep09.ogg" from "50 RPG sound effects" by Kenney, https://opengameart.org/content/50-rpg-sound-effects
+fight/ledge_grab.wav
+  "handleSmallLeather.ogg" from "50 RPG sound effects" by Kenney, https://opengameart.org/content/50-rpg-sound-effects
+fight/shield_on.wav
+  "forceField_000.ogg" from "Sci-Fi Sounds" by Kenney, https://opengameart.org/content/sci-fi-sounds, cut to 0.35 s with a fade-out
+fight/charge.wav
+  "forceField_001.ogg" from "Sci-Fi Sounds" by Kenney, https://opengameart.org/content/sci-fi-sounds
+fight/zap.wav
+  "laserSmall_000.ogg" from "Sci-Fi Sounds" by Kenney, https://opengameart.org/content/sci-fi-sounds
+fight/burst.wav
+  "explosionCrunch_000.ogg" from "Sci-Fi Sounds" by Kenney, https://opengameart.org/content/sci-fi-sounds
+fight/boost.wav
+  "thrusterFire_001.ogg" from "Sci-Fi Sounds" by Kenney, https://opengameart.org/content/sci-fi-sounds, cut to 0.5 s with a fade-out
+fight/ko.wav
+  "lowFrequency_explosion_000.ogg" from "Sci-Fi Sounds" by Kenney, https://opengameart.org/content/sci-fi-sounds
+fight/shield_break.wav
+  "bfh1_glass_breaking_01.ogg" from "75 CC0 breaking / falling / hit sfx" by rubberduck, https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx
+fight/respawn.wav
+  "spell_01.ogg" from "80 CC0 RPG SFX" by rubberduck, https://opengameart.org/content/80-cc0-rpg-sfx
