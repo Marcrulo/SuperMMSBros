@@ -115,10 +115,11 @@ func test_shield_bubble_shrinks_with_health() -> void:
 
 
 func test_frame_size_is_the_strip_height() -> void:
-	assert_eq(FighterVisuals.frame_size(FighterVisuals.textures_for("slot_01")["idle"]), 48)
 	assert_eq(FighterVisuals.frame_size(FighterVisuals.textures_for("slot_05")["idle"]), 64)
+	var strip_48 := ImageTexture.create_from_image(Image.create(48 * 4, 48, false, Image.FORMAT_RGBA8))
+	assert_eq(FighterVisuals.frame_size(strip_48), 48)
 
 
-func test_frame_rect_puts_the_feet_at_the_origin() -> void:
-	assert_eq(FighterVisuals.frame_rect(48), Rect2(-24, -48, 48, 48))
-	assert_eq(FighterVisuals.frame_rect(64), Rect2(-32, -64, 64, 64))
+func test_every_frame_is_drawn_48_px_with_the_feet_at_the_origin() -> void:
+	assert_eq(FighterVisuals.frame_rect(), Rect2(-24, -48, 48, 48),
+			"a 48 px frame 1:1, a 64 px frame at 3/4 size")

@@ -24,10 +24,12 @@ long as it exports PNG sprite strips.
 ### Frame size, alignment and proportions
 
 - Every fighter frame is **48×48 px**, or **64×64 px** for characters already moved to the 64 px
-  style (see [64 px style](#64-px-style-trial); for now: Michael Bech, `slot_05`). Each strip's height is
+  style (see [64 px style](#64-px-style-trial); all 14 characters are now). Each strip's height is
   its frame size; one character uses one size for all its strips.
 - The fighter's **feet sit on the bottom row, centered horizontally** (x = 24 at 48 px, x = 32 at
-  64 px). That point is the fighter's origin in the game. Sprites are drawn 1:1 at either size.
+  64 px). That point is the fighter's origin in the game. Every frame is drawn into the same
+  48×48 game pixels: a 48 px frame 1:1, a 64 px frame at ¾ size (one drawn pixel = ¾ game pixel),
+  so both styles are the same size in the game.
 - **Big head** (Brawlhalla-like): the head is about **13 px tall** and pokes 3 px above the 24 px
   body box. The body box is frame pixels x 16–31, y 24–47; the head reaches up to about y 21.
   The hurtbox covers body and head: x 16–31, y 21–47.
@@ -105,7 +107,7 @@ is named on the command line).
 
 ### 64 px style (trial)
 
-A bigger, more detailed style, being tried one character at a time before the rest move over.
+A bigger, more detailed style; every character uses it.
 
 - **Frames 64×64**, feet on the bottom row centered at x = 32. The standing figure is about 42 px
   tall: a hand-drawn head about 17 px tall (18 wide) on a 15 px wide torso, the shoulders 17 px.
@@ -114,14 +116,16 @@ A bigger, more detailed style, being tried one character at a time before the re
   side). The idle is a boxing guard.
 - **Faces:** normal, eyes shut (helpless, dodges, dizzy, rolls) and a wince with gritted teeth
   (hurt). A raised arm comes up beside the head, never over the face.
-- **Gameplay sizes are unchanged for now** (body box, hurtbox, hitboxes): a 64 px character is
-  drawn bigger than its boxes. Moving everyone to 64 px will rescale those (or the camera).
+- **Drawn at ¾ size** in the game (into 48×48 game pixels), so gameplay sizes (body box,
+  hurtbox, hitboxes) and the stages stay as they are. The trade-off: a fighter's pixels are
+  finer than the stage's. (The alternative, kept for later: scale the world and the camera by
+  4/3 and draw 64 px frames 1:1.)
 - **Tools:** `tools/fighter64_looks.py` holds each character's colors and hand-drawn head (a
   letter grid plus layers: hair, beard, glasses, mouth); `tools/gen_fighter_sprites64.py
   <out_dir> [ids…]` draws the bodies from poses and writes the strips plus a preview sheet;
   `tools/preview_fighter_gif.py <strips_dir> <out.gif>` animates a character's strips at game
-  timing. A character moved to 64 px is in `HAND_EDITED` (`tools/fighter_looks.py`), so the 48 px
-  generator leaves its folder alone.
+  timing. Every character is in `HAND_EDITED` (`tools/fighter_looks.py`), so the old 48 px
+  generator leaves their folders alone.
 
 ## Stages
 

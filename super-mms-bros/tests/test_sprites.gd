@@ -29,9 +29,10 @@ func test_every_character_has_every_strip() -> void:
 			assert_eq(texture.get_size(), Vector2(size * FRAMES[animation], size), path)
 
 
-func test_michael_bech_is_in_the_64_px_style() -> void:
-	var texture := load(DIR + "slot_05/fighter_idle.png") as Texture2D
-	assert_eq(texture.get_size(), Vector2(64 * 4, 64))
+func test_every_character_is_in_the_64_px_style() -> void:
+	for character in Game.roster().characters:
+		var texture := load(DIR + "%s/fighter_idle.png" % character.id) as Texture2D
+		assert_eq(texture.get_size(), Vector2(64 * 4, 64), character.id)
 
 
 func test_every_character_has_a_stock_icon() -> void:

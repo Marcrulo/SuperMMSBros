@@ -261,7 +261,7 @@ func test_an_unlocked_character_without_a_portrait_shows_the_fighter_head() -> v
 	character.playable = true
 	var tile := CharacterSelect.make_tile(character)
 	add_child_autofree(tile)
-	assert_eq((tile.get_picture() as AtlasTexture).region, PlayerCard.head_region(48))
+	assert_eq((tile.get_picture() as AtlasTexture).region, PlayerCard.head_region(64))
 	assert_eq((tile.get_picture() as AtlasTexture).atlas, FighterVisuals.textures_for("slot_06")["idle"],
 			"its own head")
 	assert_eq(tile.get_picture_filter(), CanvasItem.TEXTURE_FILTER_NEAREST)

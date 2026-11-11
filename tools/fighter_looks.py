@@ -14,8 +14,8 @@ front), cheeks (head this much wider than tall); negative for smaller.
 
 ## Characters whose strips have been edited by hand: the generator leaves their folders alone
 ## (unless an id is named on its command line). See docs/specs/art-guide.md#generated-characters.
-## slot_05 (Michael Bech) is drawn in the 64 px style by tools/gen_fighter_sprites64.py.
-HAND_EDITED: set[str] = {"slot_05"}
+## Every character is now drawn in the 64 px style by tools/gen_fighter_sprites64.py.
+HAND_EDITED: set[str] = {f"slot_{i:02d}" for i in range(1, 15)}
 
 FAIR = (240, 176, 136)
 JEANS = (51, 60, 87)
