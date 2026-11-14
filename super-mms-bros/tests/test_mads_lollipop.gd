@@ -10,7 +10,7 @@ var _mads: CharacterData
 
 
 func before_each() -> void:
-	_mads = load("res://fighter/characters/%s.tres" % MADS)
+	_mads = load("res://characters/mads/character.tres")
 
 
 func test_the_side_tilt_matches_the_spec() -> void:
@@ -51,7 +51,7 @@ func test_the_hitbox_reaches_where_the_sign_is_drawn() -> void:
 
 ## The same move as Stig's cross smash (its own files, so they can be tuned apart).
 func test_the_stop_smash_is_stigs_cross_smash() -> void:
-	var stig: CharacterData = load("res://fighter/characters/slot_07.tres")
+	var stig: CharacterData = load("res://characters/stig/character.tres")
 	var ours := _mads.fighter_stats().moveset
 	var theirs := stig.fighter_stats().moveset
 	for name in ["down_special", "down_special_dive"]:

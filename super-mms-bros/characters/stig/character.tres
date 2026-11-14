@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CharacterData" format=3]
+
+[ext_resource type="Script" path="res://fighter/character_data.gd" id="1_data"]
+[ext_resource type="Resource" path="res://fighter/default_stats.tres" id="3_stats"]
+[ext_resource type="Resource" path="res://characters/stig/moves/moveset.tres" id="4_moves"]
+[ext_resource type="Texture2D" path="res://assets/fighters/portraits/slot_07.png" id="2_portrait"]
+
+[resource]
+script = ExtResource("1_data")
+id = "slot_07"
+display_name = "Stig"
+playable = true
+portrait = ExtResource("2_portrait")
+stats = ExtResource("3_stats")
+moveset = ExtResource("4_moves")
+charge_glow = Vector2(-19, -44)

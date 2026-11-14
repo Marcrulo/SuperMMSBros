@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Roster" format=3]
+
+[ext_resource type="Script" path="res://fighter/roster.gd" id="1_roster"]
+[ext_resource type="Script" path="res://fighter/character_data.gd" id="2_data"]
+[ext_resource type="Resource" path="res://characters/pia/character.tres" id="3_slot_01"]
+[ext_resource type="Resource" path="res://characters/gitte/character.tres" id="4_slot_02"]
+[ext_resource type="Resource" path="res://characters/trine/character.tres" id="5_slot_03"]
+[ext_resource type="Resource" path="res://characters/nina/character.tres" id="6_slot_04"]
+[ext_resource type="Resource" path="res://characters/michael/character.tres" id="7_slot_05"]
+[ext_resource type="Resource" path="res://characters/henrik/character.tres" id="8_slot_06"]
+[ext_resource type="Resource" path="res://characters/stig/character.tres" id="9_slot_07"]
+[ext_resource type="Resource" path="res://characters/casper/character.tres" id="10_slot_08"]
+[ext_resource type="Resource" path="res://characters/kim/character.tres" id="11_slot_09"]
+[ext_resource type="Resource" path="res://characters/mette/character.tres" id="12_slot_10"]
+[ext_resource type="Resource" path="res://characters/mads/character.tres" id="13_slot_11"]
+[ext_resource type="Resource" path="res://characters/sjippepigen/character.tres" id="14_slot_12"]
+[ext_resource type="Resource" path="res://characters/fidusen/character.tres" id="15_slot_13"]
+[ext_resource type="Resource" path="res://characters/magnus/character.tres" id="16_slot_14"]
+
+[resource]
+script = ExtResource("1_roster")
+characters = Array[ExtResource("2_data")]([ExtResource("3_slot_01"), ExtResource("4_slot_02"), ExtResource("5_slot_03"), ExtResource("6_slot_04"), ExtResource("7_slot_05"), ExtResource("8_slot_06"), ExtResource("9_slot_07"), ExtResource("10_slot_08"), ExtResource("11_slot_09"), ExtResource("12_slot_10"), ExtResource("13_slot_11"), ExtResource("14_slot_12"), ExtResource("15_slot_13"), ExtResource("16_slot_14")])
+slots = 15

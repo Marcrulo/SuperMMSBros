@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="RopeData" format=3]
+
+[ext_resource type="Script" path="res://characters/sjippepigen/rope_data.gd" id="1_ropes"]
+[ext_resource type="Resource" path="res://characters/sjippepigen/moves/rope_short_hit.tres" id="2_short"]
+[ext_resource type="Resource" path="res://characters/sjippepigen/moves/rope_long_hit.tres" id="3_long"]
+[ext_resource type="Resource" path="res://characters/sjippepigen/moves/frenzy_hit.tres" id="4_frenzy"]
+
+[resource]
+script = ExtResource("1_ropes")
+count = 3
+center = Vector2(0, -14)
+short_radius = Vector2(18, 24)
+long_radius = Vector2(34, 34)
+short_period = 30
+long_period = 48
+tip_size = Vector2(10, 10)
+immune_frames = 30
+short_hit = ExtResource("2_short")
+long_hit = ExtResource("3_long")
+frenzy_frames = 120
+frenzy_speed = 2.0
+frenzy_hit = ExtResource("4_frenzy")
+frenzy_charge_knockback = 200.0
+frenzy_refill_frames = 720

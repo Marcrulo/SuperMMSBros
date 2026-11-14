@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="IpadData" format=3]
+
+[ext_resource type="Script" path="res://characters/trine/ipad_data.gd" id="1_ipad"]
+
+[resource]
+script = ExtResource("1_ipad")
+watch_frames = 300
+heal_every = 10
+heal = 1.0

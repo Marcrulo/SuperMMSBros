@@ -5,7 +5,7 @@ extends Node
 const CHARACTER_SELECT_PATH := "res://ui/character_select.tscn"
 const STAGE_SELECT_PATH := "res://ui/stage_select.tscn"
 const MATCH_PATH := "res://match/match.tscn"
-const ROSTER_PATH := "res://fighter/characters/roster.tres"
+const ROSTER_PATH := "res://fighter/roster.tres"
 const DEFAULT_CHARACTER := CharacterData.DEFAULT_ID
 ## P2's character when the menus were skipped.
 const DEFAULT_P2_CHARACTER := "slot_02"

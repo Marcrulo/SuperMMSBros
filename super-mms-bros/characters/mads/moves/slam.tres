@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="GrabData" format=3]
+
+[ext_resource type="Script" path="res://characters/mads/grab_data.gd" id="1_grab"]
+[ext_resource type="Resource" path="res://characters/mads/moves/slam_hit.tres" id="2_hit"]
+
+[resource]
+script = ExtResource("1_grab")
+throw_frames = 40
+turn_frame = 15
+slam_frame = 24
+path = PackedVector2Array(12, -16, 11, -28, 0, -34, -9, -30, -13, -10)
+held_middle = 16.0
+slam_hit = ExtResource("2_hit")
