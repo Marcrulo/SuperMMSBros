@@ -38,6 +38,8 @@ enum Direction { FACING, AWAY }
 @export var drift_speed: float
 ## Down special in the air: diving speed.
 @export var dive_speed: float
+## Down special on the ground: hops up this fast first (`belly_hop`), then dives (0 = no hop).
+@export var hop_speed: float
 ## Side special: the projectile (its size, damage and knockback are this move's hitbox and hit
 ## values; it appears at hitbox_center on frame `startup`).
 @export var projectile_speed: float
@@ -61,6 +63,19 @@ enum Direction { FACING, AWAY }
 @export var vine: VineData
 ## Up special: a pyramid rises out of the floor below (or a hop) instead of the jump boost.
 @export var pyramid: PyramidData
+## Down special: sits down and watches an iPad, healing (no dive, no hitbox; ground only).
+@export var ipad: IpadData
+## Down special: switches the fighter's jump ropes short ↔ long on frame `startup` (no dive, no
+## hitbox).
+@export var rope_switch: bool
+## Neutral special: charged like the punch, but releasing it starts the jump ropes' frenzy
+## (RopeData) instead of punching (no hitbox).
+@export var rope_frenzy: bool
+## Neutral special: let go before this many ticks of charging and nothing happens (0 = any charge).
+@export var min_charge_frames: int
+## A command grab: the hitbox is a grab box (catches through shields, never hits) and a catch
+## starts this throw.
+@export var grab: GrabData
 ## Neutral special as a summon (no charge): the hand it summons on frame `startup`.
 @export var hand: HandData
 

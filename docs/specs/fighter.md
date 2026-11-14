@@ -112,6 +112,7 @@ action. Shield, crouch and charging act while their button is *held*.
 | `LEDGE` | Hanging from a ledge |
 | `LEDGE_CLIMB` | Climbing up from a ledge onto the stage |
 | `KO` | Knocked out; hidden and inactive until the Match respawns it |
+| `HELD` | Caught by a command grab: can't act, no physics; placed by the Match until thrown (see [moves](moves.md#mads--grappler)) |
 | `TRIPPED` | Slipped on a banana peel: lying on the floor, can't act (see [moves](moves.md#fidusen--banana-book-vine)) |
 
 Every fighter also tracks `state_frame`: ticks spent in the current state, starting at 1 on the tick
@@ -154,6 +155,8 @@ Checked in this order on each tick; the first that applies happens:
 - a grounded state (not `LEDGE`, `LEDGE_CLIMB`, `KO`, `TRIPPED`) → `TRIPPED`: touching an enemy's
   banana peel while on the ground and hittable; `TRIPPED` → `IDLE`/`AIR` after the trip's ticks.
   While tripped the fighter slides to a stop, uses the crouching hurtbox, and can be hit as usual.
+- a hittable state (also `SHIELD`) → `HELD`: caught by a command grab's grab box (set by the
+  Match); `HELD` → `HITSTUN` when thrown. A held fighter can't be hit.
 - any state → `KO`: set by the Match when the fighter leaves the blast zone.
 
 ## Movement rules
@@ -308,6 +311,8 @@ Drawn from the fighter's state; never changes gameplay state.
 - **Pyramid:** while Gitte rides her pyramid up (`pyramid_rise`), her up special's second drawing
   (arms up); the pyramid itself is drawn by its own node (see
   [art guide](art-guide.md#gittes-pyramid)).
+- **Belly hop:** while Pia hops before her belly flop (`belly_hop`), her `jump` drawings; the
+  flop's dust is drawn on both sides of her (see [art guide](art-guide.md#pias-belly-flop)).
 - **Charge:** a glow grows as the neutral special charges, at the character's
   `CharacterData.charge_glow` point (the fists by default; Henrik: his raised guitar).
 - **Invulnerable:** the whole fighter blinks (hidden 4 ticks, shown 4 ticks).

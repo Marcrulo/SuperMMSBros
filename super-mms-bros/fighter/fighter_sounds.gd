@@ -57,6 +57,8 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 			out.append(&"charge")
 		elif move == &"down_special_dive":
 			out.append(&"dive")
+		elif move == &"belly_hop":
+			out.append(&"jump")  # Pia's hop before her belly flop.
 		elif move == &"pyramid_rise":
 			out.append(&"burst")  # Gitte's pyramid starts rising.
 	var was_charging: bool = before.state == Fighter.State.ATTACK and before.move == &"neutral_special_charge"

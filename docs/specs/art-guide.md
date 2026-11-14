@@ -129,7 +129,7 @@ A bigger, more detailed style; every character uses it.
 
 ### Weapons
 
-A character can carry a weapon (Henrik: an acoustic guitar). It's drawn into the character's
+A character can carry a weapon (Henrik: an acoustic guitar; Stig: a gold cross). It's drawn into the character's
 strips like any body part, by the 64 px generator from the poses, so it follows the body.
 
 - **Bigger canvas:** a swung weapon reaches past a 64×64 frame, so such a character's frames are
@@ -143,6 +143,78 @@ strips like any body part, by the 64 px generator from the poses, so it follows 
   by the neck); in every other animation it stays on his back.
 - His move hitboxes are fitted to where the guitar is drawn in the strike drawing (see
   [moves](moves.md#henrik--guitar)).
+- **Stig's cross:** a solid gold Latin cross, not a sword: a long beam about 39 px and a crossbar
+  16 px wide near the top (the arm above it shorter than the side arms, so it reads as a Latin
+  cross even when only the top shows), both beams about 4 px thick with square ends, bevelled (lit
+  edges up and right, shaded down and left). He holds it 6 px up from the foot of the long beam
+  and swings it like a sword (Henrik's poses, no choking up), so the crossbar is out at the far
+  end. It never points below level, so in the follow-throughs it's held out forward instead of
+  down into the floor. Frames 112×80 like Henrik's. On his back it hangs diagonally like Gitte's
+  scissors, at the same slant: the cross head sticks out behind his neck at head height (left),
+  the long beam slants down behind his body, and its foot pokes out just in front of his hip
+  (right).
+- **Stig's cross smash** (his `down_special`, 5 drawings), like a wizard driving his staff into
+  the ground: the cross held upright in front of him in **both hands** (the back fist drawn over
+  the beam just above the front one), well clear of his face; lifted higher; then (the strike
+  drawing and the next) pushed straight down, its foot on the floor about 13 px ahead, as he drops
+  to one knee; then getting up, still holding it upright. **The light** (`burst.png`, 4 drawings
+  of 80×28, drawn at ¾ on the floor with its left edge 7 px ahead of his feet, so it starts at the
+  cross's foot; 3 ticks each from the first active frame): a white flash where the cross hits,
+  with short rays; then warm light fanning out forward along the floor up to ~26° (white core on
+  the floor, pale yellow glow and three rays, a gold rim, a dithered far end), with a few
+  twinkles; then the same breaking up as it fades. Colors: white (255, 255, 236), pale
+  (255, 238, 150), gold (246, 196, 72).
+- **Trine's iPad and coffee** (her `down_special`, 5 drawings; no weapon otherwise, frames stay
+  64×64). **The iPad** stands on the floor in front of her feet on a kickstand, leaning back away
+  from her, its screen turned to her, so we see its back: a 6×11 aluminium slab (lit top right,
+  shaded bottom left), a dark camera dot near the top, a 1 px line of pale blue screen light along
+  the edge facing her, the kickstand a thin line down behind it. **The screen's light** tints her
+  face and hair blue (90, 175, 255), strongest near the screen and fading out over ~28 px
+  (outlines untouched), a little stronger in the watching drawings. **The mug:** white, 4×5 with
+  a shaded side and bottom and a handle toward her, in her front hand; at her chest it shows the
+  coffee on top and a 2-pixel wisp of steam (the wisp shifts between the two watching drawings);
+  for a sip it's tipped up to her lips (rim at her mouth, foot down and forward, a 7×6 tilted
+  shape), her fist under its foot and her arm raised in front of her face, eyes closed. Her back hand rests on the floor behind
+  her. Drawings: 1 bending down (mug in hand); 2 seated, legs out in front, watching, mug at her
+  chest; 3 the same, the steam and light shifted, leaning a pixel; 4 sipping (head up a pixel, eyes closed);
+  5 getting up (like 1). Sitting down shows 1 then 2 (5 ticks each). While she watches: 2 and 3
+  alternate every 15 ticks for 30 ticks, then 4 for 30 ticks (a sip), round after round (a sip
+  every second, half the time). Getting
+  up shows 5.
+  The heal "+" (presentation only): green (99, 199, 77) with a dark outline, 5×5 px, rising
+  12 px above her head and fading over 20 ticks after each heal.
+- **Sjippepigen's idle** is skipping on the spot (her ropes always spin): 4 drawings, landing
+  (knees bent), a hop (her feet 4 px off the floor, toes down), landing, a hop with the other foot
+  leading; her hands down by her hips, where the rope handles are. Her **run** skips along the
+  same way: the run's strides with a hop in each (landing, 5 px up, coming down), hands by her hips.
+- **Mads's lollipop:** a school crossing guard's stop sign: a white pole (about 2 px thick,
+  shaded) with a round sign on top, about 15 px across, yellow-green (214, 226, 74), lit top left
+  and shaded bottom right, with a white rim; about 36 px from the foot of the pole to the far edge
+  of the sign. He holds it 4 px up from the foot of the pole. On his back it slants like Stig's
+  cross (the sign up behind his head). Only his side tilt swings it (Henrik's side tilt poses, never
+  pointing below level). His frames are 112×80 like the other weapon carriers.
+- **Mads's stop smash** (his `down_special`, 5 drawings, Stig's cross smash poses with the
+  lollipop): drawing 1 the lollipop held upright in both hands; 2 lifted, and it has turned into a
+  **stop sign**: a red octagon (214, 40, 40), shaded bottom right (166, 26, 30), 21 px across with
+  a white rim and **STOP** in white 3×5 pixel letters (1 px apart; the game draws each art pixel
+  about 2 screen pixels wide, so they stay readable); 3 and 4 planted, its pole 10 px longer so the
+  sign stands above his head; 5 getting up, the lollipop again. His burst (`burst.png`, as Stig's)
+  is in stop-sign colors: white core, pale red glow (255, 156, 146), red rim.
+  **Facing left:** the game mirrors drawings for facing left, which would mirror the lettering, so
+  Mads has a second strip, `fighter_down_special_left.png`: the down special already mirrored but
+  with STOP (and the sign's shading) the right way round. Any character may have such a
+  `<animation>_left` strip; facing left the game draws it as it is instead of mirroring the usual
+  one.
+- **Mads's slam** (no weapon, frames stay 64×64). The reach (his `side_special`, 4 drawings):
+  reaching forward with both arms out, leaning in (drawings 1–3, so the reach and a miss look the
+  same); 4 straightening up. **The throw** has its own strip, `fighter_grab_throw.png` (6
+  drawings, only for grapplers): 1 the catch, arms out in front (throw ticks 1–3); 2 lifting, both
+  arms up in front (4–8); 3 overhead, leaning back, both arms up beside his head (9–14); 4 turned
+  round (he now faces the other way), arms overhead, leaning toward the victim (15–18); 5 the slam,
+  bent forward, both arms driven down in front (19–30); 6 straightening up (31–40). The victim's
+  `path` (see [moves](moves.md#mads--grappler)) is fitted to his front fist in these drawings. The
+  victim is drawn in their own `hurt` drawing behind him (`z_index` −1), turned round the middle of
+  their body (π × t, head first over him), upright again once thrown.
 - **Gitte's scissors:** a large pair, about 30 px long: two steel blades (light grey, shaded) on a
   pivot screw, two big red handle loops (about 8 px across, with a visible hole) so they read as
   scissors even small. Her frames are a 112×80 canvas too. On her back they hang closed, diagonally like
@@ -153,6 +225,26 @@ strips like any body part, by the 64 px generator from the poses, so it follows 
   then flung out wide. Her volley's picture (`projectile.png`): a small pair of scissors, 3
   drawings of 16×16 turned 120° further each.
 - **Stances ÷ and ×** draw her frames at ×0.75 / ×1.25 of the usual ¾ size, feet at the origin.
+
+### Pia's belly flop
+
+No weapon; her frames stay 64×64. Her down special (see [moves](moves.md#pia--belly-flop)):
+
+- **The hop** uses her usual `jump` drawings.
+- **The dive** (`down_special_dive`, 1 drawing): flat on her belly in the air, shoulders toward
+  the facing side, her head upright at the front looking ahead, one arm flailing up behind it,
+  knees bent so her feet kick up behind her.
+- **The flop** (`down_special`, 5 drawings): 1 the impact, flat on the floor, squashed a pixel,
+  arm flailing, eyes shut; 2 and 3 lying flat, arms back along her body, her chin on the floor;
+  4 pushing herself up, crouched low and leaning forward; 5 crouching, getting up.
+- The flat drawings are posed upright without the head, turned 90° (a quarter turn moves every
+  pixel onto the grid, so the art isn't distorted) and set down with the lowest pixel on the
+  floor row; then the head is drawn on upright at the front (3 px over the shoulders), so the
+  face never turns sideways.
+- **The dust** (`dust.png`, 4 drawings of 40×20, drawn at ¾ on both sides of her, mirrored, from
+  6 px out from her feet; 3 ticks each from the first active frame, so on impact): puffs of
+  pale dust (230, 220, 200) shaded (186, 174, 156) rolling out along the floor and up, growing,
+  then breaking up and fading. Presentation only.
 
 ### Gitte's pyramid
 

@@ -114,7 +114,8 @@ Getting hit while charging loses the charge.
 - Hitbox on frames 5–16: (0, −14), 20×30, damage 6, base 150, growth 0.8, angle 85°, AWAY.
 - When the fighter stops rising, it becomes `HELPLESS` (see [fighter](fighter.md#helpless)) until it
   lands or is hit.
-- Usable once per stay in the air: landing or being hit allows it again.
+- Usable once per stay in the air: landing, being hit, or a move ending while standing on the floor
+  (an up special that never left the ground) allows it again.
 
 ## Character move sets
 
@@ -140,6 +141,42 @@ raised guitar's body, `charge_glow` (−21, −45).
 
 Files: `fighter/moves/henrik/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
 `neutral_special.tres`).
+
+### Stig — cross
+
+Stig carries a big gold cross (see [art guide](art-guide.md#weapons)) and uses it as a sword. He
+swings it in the **same three moves as Henrik**, with the same poses, frames, damage, knockback and
+charge (see [Henrik](#henrik--guitar)); everything else except the down special (below) is the default
+move set, the cross staying on his back. Only the hitboxes differ, fitted to the drawn cross (held by the foot of the long
+beam, never choked up):
+
+| Move | Hitbox center, size | Reach |
+|---|---|---|
+| Jab | (22, −10), 22×12 | 33 px |
+| Side tilt | (29, −16), 24×12 | 41 px |
+| Neutral special | (18, −28), 38×26 | 37 px forward, up to 41 px above the feet |
+
+His charge glow is where the raised cross's beams meet, `charge_glow` (−19, −44).
+
+#### Down special — cross smash
+
+Stig's down special replaces the ground energy burst: like a wizard driving his staff into the
+ground, he grips the upright cross in both hands, lifts it, and pushes its foot straight down onto
+the floor in front of him as he drops to one knee; a burst of holy light shoots out along the
+ground ahead, launching whoever it hits **nearly straight sideways**.
+
+- **On the ground:** 10 / 6 / 12 (28) frames (the default down special's, so its animation timing
+  fits). Hitbox (36, −10), 56×20 — in front of him only (from 8 to 64 px ahead, up to 20 px
+  high): from where the cross's foot hits the floor (about 13 px ahead) out along the light.
+  Damage 9, base 180, growth 1.4, angle 10°, FACING: a low, nearly horizontal launch away from
+  him.
+- **In the air:** he drops straight down at 360 px/s like the default dive, but with **no hitbox**
+  on the way (`down_special_dive` with no active frames), then smashes on landing (from frame 1).
+- **The light:** a picture drawn in front of him from the impact point on the active frames and a
+  little after (see [art guide](art-guide.md#weapons)); presentation only.
+
+Files: `fighter/moves/stig/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
+`neutral_special.tres`, `down_special.tres`, `down_special_dive.tres`).
 
 ### Michael Bech — football
 
@@ -296,6 +333,183 @@ hovers in front of him for a second, then slams down. Everything else is the def
   hover frames, slam speed, impact frames, `hover_hit` and `slam_hit` as `MoveData` for the hit
   values). Files: `fighter/moves/michael/` (`moveset.tres`, `neutral_special.tres`,
   `hand.tres`, `hand_hover_hit.tres`, `hand_slam_hit.tres`).
+
+### Trine — iPad break
+
+Trine's down special: she sits down on the floor and watches her iPad, and her % slowly goes
+down. Everything else is the default move set.
+
+- **On the ground only.** In the air the K press (with down held) does nothing.
+- **Sitting down** (`down_special`, 10 / 0 / 12 frames, no hitbox): on frame 10 she's seated and
+  starts watching (`ipad_watch`).
+- **Watching** lasts while down stays held, up to 300 ticks (5 s, `watch_frames`). Every 10 ticks
+  of watching (`heal_every`) her % drops by 1 (`heal`), not below 0, so one full sit heals 30 %.
+- **Getting up** (`ipad_stand`): releasing down, or reaching 300 ticks, starts the move's 12
+  recovery frames; then she's free.
+- While sitting, watching and getting up she can't move, turn, attack, jump or shield (on the
+  ground she only slides to a stop). That's the price for healing.
+- **A hit ends it** at once (like any move: the hit lands normally); so does slipping on a banana
+  peel. Should the floor go from under her, she falls (`AIR`).
+- **Data:** `MoveData.ipad` → `IpadData` (`watch_frames` 300, `heal_every` 10, `heal` 1.0).
+  Files: `fighter/moves/trine/` (`moveset.tres`, `down_special.tres`, `ipad.tres`).
+- **Look:** see [art guide](art-guide.md#weapons). While watching, a small green "+" floats up
+  above her head after each heal.
+
+### Mads — grappler
+
+Mads is a grappler: most of his specials are **command grabs**, moves that catch the opponent
+instead of hitting them. A grab goes through a shield (that's what it's for), but it's slow to
+come out and has a long end lag if it misses. Everything not listed here is the default move set.
+
+**How a command grab works** (shared by all his grabs):
+- The move's hitbox is a **grab box**: on its active frames, the first fighter whose hurtbox it
+  touches is caught, even while shielding — unless they can't be hit (KO'd, invulnerable,
+  intangible) or are already held. A grab box never hits like an attack.
+- The caught fighter goes into the `HELD` state (see [fighter](fighter.md#states)): they can't act,
+  aren't moved by physics, and the Match places them each tick. Mads goes into the move's throw
+  phase. **Neither of them can be hit** while the throw lasts.
+- A miss plays the move out to the end of its recovery.
+
+**Side tilt — lollipop swing** (`side_tilt.tres`): Mads carries a school crossing guard's stop
+sign, a "lollipop" (see [art guide](art-guide.md#weapons)), on his back, and swings it in his side
+tilt like Henrik's guitar: 7 / 3 / 10 (20) frames, hitbox (31, −15), 22×14 (fitted to where the
+sign is drawn in the strike drawing: it reaches 42 px in front), damage 7, base 160, growth 1.3,
+angle 35°, FACING. His other normals are the default ones (the sign stays on his back).
+
+**Down special — stop smash** (`down_special.tres`, `down_special_dive.tres`): Stig's cross smash
+(see [Stig](#down-special--cross-smash)) with his lollipop: the same frames, hitbox, hit, air drop
+and burst timing (own copies of the files, so the two can be tuned apart). The lollipop turns into
+a stop sign for the smash, and the burst is stop-sign red (see [art guide](art-guide.md#weapons)).
+
+**Side special — over-the-head slam** (`side_special.tres` with `grab` → `GrabData`):
+- **On the ground and in the air.** It turns toward the held side first, like every side special.
+  It throws no projectile. In the air he keeps falling while reaching.
+- **Reach:** 9 / 4 / 24 (37) frames; he stays put. Grab box (16, −14), 18×24: about one body
+  length in front.
+- **The throw** (`grab_throw`, 40 frames from the catch): he stands still (in the air he hangs in
+  place) and swings the victim over his head, **in his hands the whole way**: the middle of the
+  victim's body (16 px above their feet, `held_middle`) follows `path`, keyframes at throw frames
+  0, 6, 12, 18 and 24 relative to his feet (x toward the side he faced at the catch), in straight
+  lines between them: (12, −16) the catch, (11, −28) lifted in front, (0, −34) overhead, (−9, −30)
+  coming down on the far side, (−13, −10) at the slam. These are where his hands are in his throw
+  drawings. On frame 15 (`turn_frame`, the victim overhead) **he turns round**, so he slams them
+  down in front of him. On frame 24 (`slam_frame`) the victim lands on his feet line, 13 px from
+  him on that far side, and is hit by the slam: damage 12, base 220, growth 1.3, angle 60°,
+  launched **away from Mads** (they bounce up off the floor and fly). He is free after frame 40.
+- **Data:** `MoveData.grab` → `GrabData` (`throw_frames` 40, `turn_frame` 15, `slam_frame` 24,
+  `path`, `held_middle` 16, `slam_hit` → a `MoveData` with the slam's hit values). Files:
+  `fighter/moves/mads/` (`moveset.tres`, `side_special.tres`, `slam.tres`, `slam_hit.tres`).
+- **Look** (see [art guide](art-guide.md#weapons)): his own throw drawings; the victim is drawn in
+  their hurt pose behind him (his hands and head in front), turning over round the middle of their
+  body as they go (half a turn by the slam, head first onto the floor).
+
+### Sjippepigen — jump ropes
+
+Sjippepigen fights only with her three jump ropes (one per pair of arms). She has **no attacks**:
+the attack button does nothing, and of the specials only neutral special (the frenzy, her
+finisher), down special (it switches the rope length) and up special (the lasso, her recovery)
+work. She can still move, jump, shield, dodge and
+grab ledges.
+
+- **The ropes always spin** while she can act (and while attacking, hanging, helpless): not while
+  she's in `HITSTUN`, `TRIPPED`, `SHIELD_BREAK`, `HELD` or `KO`, and not while she shields or
+  dodges (`SHIELD`, `SHIELD_DROP`, `SPOT_DODGE`, `ROLL`, `AIR_DODGE`), nor during her up special
+  (see below): then they neither spin, hurt nor show. Each rope
+  sweeps round her like skipping: over her head, down in front, under her feet and up behind.
+  Rope i's angle after `rope_tick` ticks of spinning: θ = 2π × (`rope_tick` / period + i / 3)
+  (the three are a third of a turn apart); the far end of its loop (**the tip**) is at her body
+  middle (0, −14) + (sin θ × rx × facing, −cos θ × ry). `rope_tick` counts only while the ropes
+  spin, and restarts at 0 on every spawn.
+- **Short** (her length at every spawn): rx 18, ry 24 px, a turn every 30 ticks. **Long:** rx 34,
+  ry 34 px, a turn every 48 ticks.
+- **The hit:** only the tip hurts: a 10×10 box centered on it. A tip touching a fighter that can
+  be hit hits them (a shield blocks it like any hit); each rope hits a given fighter at most once
+  per turn of that rope, and a fighter takes at most one rope hit per tick. **Rope immunity:** a
+  fighter hurt by a rope can't be hurt by any rope for 30 ticks, counting the tick of the hit
+  (`immune_frames`; counted down by the Match like respawn invulnerability; a blocked rope gives none), so the ropes can't stack hits. Launched away from her
+  (by which side of her middle the victim's middle is). The short ropes hit harder, the long ones
+  reach further: short damage 3, base 110, growth 1.0, angle 40°; long damage 2, base 60, growth
+  0.4, angle 40°.
+- **Down special — switch length** (`down_special.tres`, `rope_switch` on): 6 / 0 / 6 (12) frames,
+  on the ground or in the air (no dive, no hitbox): on frame 6 the ropes switch between short and
+  long (a switch forgets which turns already hit).
+- **Data:** `MoveSet.ropes` → `RopeData` (`count` 3, `center`, `short_radius`, `long_radius`,
+  `short_period`, `long_period`, `tip_size`, `immune_frames`, `short_hit` and `long_hit` as
+  `MoveData`, `frenzy_frames`, `frenzy_speed`, `frenzy_hit`, `frenzy_charge_knockback`);
+  `MoveData.rope_switch` on her down special, `MoveData.rope_frenzy` on her neutral special
+  (`neutral_special.tres`, `frenzy_hit.tres`). Files: `fighter/moves/sjippepigen/`
+  (`moveset.tres`, `down_special.tres`, `ropes.tres`, `rope_short_hit.tres`, `rope_long_hit.tres`,
+  `up_special.tres`, `lasso.tres`, `lasso_hit.tres`).
+- **Look:** the game draws each rope as seen from the side while skipping: **from one hand of its
+  pair of arms** (rope 1 the main pair, ropes 2 and 3 the extra pairs) out round its tip and back
+  to the pair's other hand: a rounded loop (at u from 0 to π: the point between the hands at
+  (1 − cos u) / 2, plus (tip − the hands' midpoint) × sin u, plus sideways half the loop's length ×
+  sin u cos u so it swells out either side, plus a lag of 0.4 × (the path point 0.6 rad behind the
+  tip − the tip) × sin² u, bowing it back the way it came), 1 px of color inside a 3 px dark
+  outline; plus a faint streak (35 % opacity) along the tip's path for 0.9 rad behind it. The hands' positions in every
+  drawing come from `assets/fighters/slot_12/hands.json` (written by the sprite generator: per
+  animation, per drawing, per pair the front and back fist, game px from the feet facing right).
+  Her ropes are her own patina green: rope 1 (120, 128, 80), rope 2 lighter (146, 156, 100), rope 3
+  darker (92, 100, 60) (`CharacterData.rope_colors`; a character without them would get red,
+  blue, yellow).
+- **Neutral special — frenzy** (`neutral_special.tres`, `rope_frenzy` on): charged like the
+  default neutral special (hold K up to 60 ticks; on the ground she slides to a stop, in the air she
+  keeps falling; her ropes keep spinning normally meanwhile), but releasing it doesn't punch: a
+  3 / 0 / 8 (11) frame release with no hitbox. **Let go before 20 ticks of charging
+  (`min_charge_frames`) and nothing more happens; otherwise the frenzy** starts: for 120 ticks
+  (`frenzy_frames`; she's free to act after the release) her ropes spin twice as fast
+  (`frenzy_speed`; the ropes' turn grows by speed / period each tick, so a speed change doesn't make
+  them jump) and every rope hit is the frenzy hit instead: **damage 0**, base 150 + 200 × the charge
+  (0…1; `frenzy_charge_knockback`), growth 1.6, angle 40° (`frenzy_hit`), so it's her way to
+  knock people off the stage at high %. Rope immunity, shields and both lengths work as usual. No
+  new charge while a frenzy is on. **The frenzy meter** (shown on her player card, see
+  [HUD](match-and-stage.md#hud)): empty at every spawn, it refills over 720 ticks (12 s;
+  `frenzy_refill_frames`), not during a frenzy; the charge can only be started with a full meter,
+  and starting a frenzy empties it (a tap that starts none costs nothing). Drawn: the ropes lit up (each color lightened 45 %). **While
+  charging** (not the punch glow): her ropes light up gradually (lightened 45 % × the charge), and a
+  ring 5 px in radius 44 px above her feet (3 px dark outline) fills clockwise from the top in her
+  first rope color: dimmed and see-through before 20 ticks, lightened after, flashing white (4 ticks
+  on, 4 off) when full.
+- **Up special — lasso** (`up_special.tres` with `vine` → `VineData`, `lasso.tres`): Fidusen's vine
+  (see [Fidusen](#fidusen--banana-book-vine), the same numbers) thrown as a rope, with an air grab
+  added. On frame 6 the Match picks, in this order: a free **ledge** in reach (as the vine) → pulled
+  to it and hangs; else the nearest **opponent** that can be hit and isn't held, whose center is at
+  most 100 px (`grab_range`) from hers and not behind her (behind = more than 8 px on her back side
+  and not more than 8 px above her) → **lasso**: they're `HELD` and reeled in, in a straight line
+  over 12 ticks (`reel_frames`), to 16 px in front of her feet (`reel_to`), while she hangs in place
+  and neither can be hit; then they're hit (damage 7, base 160, growth 1.0, angle 45°, launched
+  forward), get 30 ticks of rope immunity, and she pops up at 260 px/s (`pop_speed`) like a launched
+  up special (`HELPLESS` once she stops rising); else → **a miss** (no swing from above: it only
+  catches a ledge or an opponent; `swing` false): the rope flies out toward 100 px at 45° up and
+  forward and back over 18 ticks (`miss_frames`) while she falls and steers as usual; then she's
+  free (`AIR`), her up special used until she lands. The rope is drawn like the vine, in her first
+  rope color. **Her jump ropes rest** (no spinning, no hits, not drawn) for the whole up special:
+  the throw, the pull, the reel and the miss (and while rising from a lasso's pop).
+
+### Pia — belly flop
+
+Pia's down special is a ground pound done as a **belly flop**: she throws herself up, turns flat
+on her belly in the air and comes down on it, and the impact hits everyone near her on both
+sides. Everything else is the default move set.
+
+- **On the ground: a hop first** (`belly_hop`, a phase of the down special): she jumps straight
+  up at 240 px/s (`MoveData.hop_speed` on her down special; about 48 px high) and can steer in
+  the air as usual (no hitbox). When she stops rising, the dive starts.
+- **In the air:** the dive starts at once (no hop).
+- **The dive** (`down_special_dive`): flat on her belly, she drops straight down at 400 px/s
+  (no steering) until she lands. Her belly hits whoever is under her: hitbox (0, −7), 36×14,
+  damage 7, base 150, growth 1.1, angle −70°, AWAY — it drives the victim down (a victim standing
+  on the ground bounces up instead, like the default dive).
+- **The flop** (`down_special`, on landing, from frame 1): 0 / 6 / 22 (28) frames — the impact
+  is on the landing tick itself (no startup), then she lies flat and gets up. The shockwave hits
+  on both sides: hitbox (0, −8), 80×16 (40 px each side of her feet, up to 16 px high), damage
+  11, base 200, growth 1.4, angle 70°, AWAY: up and away from her. It can hit someone the belly
+  already hit. A shield blocks both.
+- The frames differ from the default down special's 10 / 6 / 12, but the total (28) is the same,
+  so her five drawings still fit the shared timing; the hit is on drawings 0–1, not drawing 2.
+- **Look:** see [art guide](art-guide.md#pias-belly-flop): a dust cloud bursts out on both sides on
+  impact.
+- Files: `fighter/moves/pia/` (`moveset.tres`, `down_special.tres`, `down_special_dive.tres`).
 
 ## Damage % and knockback
 

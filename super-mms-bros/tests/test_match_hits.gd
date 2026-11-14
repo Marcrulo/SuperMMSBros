@@ -112,11 +112,13 @@ func test_dive_spikes_in_the_match() -> void:
 		if _p2.state == Fighter.State.HITSTUN:
 			break
 	assert_eq(_p2.state, Fighter.State.HITSTUN, "the dive hit")
-	assert_eq(_p2.percent, 8.0)
+	# P1's own dive (Pia's belly dive by default), whatever its damage.
+	var damage := _p1.stats.moveset.down_special_dive.damage
+	assert_eq(_p2.percent, damage)
 	assert_gt(_p2.velocity.y, 0.0, "spiked down")
 	_steps(3)
 	assert_eq(_p1.move, &"down_special_dive", "still diving")
-	assert_eq(_p2.percent, 8.0, "one hit per victim")
+	assert_eq(_p2.percent, damage, "one hit per victim")
 
 
 func test_invulnerable_fighters_cant_be_hit() -> void:

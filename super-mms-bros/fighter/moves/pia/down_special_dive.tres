@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 0
+active = 100000
+recovery = 0
+hitbox_center = Vector2(0, -7)
+hitbox_size = Vector2(36, 14)
+damage = 7.0
+base_knockback = 150.0
+knockback_growth = 1.1
+angle_deg = -70.0
+direction = 1

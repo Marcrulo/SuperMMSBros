@@ -34,7 +34,7 @@ func test_every_character_has_every_strip() -> void:
 func test_every_character_is_in_the_64_px_style() -> void:
 	for character in Game.roster().characters:
 		var texture := load(DIR + "%s/fighter_idle.png" % character.id) as Texture2D
-		var weapon: bool = character.id in ["slot_06", "slot_02"]  # Henrik's guitar, Gitte's scissors
+		var weapon: bool = character.id in ["slot_06", "slot_02", "slot_07", "slot_11"]  # guitar, scissors, cross, lollipop
 		var canvas := Vector2(112, 80) if weapon else Vector2(64, 64)
 		assert_eq(texture.get_size(), Vector2(canvas.x * 4, canvas.y), character.id)
 

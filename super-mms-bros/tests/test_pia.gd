@@ -1,0 +1,239 @@
+extends GutTest
+## Pia's down special, the belly flop (docs/specs/moves.md#pia--belly-flop): on the ground a hop,
+## then flat on her belly she drops (the belly spikes), and the landing's shockwave hits on both
+## sides. P1 is Pia; scripted [idle, down special] starts it on step 2. Main platform top y 192
+## (x 96…384); the left platform spans x 132…204.
+
+const MATCH_SCENE := preload("res://match/match.tscn")
+const PIA := "slot_01"
+
+var _match: Match
+var _p1: Fighter
+var _p2: Fighter
+var _saved_ids: Array[String] = []
+
+
+func before_each() -> void:
+	_saved_ids = [Game.character_id, Game.p2_character_id]
+	Game.character_id = PIA
+	Game.p2_character_id = "slot_09"
+	_match = MATCH_SCENE.instantiate()
+	_match.auto_step = false
+	add_child_autofree(_match)
+	_p1 = _match.get_fighter(0)
+	_p2 = _match.get_fighter(1)
+
+
+func after_each() -> void:
+	Game.character_id = _saved_ids[0]
+	Game.p2_character_id = _saved_ids[1]
+
+
+func _place(p1_at: Vector2, p2_at: Vector2, p1_inputs: Array[FighterInput],
+		p2_inputs: Array[FighterInput] = []) -> void:
+	_p1.spawn_at(p1_at, 1)
+	_p2.spawn_at(p2_at, -1)
+	_match.set_controller(0, ScriptedController.new(p1_inputs))
+	_match.set_controller(1, ScriptedController.new(p2_inputs))
+	await wait_physics_frames(1)
+
+
+func _steps(count: int) -> void:
+	for i in count:
+		_match.step()
+
+
+## Steps until Pia is in `phase` (at most `limit` steps); returns the steps taken, or -1.
+func _step_until_move(phase: StringName, limit: int = 120) -> int:
+	for i in limit:
+		_match.step()
+		if _p1.state == Fighter.State.ATTACK and _p1.move == phase:
+			return i + 1
+	return -1
+
+
+## [idle, down special].
+func _flop() -> Array[FighterInput]:
+	var special := FighterInput.new()
+	special.special_pressed = true
+	special.special_held = true
+	special.down_held = true
+	return [FighterInput.new(), special]
+
+
+func _shield(ticks: int) -> Array[FighterInput]:
+	var inputs: Array[FighterInput] = []
+	for i in ticks:
+		var shield := FighterInput.new()
+		shield.shield_held = true
+		inputs.append(shield)
+	return inputs
+
+
+# --- Data -----------------------------------------------------------------------------------------
+
+
+func test_the_flop_matches_the_spec() -> void:
+	var flop := _p1.stats.moveset.down_special
+	assert_eq([flop.startup, flop.active, flop.recovery], [0, 6, 22])
+	assert_eq(flop.total_frames(), 28, "the default total, so the shared timing fits")
+	assert_eq([flop.hitbox_center, flop.hitbox_size], [Vector2(0, -8), Vector2(80, 16)])
+	assert_eq([flop.damage, flop.base_knockback, flop.knockback_growth, flop.angle_deg],
+		[11.0, 200.0, 1.4, 70.0])
+	assert_eq(flop.direction, MoveData.Direction.AWAY)
+	assert_eq(flop.dive_speed, 400.0)
+	assert_eq(flop.hop_speed, 240.0)
+
+
+func test_the_belly_dive_matches_the_spec() -> void:
+	var dive := _p1.stats.moveset.down_special_dive
+	assert_eq([dive.hitbox_center, dive.hitbox_size], [Vector2(0, -7), Vector2(36, 14)])
+	assert_eq([dive.damage, dive.base_knockback, dive.knockback_growth, dive.angle_deg],
+		[7.0, 150.0, 1.1, -70.0])
+	assert_eq(dive.direction, MoveData.Direction.AWAY)
+	assert_true(dive.is_active_frame(1) and dive.is_active_frame(300), "out for the whole dive")
+
+
+func test_only_pia_hops() -> void:
+	var default := (load("res://fighter/default_stats.tres") as FighterStats).moveset
+	assert_eq(default.down_special.hop_speed, 0.0, "the default down special has no hop")
+
+
+# --- The hop and the dive -------------------------------------------------------------------------
+
+
+func test_on_the_ground_she_hops_first() -> void:
+	await _place(Vector2(240, 192), Vector2(380, 192), _flop())
+	_steps(2)
+	assert_eq(_p1.state, Fighter.State.ATTACK)
+	assert_eq(_p1.move, &"belly_hop")
+	assert_almost_eq(_p1.velocity.y, -240.0 + 600.0 / 60.0, 0.01, "launched up, then gravity")
+	assert_false(_p1.is_hitbox_active(), "no hitbox on the way up")
+	_steps(10)
+	assert_lt(_p1.global_position.y, 192.0 - 20.0, "in the air")
+	assert_eq(_p1.move, &"belly_hop", "still rising")
+
+
+func test_the_hop_turns_into_the_dive_when_she_stops_rising() -> void:
+	await _place(Vector2(240, 192), Vector2(380, 192), _flop())
+	_steps(2)
+	assert_eq(_p1.move, &"belly_hop")
+	var top := _p1.global_position.y
+	var steps := 1
+	while _p1.move == &"belly_hop" and steps < 60:
+		top = minf(top, _p1.global_position.y)
+		_match.step()
+		steps += 1
+	assert_eq(_p1.move, &"down_special_dive")
+	assert_between(steps, 20, 30, "about 24 ticks up")
+	assert_between(top, 192.0 - 56.0, 192.0 - 40.0, "about 48 px high")
+	_steps(1)
+	assert_eq(_p1.velocity.y, 400.0, "drops at the dive speed")
+	assert_true(_p1.is_hitbox_active(), "the belly hits on the way down")
+
+
+func test_in_the_air_she_flops_at_once() -> void:
+	# x 110: clear of the left platform (x 132…204), so she lands on the main platform.
+	await _place(Vector2(110, 100), Vector2(380, 192), _flop())
+	_steps(2)
+	assert_eq(_p1.move, &"down_special_dive")
+	assert_eq(_p1.velocity.y, 400.0)
+
+
+func test_the_belly_spikes_a_fighter_below() -> void:
+	await _place(Vector2(110, 100), Vector2(110, 140), _flop())
+	_steps(2)
+	var hit := false
+	for i in 30:
+		_match.step()
+		if _p2.percent > 0.0:
+			hit = true
+			break
+	assert_true(hit, "the belly hits on the way down")
+	assert_eq(_p2.percent, 7.0)
+	assert_gt(_p2.velocity.y, 0.0, "driven down")
+
+
+# --- The flop -------------------------------------------------------------------------------------
+
+
+func test_the_flop_hits_on_the_landing_tick() -> void:
+	watch_signals(_match)
+	await _place(Vector2(240, 192), Vector2(270, 192), _flop())
+	_steps(1)
+	assert_gt(_step_until_move(&"down_special"), 0, "lands into the flop")
+	assert_true(_p1.is_on_floor())
+	assert_true(_p1.is_hitbox_active(), "the impact is on the landing tick")
+	assert_eq(_p2.state, Fighter.State.HITSTUN)
+	assert_eq(_p2.percent, 11.0)
+	assert_gt(_p2.velocity.x, 0.0, "away from her")
+	var angle := rad_to_deg(atan2(-_p2.velocity.y, _p2.velocity.x))
+	assert_almost_eq(angle, 70.0, 0.5, "70° above horizontal")
+	assert_signal_emitted(_match, "fighter_hit")
+
+
+func test_the_flop_hits_behind_her_too() -> void:
+	await _place(Vector2(240, 192), Vector2(210, 192), _flop())
+	_steps(1)
+	_step_until_move(&"down_special")
+	assert_eq(_p2.percent, 11.0)
+	assert_lt(_p2.velocity.x, 0.0, "launched away from her, to the left")
+
+
+func test_the_flop_misses_far_away() -> void:
+	await _place(Vector2(240, 192), Vector2(300, 192), _flop())
+	_steps(80)
+	assert_eq(_p2.percent, 0.0)
+
+
+func test_a_shield_blocks_the_flop() -> void:
+	await _place(Vector2(240, 192), Vector2(270, 192), _flop(), _shield(80))
+	_steps(1)
+	_step_until_move(&"down_special")
+	_steps(1)
+	assert_eq(_p2.state, Fighter.State.SHIELD)
+	assert_eq(_p2.percent, 0.0)
+
+
+func test_she_gets_up_after_the_flop() -> void:
+	await _place(Vector2(240, 192), Vector2(380, 192), _flop())
+	_steps(1)
+	_step_until_move(&"down_special")
+	_steps(27)
+	assert_eq(_p1.state, Fighter.State.ATTACK, "still on the floor on frame 28")
+	_steps(1)
+	assert_eq(_p1.state, Fighter.State.IDLE)
+
+
+func test_a_hit_stops_the_hop() -> void:
+	await _place(Vector2(240, 192), Vector2(380, 192), _flop())
+	_steps(4)
+	_p1.take_hit(_p1.stats.moveset.jab, -1, _p2.global_position.x)
+	assert_eq(_p1.state, Fighter.State.HITSTUN)
+	assert_eq(_p1.move, Fighter.NO_MOVE)
+
+
+# --- Look -----------------------------------------------------------------------------------------
+
+
+func test_the_hop_uses_the_jump_drawings() -> void:
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, -100.0, &"belly_hop"), "jump")
+
+
+## The belly-flop drawings lie flat: wider than tall, resting on the floor row.
+func test_her_dive_and_flop_drawings_lie_flat() -> void:
+	for animation in ["down_special_dive", "down_special"]:
+		var image := (load("res://assets/fighters/%s/fighter_%s.png" % [PIA, animation])
+			as Texture2D).get_image()
+		var size := image.get_height()
+		var used := image.get_region(Rect2i(0, 0, size, size)).get_used_rect()
+		assert_gt(used.size.x, used.size.y * 1.4, "%s drawing 1 lies flat" % animation)
+		if animation == "down_special":
+			assert_eq(used.end.y, size, "her belly on the floor row")
+
+
+func test_she_has_a_dust_picture() -> void:
+	var dust := load("res://assets/fighters/%s/dust.png" % PIA) as Texture2D
+	assert_not_null(dust)
+	assert_eq(dust.get_width(), 40 * FighterVisuals.DUST_DRAWINGS)
+	assert_eq(dust.get_height(), 20)

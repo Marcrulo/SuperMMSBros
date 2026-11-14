@@ -43,9 +43,9 @@ HAIR = {
               at(23, 23, "aAAAAAAAAZZZZAAAAa"), at(24, 22, "aAAAAAAAAAAAAAAAAAa"),
               at(25, 22, "aAAAAAAAAAAaa"), at(26, 22, "aAAAAAaa"), at(27, 22, "aAAAa.a"),
               at(28, 22, "aAa"), at(29, 22, "aaa"), at(30, 23, "a")],
-    "receding": [at(21, 27, "aAAAAAa"), at(22, 25, "aAAAAZZAAAa"), at(23, 23, "aAAAAAAZZAaa"),
-                 at(24, 22, "aAAAAAAAaa"), at(25, 22, "aAAAAAa"), at(26, 22, "aAAAAa"),
-                 at(27, 22, "aAAAa.a"), at(28, 22, "aAa"), at(29, 22, "aaa"), at(30, 23, "a")],
+    "receding": [at(22, 26, "aaaaa"), at(23, 24, "aAAAAAZa"), at(24, 22, "aAAAAAAZa"),
+                 at(25, 22, "aAAAAAAa"), at(26, 22, "aAAAAAa"), at(27, 22, "aAAAAa.a"),
+                 at(28, 22, "aAa"), at(29, 22, "aAa"), at(30, 22, "aa"), at(31, 23, "a")],
     "fringe": [at(20, 28, "aaaaaaaa"), at(21, 26, "aAAAAZZZZAAa"), at(22, 24, "aAAAAAAZZZZZAAAa"),
                at(23, 23, "aAAAAAAAAZZZZAAAAa"), at(24, 22, "aAAAAAAAAAAAAAAAAAa"),
                at(25, 22, "aAAAAAAAAAAAAAAAAAa"), at(26, 22, "aAAAAAAAAAAa.aAa.a"),
@@ -138,14 +138,14 @@ WHITE_SHIRT = (232, 236, 240)
 CHARACTERS = {
     "slot_01": dict(name="Pia", skin=(232, 160, 122), hair=(150, 52, 26),
                     hair_light=(190, 82, 40), hair_style="bob", blush=(222, 120, 110), mouth="soft", build="heavy",
-                    shirt=(132, 78, 182), pants=JEANS),
+                    shirt=(132, 78, 182), pants=JEANS, belly_flop=True),
     "slot_02": dict(name="Gitte", skin=FAIR, hair=(232, 236, 242), hair_shade=(184, 190, 204),
                     hair_light=(255, 255, 255), hair_style="puff", shirt=(226, 48, 120),
                     shirt_shade=(160, 16, 88), inner=(250, 150, 190), lips=(196, 40, 112), pants=DARK,
                     weapon="scissors", canvas=(112, 80), pyramid=True),
     "slot_03": dict(name="Trine", skin=FAIR, hair=(160, 168, 176), hair_style="long",
                     hair_length=6, glasses=(20, 20, 28), mouth="soft", big_chin=True, shirt=(84, 96, 106),
-                    inner=(150, 160, 168), pants=DARK),
+                    inner=(150, 160, 168), pants=DARK, ipad=True),
     "slot_04": dict(name="Nina", skin=(248, 180, 140), hair=(168, 30, 18), slim=0.4,
                     hair_light=(214, 64, 34), hair_style="long", hair_length=12,
                     freckles=(204, 120, 90), shirt=(232, 234, 238), shirt_shade=(178, 184, 198),
@@ -162,7 +162,7 @@ CHARACTERS = {
                     canvas=(112, 80)),
     "slot_07": dict(name="Stig", skin=FAIR, hair=(84, 56, 34), hair_style="receding",
                     glasses=(20, 20, 28), mouth="soft", shirt=(72, 84, 90), inner=WHITE_SHIRT,
-                    pants=(60, 68, 74)),
+                    pants=(60, 68, 74), weapon="cross", canvas=(112, 80), cross_smash=True),
     "slot_08": dict(name="Casper", skin=(248, 176, 144), hair=(80, 48, 16), hair_style="short",
                     eye=(96, 64, 40), shirt=(30, 30, 36), shirt_light=(64, 64, 72),
                     pants=JEANS),
@@ -171,16 +171,19 @@ CHARACTERS = {
     "slot_10": dict(name="Mette", skin=FAIR, hair=(110, 70, 36), hair_light=(146, 98, 54), slim=0.4,
                     hair_style="long", hair_length=13, shirt=(48, 84, 140),
                     dots=(196, 210, 230), pants=DARK),
-    "slot_11": dict(name="Mads", skin=(88, 96, 52), hair=(92, 60, 36), hair_style="short",
+    "slot_11": dict(name="Mads", skin=(204, 148, 108), hair=(66, 50, 38), hair_style="short",
                     glasses=(20, 20, 28), eye=(70, 50, 30),
                     camo=[(88, 96, 52), (60, 70, 38), (110, 88, 56), (40, 44, 30)],
+                    camo_style="streaks",
                     shirt=(196, 244, 0), shirt_shade=(140, 180, 0), shirt_light=(226, 255, 90),
-                    stripe=(170, 178, 200), pants=DARK),
+                    stripe=(170, 178, 200), collar="tee", short_sleeves=True,
+                    sleeve=(240, 240, 240), pants=DARK, grappler=True,
+                    weapon="lollipop", canvas=(112, 80), stop_smash=True),
     "slot_12": dict(name="Sjippepigen", skin=(120, 128, 80), skin_shade=(92, 100, 60),
                     hair=(146, 122, 70), hair_light=(182, 160, 100), hair_style="ponytail",
                     eye=(70, 60, 40), eye_white=(226, 230, 208), statue=True, mouth="small", soft_face=True, shirt=(128, 92, 58),
                     legs="skirt", pants=(120, 128, 80), shoes=(88, 64, 40), build="slim", head_trim=([14], [12, 16, 22, 27]),
-                    oval_head=(8.8, 17.6, 7.7, 8.6), arm_pairs=3),
+                    oval_head=(8.8, 17.6, 7.7, 8.6), arm_pairs=3, ropes=True),
     "slot_13": dict(name="Fidusen", monkey=True, skin=(112, 104, 88), hair=(112, 104, 88),
                     hair_light=(136, 126, 106), face=(232, 218, 176), muzzle=(184, 170, 146),
                     iris=(128, 72, 46), mouth="soft",
@@ -402,6 +405,12 @@ def trim(cells, rows, cols):
 
 
 def camo_color(c, x, y):
-    """Face paint: blotches of the camo colors, fixed to the head's grid."""
+    """Face paint: blotches of the camo colors, fixed to the head's grid; with
+    `camo_style="streaks"`, diagonal streaks with the skin showing between them (None = skin)."""
+    if c.get("camo_style") == "streaks":
+        band = (x - y + 40 + (y // 4) % 2) // 3
+        if band % 3 == 2:
+            return None
+        return c["camo"][(band * 2 + y // 5) % len(c["camo"])]
     blob = ((x // 3) * 7 + (y // 2) * 13 + (x // 3) * (y // 2)) % 5
     return c["camo"][blob % len(c["camo"])]

@@ -15,6 +15,8 @@ const BUMP_HEIGHT := 2.0
 ## Where the first stock icon sits on the card, and the distance to the next.
 const STOCKS_AT := Vector2(60, 4)
 const STOCK_STEP := 10.0
+## Where the frenzy meter sits: along the bottom, under the name and %.
+const FRENZY_BAR_AT := Vector2(30, 25)
 
 var player_color: Color
 var _fighter: Fighter
@@ -22,6 +24,8 @@ var _bump_frames_left: int = 0
 var _stock_icons: Array[TextureRect] = []
 ## Gitte's stance sign, on the portrait's bottom-right corner (only for a fighter with stances).
 var _stance_badge: StanceBadge
+## Sjippepigen's frenzy meter, along the card's bottom (only for a fighter with the frenzy).
+var _frenzy_bar: FrenzyBar
 
 @onready var _portrait_box := $Portrait as Panel
 @onready var _head := $Portrait/Head as TextureRect
@@ -80,6 +84,15 @@ func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 		_stance_badge.position = _portrait_box.position + _portrait_box.size \
 				- Vector2(StanceBadge.SIZE, StanceBadge.SIZE) + Vector2(2, 2)
 		add_child(_stance_badge)
+	if _frenzy_bar != null:
+		_frenzy_bar.queue_free()
+		_frenzy_bar = null
+	if fighter.ropes() != null and fighter.stats.moveset.neutral_special.rope_frenzy:
+		_frenzy_bar = FrenzyBar.new()
+		var colors := FighterVisuals.rope_colors_for(fighter.character_id)
+		_frenzy_bar.color = colors[0] if not colors.is_empty() else color
+		_frenzy_bar.position = FRENZY_BAR_AT
+		add_child(_frenzy_bar)
 	for icon in _stock_icons:
 		icon.queue_free()
 	_stock_icons.clear()
@@ -102,6 +115,8 @@ func refresh() -> void:
 	_percent.position.y = _percent_y + bump_offset()
 	if _stance_badge != null and _stance_badge.stance != _fighter.stance:
 		_stance_badge.stance = _fighter.stance
+	if _frenzy_bar != null:
+		_frenzy_bar.value = _fighter.frenzy_meter
 
 
 ## Makes the number jump (the fighter was just hit).
@@ -120,6 +135,11 @@ func bump_offset() -> float:
 
 func has_stance_badge() -> bool:
 	return _stance_badge != null
+
+
+## The frenzy meter bar, or null for a fighter without the frenzy.
+func get_frenzy_bar() -> FrenzyBar:
+	return _frenzy_bar
 
 
 ## The stance the badge shows.

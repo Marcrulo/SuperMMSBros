@@ -1,6 +1,6 @@
 """Builds the sprite viewer page: tools/sprite_viewer/template.html with every character's strips
 embedded (as data: URIs), so the page works on its own anywhere, e.g. published as an artifact.
-Usage: python3 -I tools/sprite_viewer/build.py <strips_dir> <out.html>
+Usage: python3 -I tools/sprite_viewer/build.py <strips_dir> <out.html> [previews_dir]
   e.g. python3 -I tools/sprite_viewer/build.py super-mms-bros/assets/fighters viewer.html
 """
 import base64
@@ -36,10 +36,28 @@ STRIKE = {"jab": [2], "down_tilt": [2], "up_tilt": [2], "side_tilt": [2], "neutr
           "neutral_special": [1], "down_special": [2], "up_special": [1]}
 # Pictures a character has besides its strips, shown as extra tiles: file, ticks per drawing, loop.
 EXTRAS = {
+    "rope_preview_short.png": ("ropes (short)", [1] * 30, True,
+                               "Preview at game scale: the game draws her ropes itself. Short ropes: one turn (30 ticks), 3 % a hit; only the tips hurt."),
+    "rope_preview_long.png": ("ropes (long)", [1] * 48, True,
+                              "Preview at game scale: long ropes, one turn (48 ticks), 2 % a hit. Down special switches short ↔ long."),
+    "rope_preview_charge.png": ("frenzy charge", [1] * 64, False,
+                                "Preview at game scale: holding B. The ring above her head fills over 1 s (dim until 20 ticks: let go earlier and nothing happens), flashing when full; her ropes light up as it fills."),
+    "frenzy_meter_preview.png": ("frenzy meter", [6] * 48 + [1] * 16, False,
+                                 "Mock-up of her player card (no text): the frenzy meter refills over 12 s (sped up here), then flashes when full: B can be charged only then."),
+    "rope_preview_frenzy.png": ("ropes (frenzy)", [1] * 15, True,
+                                "Preview at game scale: her charged neutral special: for 2 seconds the ropes spin twice as fast, lit up; their hits deal no damage but knock back hard."),
+    "fighter_down_special_left.png": ("down special (facing left)", [5, 5, 6, 6, 6], False,
+                                      "Drawn for facing left so the stop sign's lettering isn't mirrored."),
+    "fighter_grab_throw.png": ("throw", [3, 5, 6, 4, 12, 10], False,
+                               "Mads's command-grab throw (the victim is drawn by the game, in his hands). He turns round on drawing 4."),
     "hand.png": ("summoned hand", [60, 13], True,
                  "Hovers (open) for 60 ticks, then slams (flat). The game adds the shadow and bob."),
     "projectile.png": ("projectile", [4, 4, 4], True, "Spins while flying."),
     "peel.png": ("banana peel", [60], True, "Lies on the floor until someone slips on it."),
+    "burst.png": ("light burst", [3, 3, 3, 3], False,
+                  "Cross smash: drawn on the floor from where the cross hits, from the first active frame."),
+    "dust.png": ("flop dust", [3, 3, 3, 3], False,
+                 "Belly flop: drawn on the floor on both sides of her (mirrored), from the landing tick."),
     "pyramid.png": ("pyramid", [60], True,
                     "Rises out of the floor under her (only the part above the floor shows), then sinks back."),
 }
@@ -53,7 +71,7 @@ NOTES = {
 }
 
 
-def main(strips_dir, out):
+def main(strips_dir, out, previews_dir=None):
     strips_dir = Path(strips_dir)
     data = {"characters": [], "anims": {}, "strips": {}, "extras": {}, "view": [64, 64]}
     for name, (ticks, loop) in ANIMS.items():
@@ -72,6 +90,8 @@ def main(strips_dir, out):
                                 max(data["view"][1], img.height)]
         for file, (title, ticks, loop, note) in EXTRAS.items():
             path = strips_dir / cid / file
+            if not path.exists() and previews_dir:
+                path = Path(previews_dir) / cid / file
             if path.exists():
                 data["extras"].setdefault(cid, {})[title] = {
                     "src": "data:image/png;base64," + base64.b64encode(path.read_bytes()).decode(),
@@ -82,4 +102,5 @@ def main(strips_dir, out):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1], sys.argv[2])
+    # Optional 3rd argument: a folder of preview pictures (made by rope_strips.py) not in the game.
+    main(sys.argv[1], sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None)

@@ -9,6 +9,7 @@ Usage:
 Strips go to <out_dir>/<id>/; --preview also writes <out_dir>/<id>_preview.png (every frame).
 The game's strips: python3 -I tools/gen_fighter_sprites64.py super-mms-bros/assets/fighters slot_05
 """
+import json
 import math
 import random
 import sys
@@ -137,6 +138,26 @@ def disc(cx, cy, r):
             if (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 <= r * r}
 
 
+BOTH_HANDS_GAP = 5   # px between the two fists on a weapon held in both hands
+
+
+def reach_to(root, target):
+    """An arm from `root` whose fist is at `target` (as near as the arm reaches), the elbow bent
+    downward: [shoulder, elbow, fist]."""
+    l1, l2 = ARM
+    dx, dy = target[0] - root[0], target[1] - root[1]
+    d = min(math.hypot(dx, dy), l1 + l2 - 0.01) or 0.01
+    base = math.atan2(dy, dx)
+    bend = math.acos(max(-1.0, min(1.0, (l1 * l1 + d * d - l2 * l2) / (2 * l1 * d))))
+    # Of the two elbow positions, the lower one (larger y).
+    elbows = [(root[0] + math.cos(base + sgn * bend) * l1, root[1] + math.sin(base + sgn * bend) * l1)
+              for sgn in (1, -1)]
+    elbow = max(elbows, key=lambda e: e[1])
+    hand = (root[0] + math.cos(base) * d, root[1] + math.sin(base) * d) \
+        if math.hypot(dx, dy) > d else target
+    return [root, elbow, hand]
+
+
 def limb(points, widths, colors):
     """A two-segment limb through `points`, one part with no line at the joint."""
     out = {}
@@ -215,6 +236,13 @@ def torso(c, p, top, top_x, hip, hip_x):
                 out[(x, y)] = p["h"] if y == top + 1 or x == cx - half - 1 else p["H"]
         for (x, y) in disc(cx - 6.5, top - 2.0, 2.2):
             out[(x, y)] = p["h"]
+    elif collar == "tee":
+        # A white T-shirt's neckline showing above a vest.
+        tee = c.get("sleeve", (240, 240, 240))
+        for x in range(cx - 2, cx + 5):
+            out[(x, top)] = tee
+        for x in range(cx - 1, cx + 4):
+            out[(x, top + 1)] = looks.scale(tee, 0.85)
     elif collar == "crew":
         for x in range(cx - 2, cx + 5):
             out[(x, top)] = p["s"]
@@ -278,16 +306,22 @@ def head_pixels(c, p, cells, neck):
         x, y = neck[0] + col - nc, neck[1] + r - nr
         color = p[ch]
         if "camo" in c and ch in "SL" and r < 16:
-            color = looks.camo_color(c, col, r)
+            color = looks.camo_color(c, col, r) or color
         out[(x, y)] = color
     return out
 
 
 # --- A frame ----------------------------------------------------------------------------------
 
+# Where each drawn frame's front fist ended up (art px), in drawing order (for fitting paths).
+FISTS = []
+# The last drawn frame's fists per pair of arms (0 = the main pair): pair -> {"front", "back"}.
+HANDS = {}
+
 
 def draw_frame(pose, c, p, heads):
     f = Frame()
+    HANDS.clear()
     small = c.get("build") == "small"
     leg_len = LEG - (0.5 if small else 0)
     torso_len = TORSO_LEN - (1 if small else 0)
@@ -299,6 +333,15 @@ def draw_frame(pose, c, p, heads):
     neck = (round(top_x) + 2 + round(pose.get("head_dx", 0) * K),
             top - 1 + round(pose.get("head_dy", 0) * K))
     behind, front = heads[pose.get("face", "normal")]
+    if pose.get("head_only"):
+        # Only the head (Pia's belly flop sets it upright on her turned body).
+        if behind:
+            f.part(head_pixels(c, p, behind, neck))
+        f.part(head_pixels(c, p, front, neck))
+        return f.image(c.get("canvas", (FRAME, FRAME)))
+    headless = pose.get("headless", False)
+    if headless:
+        behind = None
     dim = lambda color: looks.scale(color, 0.8)
     t = slimness(c)
     slim = t >= 0.75     # small shoes and fists, a flared skirt
@@ -326,6 +369,11 @@ def draw_frame(pose, c, p, heads):
     pants_back = (dim(p["D"]), dim(p["d"]), p["D"])
     sleeve = (p["H"], p["h"], p["K"])
     sleeve_back = (p["h"], dim(p["h"]), p["H"])
+    if "sleeve" in c:
+        # A T-shirt under a vest: its own sleeves.
+        e = c["sleeve"]
+        sleeve = (e, looks.scale(e, 0.82), looks.scale(e, 1.05))
+        sleeve_back = (looks.scale(e, 0.82), looks.scale(e, 0.68), e)
     bare, bare_back = (p["S"], p["s"], p["L"]), (p["s"], dim(p["s"]), p["S"])
     if c.get("short_sleeves"):
         fore, fore_back = (p["S"], p["s"], p["L"]), (p["s"], dim(p["s"]), p["S"])
@@ -354,6 +402,7 @@ def draw_frame(pose, c, p, heads):
     part = limb(pts, leg_w, pants)
     part.update(shoe(pts[2], p, small=slim))
     f.part(part)
+    front_foot = pts[2]
     reach = pose.get("reach", 0) * K
     fist_r = FIST_R * (0.85 if slim else 1)
     # Extra pairs of arms (the furthest fanned first, so the main arms overlap them), from just
@@ -366,11 +415,20 @@ def draw_frame(pose, c, p, heads):
         part = limb(pts, arm_w, bare_back)
         part.update(fist(pts[2], p, dim=True, r=fist_r))
         f.part(part)
+        HANDS.setdefault(k, {})["back"] = pts[2]
     pts = arm_points((top_x + 5 - narrow, top + 2), pose["ba"], pose["be"], 0)
+    back_fist = None
+    if pose.get("both_hands"):
+        # Both hands on the weapon: the back fist just above the front one (reached by bending
+        # the elbow down), drawn over the weapon later.
+        front_arm = arm_points((top_x - 1 + narrow / 2, top + 3), pose["fa"], pose["fe"], reach)
+        pts = reach_to(pts[0], (front_arm[2][0], front_arm[2][1] - BOTH_HANDS_GAP))
+        back_fist = fist(pts[2], p, dim=True, r=fist_r)
     part = limb(pts[:2], arm_w[:1], sleeve_back)
     part.update(limb(pts[1:], arm_w[1:], fore_back))
     part.update(fist(pts[2], p, dim=True, r=fist_r))
     f.part(part)
+    HANDS.setdefault(0, {})["back"] = pts[2]
 
     # Torso, skirt.
     f.part(torso(c, p, top, top_x, hip, hip_x))
@@ -385,29 +443,63 @@ def draw_frame(pose, c, p, heads):
         part = limb(pts, arm_w, bare)
         part.update(fist(pts[2], p, r=fist_r))
         f.part(part)
+        HANDS.setdefault(k, {})["front"] = pts[2]
 
     # Front arm: behind the head when raised, so it never covers the face.
     pts = arm_points((top_x - 1 + narrow / 2, top + 3), pose["fa"], pose["fe"], reach)
+    sipping = pose.get("mug") == "sip"
+    if sipping:
+        # Trine's sip: the fist up at her chin, holding the tipped mug to her mouth.
+        pts = reach_to(pts[0], (neck[0] + SIP_FIST[0], neck[1] + SIP_FIST[1]))
     arm = limb(pts[:2], arm_w[:1], sleeve)
     arm.update(limb(pts[1:], arm_w[1:], fore))
     arm.update(fist(pts[2], p, r=FIST_R * (0.85 if slim else 1)))
     # An arm whose fist is above the chin goes behind the head, so it never covers the face.
-    raised = pts[2][1] < neck[1]
+    raised = pts[2][1] < neck[1] and not sipping
+    FISTS.append(pts[2])
+    HANDS.setdefault(0, {})["front"] = pts[2]
     held = None
     if weapon and hold:
         # Choked up: the hand this far down the neck from the usual grip.
         a = math.radians(hold[0])
-        grip = (pts[2][0] + math.sin(a) * hold[2], pts[2][1] - math.cos(a) * hold[2])
-        held = weapon["draw"](grip, hold[0], hold[3])
+        # `grip`: this pose holds the weapon that far up from the usual grip (any weapon).
+        choke = pose.get("grip", hold[2] if weapon.get("choke", True) else 0)
+        if pose.get("plant"):
+            # Planted: held upright, the foot of the beam (CROSS_FOOT below the grip) on the floor
+            # (the shoes' bottom row).
+            choke = GROUND + 2 - pts[2][1] + weapon.get("foot", CROSS_FOOT)
+        grip = (pts[2][0] + math.sin(a) * choke, pts[2][1] - math.cos(a) * choke)
+        # A weapon that mustn't point lower than this (forward and down) is raised to it.
+        angle = hold[0]
+        if "lowest" in weapon and weapon["lowest"] < angle < 90 and not pose.get("into_floor"):
+            angle = weapon["lowest"]
+        held = weapon["draw"](grip, angle, hold[3])
     if held and not hold[1]:
         f.part(held)     # held behind the body
     if raised:
         f.part(arm)
-    f.part(head_pixels(c, p, front, neck))
+    tablet = ipad((front_foot[0] + 6, GROUND + 2), pose["ipad"]) if "ipad" in pose else None
+    if tablet:
+        # Trine's iPad, standing on the floor in front of her feet.
+        f.part(tablet[0])
+    face = {} if headless else head_pixels(c, p, front, neck)
+    if tablet:
+        face = screen_lit(face, tablet[1], SCREEN_STRENGTH[pose["ipad"]])
+    if face:
+        f.part(face)
     if held and hold[1]:
         f.part(held)     # swung in front, under the fist
+        if back_fist:
+            f.part(back_fist)
     if not raised:
         f.part(arm)
+    if "mug" in pose:
+        # Her coffee mug, in the front hand (drawn over it); tipped to her lips for a sip, its
+        # foot resting in her fist.
+        if sipping:
+            f.part(sip_mug(neck))
+        else:
+            f.part(mug(pts[2], pose["mug"]))
     return f.image(c.get("canvas", (FRAME, FRAME)))
 
 
@@ -699,9 +791,379 @@ SCISSOR_ANIMATIONS = {
                      pose(fa=0.6, fe=0.6, ba=-0.4)],
 }
 
+# --- Stig's cross ----------------------------------------------------------------------------
+
+GOLD = ((226, 182, 56), (168, 120, 28), (255, 228, 128))
+CROSS_FOOT = -6        # from the grip (the hand) back to the foot of the long beam, px
+CROSS_TOP = 33         # from the grip to the top of the long beam
+CROSS_BAR_AT = 27      # from the grip to the crossbar's middle (the top arm shorter than the side arms)
+CROSS_ARM = 8          # crossbar arm length each side of the beam
+CROSS_HALF = 1.8       # half the width of both beams
+
+
+def cross(grip, angle, opening=0):
+    """A solid gold Latin cross, held near the foot of its long beam at `grip` and pointing at
+    `angle` (as the guitar: 0 = hanging straight down, -90 = forward, 180 = straight up): the
+    crossbar sits near the far end, so it reads as a cross even when swung like a sword. Each
+    pixel within 1 px of an edge is lit or shaded by which way that edge faces on screen."""
+    a = math.radians(angle)
+    ax, ay = -math.sin(a), math.cos(a)        # along, grip -> top
+    cx_, cy_ = -ay, ax                        # across
+    out = {}
+    gx, gy = grip
+    for y in range(int(gy) - 40, int(gy) + 41):
+        for x in range(int(gx) - 40, int(gx) + 41):
+            dx, dy = x + 0.5 - gx, y + 0.5 - gy
+            u = dx * ax + dy * ay
+            v = dx * cx_ + dy * cy_
+            g = u - CROSS_BAR_AT
+            beam = CROSS_FOOT <= u <= CROSS_TOP and abs(v) <= CROSS_HALF
+            bar = abs(g) <= CROSS_HALF and abs(v) <= CROSS_ARM
+            if not (beam or bar):
+                continue
+            # Edges (distance to it, outward direction in (along, across)).
+            side = 1 if v > 0 else -1
+            edges = []
+            if beam:
+                edges += [(u - CROSS_FOOT, (-1, 0)), (CROSS_TOP - u, (1, 0))]
+                if not bar:
+                    edges.append((CROSS_HALF - abs(v), (0, side)))
+            if bar:
+                edges.append((CROSS_ARM - abs(v), (0, side)))
+                if not beam:
+                    edges.append((CROSS_HALF - abs(g), (1 if g > 0 else -1, 0)))
+            depth, (du, dv) = min(edges, key=lambda e: e[0])
+            if depth > 1.0:
+                out[(x, y)] = GOLD[0]
+            else:
+                sx, sy = du * ax + dv * cx_, du * ay + dv * cy_
+                out[(x, y)] = GOLD[2] if sx - sy > 0 else GOLD[1]
+    return out
+
+
+# Stig's cross smash (down special, 5 drawings, the strike drawing 3rd), like a wizard driving his
+# staff into the ground: both hands round the upright cross, lifted, then pushed straight down
+# onto the floor in front of him as he drops to one knee (held there), then he gets up.
+GRIP0, FA0, FE0, R0 = 0, 1.5, 0.0, 1.6
+GRIP1, FA1, FE1, R1 = -7, 1.75, 0.0, 1.6
+FA2, FE2, R2 = 1.45, 0.05, 1.8
+KNEEL = dict(crouch=3.6, ft=1.45, fk=1.45, bt=-0.15, bk=1.75)
+CROSS_SMASH_ANIMATIONS = {
+    "down_special": [
+        held(180, both_hands=True, grip=GRIP0, fa=FA0, fe=FE0, reach=R0, crouch=1, lean=1, ft=0.2, bt=-0.2),
+        held(180, both_hands=True, grip=GRIP1, fa=FA1, fe=FE1, reach=R1, lean=1, ft=0.2, bt=-0.2, head_dy=-1),
+        held(180, both_hands=True, into_floor=True, plant=True, fa=FA2, fe=FE2, reach=R2, lean=3, **KNEEL),
+        held(180, both_hands=True, into_floor=True, plant=True, fa=FA2, fe=FE2, reach=R2, lean=3, **KNEEL),
+        held(180, both_hands=True, grip=GRIP0, fa=FA0, fe=FE0, reach=R0, crouch=2, lean=1, ft=0.6, fk=1.0, bt=-0.2, bk=0.8)],
+}
+
+# Mads's stop smash (down special, as Stig's cross smash): the lollipop held upright in both hands,
+# turning into a stop sign as he lifts it (drawing 2), driven into the floor on a longer pole so
+# the sign stands above his head (drawings 3-4); back to the lollipop as he gets up.
+STOP_SMASH_ANIMATIONS = {
+    "down_special": [dict(ps, hold=ps["hold"][:3] + ({1: 1, 2: 2, 3: 2}.get(i, 0),))
+                     for i, ps in enumerate(CROSS_SMASH_ANIMATIONS["down_special"])],
+}
+
+# --- Trine's iPad -----------------------------------------------------------------------------
+
+IPAD_BACK = ((178, 184, 196), (138, 144, 158), (214, 220, 230))   # aluminium back: base, shade, light
+IPAD_SCREEN = (150, 220, 255)                                      # the screen's edge, facing her
+IPAD_CAMERA = (40, 42, 52)
+IPAD_W, IPAD_H = 6, 11
+# The screen's light on her face: its color, reach (px) and strength per look (bending, two
+# watching drawings that flicker a little).
+SCREEN_LIGHT = (90, 175, 255)
+SCREEN_REACH = 28
+SCREEN_STRENGTH = [0.5, 0.85, 0.7]
+
+
+def ipad(knee, look):
+    """A tablet standing on the floor (its foot at `knee`) on a kickstand, leaning back toward her with its
+    screen turned to her face (left), so we see its aluminium back: a 6x11 slab (lit top right,
+    shaded bottom left), a camera dot near the top, and a 1 px line of screen light along the edge
+    facing her. Returns (pixels, the screen's middle)."""
+    x0 = round(knee[0]) - 1
+    y_foot = round(knee[1]) - 1
+    base, shade, light = IPAD_BACK
+    out = {}
+    for row in range(IPAD_H):             # 0 = the foot
+        y = y_foot - row
+        lean = row // 4                    # leans back, away from her
+        for x in range(IPAD_W):
+            if x == 0:
+                color = IPAD_SCREEN
+            elif x == IPAD_W - 1 or row == 0:
+                color = shade
+            elif row == IPAD_H - 1 or x == IPAD_W - 2:
+                color = light
+            else:
+                color = base
+            out[(x0 + x + lean, y)] = color
+    for i in range(1, 5):                  # the kickstand, behind it
+        out.setdefault((x0 + IPAD_W + 1 + i, y_foot - 4 + i), shade)
+    top_lean = (IPAD_H - 3) // 4
+    out[(x0 + IPAD_W - 3 + top_lean, y_foot - IPAD_H + 3)] = IPAD_CAMERA
+    return out, (x0 - 1, y_foot - IPAD_H + 2)
+
+
+MUG = ((238, 236, 232), (196, 192, 190))   # white mug, its shaded side
+COFFEE = (92, 56, 34)
+STEAM = (220, 226, 236)
+
+
+# The tipped mug for a sip, as letters (W mug, S its shade, H handle), its rim (top left) at her
+# lips: SIP_RIM from the neck point (the mouth is ~5 px above it); the fist at SIP_FIST.
+SIP_MUG = ["WWW....",
+           "WWWW...",
+           "HWWWWS.",
+           ".HWWWSS",
+           "..HWSS.",
+           "....S.."]
+SIP_RIM = (2, -7)
+SIP_FIST = (7, 0)
+
+
+def sip_mug(neck):
+    """The coffee mug tipped up to her mouth (rim at her lips, foot down and forward)."""
+    colors = {"W": MUG[0], "S": MUG[1], "H": MUG[1]}
+    x0, y0 = neck[0] + SIP_RIM[0], neck[1] + SIP_RIM[1]
+    return {(x0 + x, y0 + y): colors[ch] for y, row in enumerate(SIP_MUG)
+            for x, ch in enumerate(row) if ch != "."}
+
+
+def mug(fist, look):
+    """A white coffee mug in the front fist, its handle toward her (left): 4x5, coffee showing on
+    top; "low" = held at the chest with a wisp of steam (two variants, "low"/"low2"), "sip" = at
+    her mouth, tipped (no coffee showing, no steam)."""
+    fx, fy = round(fist[0]), round(fist[1])
+    x0, y0 = fx - 1, fy - 4
+    if look == "sip":
+        y0 -= 3                              # held by its foot, its rim at her mouth
+    out = {}
+    for y in range(5):
+        for x in range(4):
+            out[(x0 + x, y0 + y)] = MUG[1] if x == 3 or y == 4 else MUG[0]
+    out[(x0 - 1, y0 + 1)] = MUG[1]           # the handle
+    out[(x0 - 1, y0 + 3)] = MUG[1]
+    if look != "sip":
+        for x in range(1, 3):
+            out[(x0 + x, y0)] = COFFEE
+        wisp = [(x0 + 1, y0 - 2), (x0 + 2, y0 - 3)] if look == "low" else [(x0 + 2, y0 - 2), (x0 + 1, y0 - 3)]
+        for pt in wisp:
+            out[pt] = STEAM
+    return out
+
+
+def screen_lit(pixels, screen, strength):
+    """`pixels` (her head) lit blue by the screen at `screen`: nearer pixels more, outlines kept."""
+    out = {}
+    for (x, y), color in pixels.items():
+        d = math.hypot(x - screen[0], y - screen[1])
+        k = strength * max(0.0, 1 - d / SCREEN_REACH)
+        if color == OUTLINE or k <= 0:
+            out[(x, y)] = color
+        else:
+            out[(x, y)] = tuple(round(c + (l - c) * k) for c, l in zip(color, SCREEN_LIGHT))
+    return out
+
+
+# Trine's iPad break (down special, 5 drawings): bending down; seated on the floor with her legs
+# out in front, the iPad propped on her lap, the coffee mug at her chest, watching (two drawings:
+# the screen light and the steam shift); sipping (the mug at her mouth); getting up. The back hand
+# rests on the floor behind her.
+SIT = dict(crouch=7, ft=1.5, fk=0.0, bt=1.3, bk=0.15, ba=-0.9, be=-0.3)
+BEND = dict(crouch=3, lean=2, ft=0.9, fk=1.5, bt=0.4, bk=1.3, fa=0.7, fe=1.4, ba=-0.5, be=0.6)
+CUP_LOW = dict(fa=0.55, fe=1.9)
+CUP_SIP = dict(fa=0.35, fe=2.5)
+IPAD_ANIMATIONS = {
+    "down_special": [pose(mug="low", **BEND),
+                     pose(ipad=1, mug="low", **SIT, **CUP_LOW),
+                     pose(ipad=2, mug="low2", lean=1, **SIT, **CUP_LOW),
+                     pose(ipad=1, mug="sip", face="shut", head_dy=-1, **SIT, **CUP_SIP),
+                     pose(mug="low", **BEND)],
+}
+
+# Sjippepigen's idle: skipping on the spot (her ropes always spin), hands down by her hips holding
+# the handles: land (knees bent), hop (off the floor, toes down), land, hop (the other foot leading).
+SKIP_ARMS = dict(fa=0.55, fe=0.9, ba=0.35, be=0.9)
+SKIP_ANIMATIONS = {
+    "idle": [pose(crouch=1.5, ft=0.35, fk=0.7, bt=0.15, bk=0.6, **SKIP_ARMS),
+             pose(crouch=-3, ft=0.15, fk=0.35, bt=-0.05, bk=0.45, head_dy=-0.5, **SKIP_ARMS),
+             pose(crouch=1.5, ft=0.3, fk=0.65, bt=0.2, bk=0.7, **SKIP_ARMS),
+             pose(crouch=-3, ft=0.05, fk=0.45, bt=0.1, bk=0.35, head_dy=-0.5, **SKIP_ARMS)],
+    # Skipping along: the run's strides with a hop in each (land, up, coming down), the hands
+    # staying down by her hips on the handles.
+    "run": [dict(run_pose(i), crouch=(1.5, -3.5, -1.5)[i % 3], **SKIP_ARMS) for i in range(6)],
+}
+
+# Mads's over-the-head slam. The reach (side special, 4 drawings): reaching forward with both
+# arms, leaning in, the rest of the reach and a miss the same. The throw (its own strip
+# fighter_grab_throw.png, 6 drawings): the catch, arms out front; lifting, arms up in front;
+# overhead, leaning back; turned round (drawn facing the new way), arms overhead leaning toward the
+# victim; the slam, bent forward, arms driven down in front; straightening up.
+REACH = pose(lean=3, fa=1.5, fe=0.2, reach=1.2, ba=1.35, be=0.25, ft=0.55, fk=0.3, bt=-0.5, bk=0.2)
+SLAM_ANIMATIONS = {
+    "side_special": [REACH, REACH, REACH, pose(lean=1, fa=0.9, fe=0.6, ba=0.6, be=0.5)],
+}
+GRAB_THROW = [
+    pose(lean=1, fa=1.55, fe=0.1, reach=0.8, ba=1.45, be=0.15, ft=0.4, fk=0.3, bt=-0.5, bk=0.2),
+    pose(lean=0, fa=2.25, fe=0.1, ba=2.1, be=0.1, ft=0.3, fk=0.2, bt=-0.4, bk=0.2),
+    pose(lean=-1, fa=2.75, fe=0.0, ba=-2.75, be=0.0, ft=0.25, fk=0.1, bt=-0.4, bk=0.1, head_dy=-1),
+    pose(lean=1, fa=2.6, fe=0.0, ba=-2.6, be=0.0, ft=0.35, fk=0.15, bt=-0.3, bk=0.1, head_dy=-1),
+    pose(lean=4, crouch=2, fa=0.95, fe=-0.1, reach=1.0, ba=0.8, be=0.0, ft=0.6, fk=0.9, bt=-0.6, bk=0.3),
+    pose(lean=1, fa=0.5, fe=0.8, ba=0.2, be=0.6, ft=0.3, fk=0.2, bt=-0.3, bk=0.2),
+]
+
+# The holy light the smash sends along the floor: 4 drawings of 80×28 (drawn at ¾). The cross
+# hits the floor at (BURST_ORIGIN, bottom): a flash there, then light fanning out forward and a
+# little up along the floor (a white core on the floor, rays, a soft far end), then it fades.
+LIGHT = ((255, 255, 236), (255, 238, 150), (246, 196, 72))   # core, glow, rim
+BURST_SIZE = (80, 28)
+BURST_ORIGIN = 8
+SPARKLES = [(34, 8), (52, 13), (64, 5), (24, 15)]
+
+
+def burst_image(light=None):
+    """The smash's burst along the floor, in `light` colors (core, glow, rim; Stig's gold light by
+    default)."""
+    light = light or LIGHT
+    (w, h), n, ox = BURST_SIZE, 4, BURST_ORIGIN
+    out = Image.new("RGBA", (w * n, h), (0, 0, 0, 0))
+    px = out.load()
+    for i in range(n):
+        def put(x, y, color):
+            if 0 <= x < w and 0 <= y < h:
+                px[i * w + x, y] = color + (255,)
+        reach = (0, 70, 70, 64)[i]
+        for y in range(h):
+            for x in range(w):
+                dx, dy = x + 0.5 - ox, h - (y + 0.5)         # up is positive
+                r = math.hypot(dx, dy)
+                ang = math.degrees(math.atan2(dy, dx))
+                color = None
+                if i < 2 and r <= (5.5 if i == 0 else 4):
+                    color = light[0]                         # the flash where the cross hit
+                elif i == 0 and r <= 8.5:
+                    color = light[1]
+                elif i == 0 and r <= 13 and any(abs(ang - a) < 5 for a in (25, 60, 95, 130)):
+                    color = light[2] if r > 11 else light[1]  # short rays of the flash
+                elif 0 <= ang <= 26 and dx > 0 and r <= reach:
+                    fade = r / reach
+                    if fade > 0.82 and (x + y) % 2:
+                        continue                             # soft far end
+                    if i == 3 and (x + y) % 2 == (y // 2) % 2:
+                        continue                             # breaking up as it fades
+                    ray = any(abs(ang - a) < 1.5 for a in (11, 18, 24))
+                    if ang < 7 and fade < 0.85 and i < 3:
+                        color = light[0]
+                    elif ray or ang < 15:
+                        color = light[1]
+                    else:
+                        color = light[2]
+                if color:
+                    put(x, y, color)
+        if i == 2:
+            for sx, sy in SPARKLES:                         # little 4-point twinkles
+                for ddx, ddy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+                    put(sx + ddx, sy + ddy, light[0])
+    return out
+
+
+# --- Mads's lollipop -----------------------------------------------------------------------------
+
+# A school crossing guard's stop sign ("lollipop"): a white pole with a round yellow-green sign on
+# top, a white rim round it.
+POLE = ((236, 236, 240), (178, 180, 192), (255, 255, 255))
+SIGN = ((214, 226, 74), (172, 186, 46), (238, 246, 132))     # face, shade, light
+SIGN_RIM = (250, 250, 250)
+POLE_FOOT = -4         # from the grip back to the foot of the pole, px
+POLE_LEN = 21          # from the grip to where the sign starts
+SIGN_R = 7.5           # the sign's radius (rim included)
+
+
+# The stop sign it turns into (Mads's down special): a red octagon, STOP_SIZE across, with a white
+# rim and STOP in a 3x5 pixel font (the game draws each art pixel about 2 screen pixels wide, so the
+# letters stay readable).
+STOP_RED = ((214, 40, 40), (166, 26, 30))     # face, shaded bottom right
+STOP_SIZE = 21
+STOP_EXTRA = 10        # the planted stop sign's pole is this much longer
+STOP_FONT = {"S": ["111", "100", "111", "001", "111"], "T": ["111", "010", "010", "010", "010"],
+             "O": ["111", "101", "101", "101", "111"], "P": ["111", "101", "111", "100", "100"]}
+# The smash's burst in stop-sign colors: white core, pale red glow, red rim.
+STOP_LIGHT = ((255, 250, 248), (255, 156, 146), (214, 40, 40))
+
+
+# While drawing a strip that will be flipped for facing left: draw the stop sign's lettering and
+# shading mirrored, so after the flip they read (and light) the right way round.
+MIRROR_TEXT = False
+
+
+def stop_sign(cx, cy):
+    """The stop sign's pixels, centered at (cx, cy), upright whatever the pole's angle."""
+    n = STOP_SIZE
+    c = (n - 1) / 2
+    cut = n * 0.29
+    x0, y0 = round(cx - c), round(cy - c)
+    face = {(x, y) for y in range(n) for x in range(n)
+            if abs(x - c) + abs(y - c) <= 2 * c - cut + 0.5}
+    flip = (lambda x: n - 1 - x) if MIRROR_TEXT else (lambda x: x)
+    out = {}
+    for (x, y) in face:
+        edge = any(n_ not in face for n_ in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)))
+        out[(x0 + x, y0 + y)] = SIGN_RIM if edge else STOP_RED[1 if flip(x) + y > n + 3 else 0]
+    tx = (n - 15) // 2
+    ty = y0 + (n - 5) // 2
+    for i, ch in enumerate("STOP"):
+        for r, row in enumerate(STOP_FONT[ch]):
+            for col, bit in enumerate(row):
+                if bit == "1":
+                    out[(x0 + flip(tx + i * 4 + col), ty + r)] = SIGN_RIM
+    return out
+
+
+def lollipop(grip, angle, opening=0):
+    """The lollipop held at `grip` near the foot of its pole, pointing at `angle` (as the guitar:
+    0 = hanging straight down, -90 = forward, 180 = straight up); `opening` 1 = turned into the
+    stop sign, 2 = the stop sign on a pole STOP_EXTRA longer (planted, the sign above his head)."""
+    a = math.radians(angle)
+    ax, ay = -math.sin(a), math.cos(a)            # along, grip -> sign
+    gx, gy = grip
+    foot = (gx + ax * POLE_FOOT, gy + ay * POLE_FOOT)
+    pole = POLE_LEN + (STOP_EXTRA if opening == 2 else 0)
+    top = (gx + ax * (pole + 2), gy + ay * (pole + 2))
+    out = shaded(segment_pixels(foot, top, 2.2), 2.2, *POLE)
+    if opening:
+        half = STOP_SIZE / 2
+        out.update(stop_sign(gx + ax * (pole + half), gy + ay * (pole + half)))
+        return out
+    cx, cy = gx + ax * (POLE_LEN + SIGN_R), gy + ay * (POLE_LEN + SIGN_R)
+    for (x, y) in disc(cx, cy, SIGN_R):
+        d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+        if d > SIGN_R - 1.3:
+            out[(x, y)] = SIGN_RIM
+        elif (x + 0.5 - cx) - (y + 0.5 - cy) > SIGN_R * 0.9:
+            out[(x, y)] = SIGN[1]                     # shaded bottom right
+        elif (x + 0.5 - cx) - (y + 0.5 - cy) < -SIGN_R * 0.9:
+            out[(x, y)] = SIGN[2]                     # lit top left
+        else:
+            out[(x, y)] = SIGN[0]
+    return out
+
+
 WEAPONS = {
     "guitar": dict(draw=guitar, animations=GUITAR_ANIMATIONS, back=(BACK_GRIP, BACK_ANGLE)),
+    # On his back diagonally like Gitte's scissors: the cross head up behind his neck, the foot
+    # poking out in front of his hip. Held by the foot of the long beam even where Henrik chokes
+    # up on the neck; never pointing below level, so in the follow-throughs the crossbar at the
+    # far end stays above the floor.
+    "cross": dict(draw=cross, animations=GUITAR_ANIMATIONS, back=((7, 9), 126), choke=False,
+                  lowest=-90),
     "scissors": dict(draw=scissors, animations=SCISSOR_ANIMATIONS, back=((-13, -7), -55)),
+    # On his back like Stig's cross, the sign up behind his head; only the side tilt swings it
+    # (Henrik's side tilt, held by the foot of the pole, never pointing below level).
+    "lollipop": dict(draw=lollipop, animations={"side_tilt": GUITAR_ANIMATIONS["side_tilt"]},
+                     back=((7, 9), 140), choke=False, lowest=-90, foot=POLE_FOOT),
 }
 
 
@@ -1018,6 +1480,75 @@ SUMMON_ANIMATIONS = {
 }
 
 
+# --- Pia's belly flop (docs/specs/art-guide.md#pias-belly-flop) ----------------------------------
+
+# Posed upright with `flat=True`: the body (no head) is turned a quarter turn forward (belly down,
+# shoulders toward the facing side) and set on the floor row, and the head is put back on upright
+# at the front, looking ahead, its chin `chin` px above the floor. Upright "up" becomes forward and
+# upright forward becomes down, so arms swung down and back flail up behind her, and knees bent
+# back kick the feet up.
+FLAT_LEGS = dict(ft=-0.25, fk=1.5, bt=-0.45, bk=1.3)
+FLAIL = dict(fa=-1.1, fe=-0.6, ba=-1.4, be=-0.5)
+SPLAYED = dict(fa=0.35, fe=0.2, ba=0.15, be=0.2)
+BELLY_FLOP_ANIMATIONS = {
+    "down_special_dive": [pose(flat=True, chin=2, **FLAIL, **FLAT_LEGS)],
+    "down_special": [
+        pose(flat=True, squash=True, face="shut", **FLAIL, ft=-0.1, fk=0.9, bt=-0.2, bk=0.8),
+        pose(flat=True, **SPLAYED, ft=-0.15, fk=0.5, bt=-0.3, bk=0.4),
+        pose(flat=True, **SPLAYED, ft=-0.15, fk=0.3, bt=-0.3, bk=0.2),
+        pose(crouch=5, lean=3, ft=1.5, fk=2.5, bt=1.1, bk=2.3, fa=1.2, fe=0.2, ba=1.0, be=0.2),
+        pose(crouch=2, lean=1, ft=0.6, fk=1.1, bt=0.3, bk=0.9, fa=0.5, ba=-0.2)],
+}
+HEAD_OVERLAP = 3       # px of the head over the turned shoulders
+DUST = ((230, 220, 200), (186, 174, 156))   # pale dust, shade
+DUST_SIZE = (40, 20)
+
+
+def flat(body, head, squash=False, chin=0):
+    """A flat drawing: `body` (drawn upright without a head) turned a quarter turn clockwise (a
+    lossless pixel move) and set on the floor row, `head` (drawn alone) upright at its front, its
+    chin `chin` px up; centred. `squash` drops the body's top row (flattened on impact)."""
+    w, h = body.size
+    turned = body.transpose(Image.ROTATE_270)
+    body = turned.crop(turned.getbbox())
+    if squash:
+        body = body.resize((body.size[0], body.size[1] - 1), Image.NEAREST)
+    head = head.crop(head.getbbox())
+    width = body.size[0] + head.size[0] - HEAD_OVERLAP
+    x0 = w // 2 - width // 2
+    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    out.alpha_composite(body, (x0, h - body.size[1]))
+    out.alpha_composite(head, (x0 + body.size[0] - HEAD_OVERLAP, h - chin - head.size[1]))
+    return out
+
+
+def dust_image():
+    """Pia's flop dust, for one side (the game mirrors it for the other): 4 drawings of puffs
+    rolling out along the floor and up, growing, then breaking up."""
+    (w, h), n = DUST_SIZE, 4
+    out = Image.new("RGBA", (w * n, h), (0, 0, 0, 0))
+    px = out.load()
+    # Per drawing: puffs as (x, radius) sitting on the floor; the last drawing breaks up.
+    puffs = [[(3, 3), (8, 2.5)],
+             [(5, 4.5), (12, 4), (18, 3)],
+             [(8, 5.5), (17, 5), (26, 4), (33, 2.5)],
+             [(12, 5), (22, 4.5), (31, 3.5), (37, 2)]]
+    for i, row in enumerate(puffs):
+        for x in range(w):
+            for y in range(h):
+                cx, cy = x + 0.5, y + 0.5
+                for (pxx, r) in row:
+                    py = h - r * 0.9           # resting on the floor
+                    d = math.hypot(cx - pxx, (cy - py) * 1.15)
+                    if d <= r:
+                        if i == 3 and (x + y) % 2:
+                            break              # fading
+                        shade = (cx - pxx) + (cy - py) > r * 0.6
+                        px[i * w + x, y] = (DUST[1] if shade else DUST[0]) + (255,)
+                        break
+    return out
+
+
 # --- Output -----------------------------------------------------------------------------------
 
 
@@ -1034,8 +1565,74 @@ def frames_for(c):
         own.update(FIDUSEN_ANIMATIONS)
     if c.get("pyramid"):
         own.update(PYRAMID_ANIMATIONS)
-    return {name: [draw_frame(ps, c, p, heads) for ps in own.get(name, poses)]
-            for name, poses in ANIMATIONS.items()}
+    if c.get("cross_smash"):
+        own.update(CROSS_SMASH_ANIMATIONS)
+    if c.get("stop_smash"):
+        own.update(STOP_SMASH_ANIMATIONS)
+    if c.get("ipad"):
+        own.update(IPAD_ANIMATIONS)
+    if c.get("ropes"):
+        own.update(SKIP_ANIMATIONS)
+    if c.get("grappler"):
+        own.update(SLAM_ANIMATIONS)
+    if c.get("belly_flop"):
+        own.update(BELLY_FLOP_ANIMATIONS)
+
+    def drawn(ps):
+        if not ps.get("flat"):
+            return draw_frame(ps, c, p, heads)
+        body = draw_frame(dict(ps, headless=True), c, p, heads)
+        head = draw_frame(dict(ps, head_only=True), c, p, heads)
+        return flat(body, head, ps.get("squash", False), ps.get("chin", 0))
+
+    return {name: [drawn(ps) for ps in own.get(name, poses)] for name, poses in ANIMATIONS.items()}
+
+
+def left_strip(c, name):
+    """An animation's strip for facing left, already mirrored, with lettering (the stop sign) kept
+    readable: the game draws it as it is instead of mirroring the usual strip."""
+    global MIRROR_TEXT
+    MIRROR_TEXT = True
+    try:
+        frames = frames_for(c)[name]
+    finally:
+        MIRROR_TEXT = False
+    w, h = frames[0].size
+    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    for i, frame in enumerate(frames):
+        strip.paste(frame.transpose(Image.FLIP_LEFT_RIGHT), (i * w, 0))
+    return strip
+
+
+def throw_strip(c):
+    """The grappler's throw: GRAB_THROW drawn side by side."""
+    p = looks.palette(c)
+    heads = {face: looks.build_head(c, face) for face in ("normal", "shut", "hurt")}
+    frames = [draw_frame(ps, c, p, heads) for ps in GRAB_THROW]
+    w, h = frames[0].size
+    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    for i, frame in enumerate(frames):
+        strip.paste(frame, (i * w, 0))
+    return strip
+
+
+def hands_json(c):
+    """Every drawing's fists per pair of arms, in game px from the feet (facing right):
+    {animation: [drawing: [pair: [[front x, y], [back x, y]]]]}; the game hangs Sjippepigen's ropes
+    between each pair's hands (FighterVisuals._draw_ropes)."""
+    p = looks.palette(c)
+    heads = {face: looks.build_head(c, face) for face in ("normal", "shut", "hurt")}
+    w, h = c.get("canvas", (FRAME, FRAME))
+    ox, oy = (w - FRAME) // 2, h - FRAME
+    game = lambda pt: [round((pt[0] + 0.5 + ox - w / 2) * 0.75, 2), round((pt[1] + 0.5 + oy - h) * 0.75, 2)]
+    out = {}
+    for name, poses in ANIMATIONS.items():
+        out[name] = []
+        for ps in poses:
+            draw_frame(ps, c, p, heads)
+            out[name].append([[game(HANDS[k]["front"]), game(HANDS[k]["back"])]
+                              for k in sorted(HANDS)])
+    return out
 
 
 def write_character(c, out):
@@ -1054,6 +1651,17 @@ def write_character(c, out):
         mini_scissors_image().save(out / "projectile.png")
     if c.get("pyramid"):
         pyramid_image().save(out / "pyramid.png")
+    if c.get("grappler"):
+        throw_strip(c).save(out / "fighter_grab_throw.png")
+    if c.get("cross_smash"):
+        burst_image().save(out / "burst.png")
+    if c.get("ropes"):
+        (out / "hands.json").write_text(json.dumps(hands_json(c)))
+    if c.get("stop_smash"):
+        burst_image(STOP_LIGHT).save(out / "burst.png")
+        left_strip(c, "down_special").save(out / "fighter_down_special_left.png")
+    if c.get("belly_flop"):
+        dust_image().save(out / "dust.png")
     if c.get("peel"):
         peel_image().save(out / "peel.png")
         book_image().save(out / "projectile.png")

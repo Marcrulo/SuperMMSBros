@@ -6,7 +6,7 @@ extends CharacterBody2D
 
 enum State {
 	IDLE, RUN, CROUCH, AIR, ATTACK, SHIELD, SHIELD_DROP, SHIELD_BREAK, HITSTUN, HELPLESS, KO,
-	SPOT_DODGE, ROLL, AIR_DODGE, LEDGE, LEDGE_CLIMB, TRIPPED,
+	SPOT_DODGE, ROLL, AIR_DODGE, LEDGE, LEDGE_CLIMB, TRIPPED, HELD,
 }
 
 ## Gitte's stances (docs/specs/moves.md#gitte--scissors-and-stances), in switching order.
@@ -24,9 +24,15 @@ const NORMALS: Array[StringName] = [&"jab", &"down_tilt", &"up_tilt", &"side_til
 		&"neutral_air", &"forward_air", &"back_air", &"up_air", &"down_air"]
 ## Special phases that end by their own rule, not after total_frames.
 const OPEN_ENDED: Array[StringName] = [&"neutral_special_charge", &"down_special_dive", &"up_special",
-		&"vine_pull", &"vine_swing", &"pyramid_rise"]
+		&"vine_pull", &"vine_swing", &"pyramid_rise", &"ipad_watch", &"ipad_stand", &"grab_throw",
+		&"lasso_reel", &"lasso_miss", &"belly_hop"]
+## Trine's iPad break after sitting down (docs/specs/moves.md#trine--ipad-break).
+const IPAD_PHASES: Array[StringName] = [&"ipad_watch", &"ipad_stand"]
 ## The vine up special's phases (docs/specs/moves.md#fidusen--banana-book-vine).
-const VINE_PHASES: Array[StringName] = [&"vine_pull", &"vine_swing"]
+const VINE_PHASES: Array[StringName] = [&"vine_pull", &"vine_swing", &"lasso_reel", &"lasso_miss"]
+## The up special and its phases (her jump ropes rest during them).
+const UP_SPECIAL_PHASES: Array[StringName] = [&"up_special", &"vine_pull", &"vine_swing",
+		&"lasso_reel", &"lasso_miss", &"pyramid_rise"]
 ## Grounded states a banana peel can't trip.
 const UNTRIPPABLE: Array[State] = [State.LEDGE, State.LEDGE_CLIMB, State.KO, State.TRIPPED]
 
@@ -64,6 +70,26 @@ var air_dodge_available: bool = true
 var ledge: Ledge = null
 ## Where the vine hangs from while swinging (the ledge corner while pulled to one).
 var vine_anchor: Vector2 = Vector2.ZERO
+## Jump ropes (only a fighter whose move set has `ropes`): long or short (short at every spawn),
+## and ticks they've spun (only while active; 0 at every spawn).
+var rope_long: bool = false
+var rope_tick: int = 0
+## How far the ropes have turned (in turns, from 0 at every spawn); grows by speed / period a tick.
+var rope_turns: float = 0.0
+## Ticks left of the ropes' frenzy (her charged neutral special), and its hit.
+var frenzy_frames_left: int = 0
+var _frenzy_hit: MoveData = null
+## The frenzy meter, 0…1 (full = the frenzy can be charged); empty at every spawn.
+var frenzy_meter: float = 0.0
+## Ticks left in which ropes can't hurt this fighter (after a rope hit). Counted down by the Match.
+var rope_immune_frames: int = 0
+## Per rope: the turn in which it last hit each fighter (player index → turn).
+var _rope_hits: Array[Dictionary] = []
+## Who holds this fighter in a command grab (state HELD), or null.
+var held_by: Fighter = null
+## The fighter this one is throwing (move &"grab_throw"), and which way it faced at the catch.
+var throwing: Fighter = null
+var throw_facing: int = 1
 ## Where the pyramid she rides rises from: her x, and the top of the floor it comes out of.
 var pyramid_origin: Vector2 = Vector2.ZERO
 ## The stance (only for a fighter whose down special has `stances`); + at every spawn. Setting it
@@ -104,6 +130,8 @@ var _ledge_intangibility_earned: bool = true
 var _ledge_intangible: bool = false
 ## Down was held on the last tick (a fighter holding down doesn't grab ledges).
 var _down_held: bool = false
+## Where the lassoed fighter was caught.
+var _lasso_from: Vector2 = Vector2.ZERO
 ## Where a vine pull started, and how long the current trip lasts.
 var _vine_from: Vector2 = Vector2.ZERO
 var _trip_frames: int = 0
@@ -190,9 +218,134 @@ func _apply_size() -> void:
 	_body_shape.position = _body_offset * s
 
 
-## False while KO'd, invulnerable or intangible.
+## False while KO'd, invulnerable, intangible, held, or throwing someone.
 func can_be_hit() -> bool:
-	return state != State.KO and invulnerable_frames == 0 and not is_intangible()
+	return state != State.KO and state != State.HELD and invulnerable_frames == 0 \
+			and not is_intangible() \
+			and not (state == State.ATTACK and move in [&"grab_throw", &"lasso_reel"])
+
+
+## The jump ropes' numbers, or null for a fighter without ropes.
+func ropes() -> RopeData:
+	return stats.moveset.ropes
+
+
+## The ropes spin (and hurt) unless she's stunned, held, KO'd, shielding, dodging or using her
+## up special.
+func ropes_active() -> bool:
+	if state == State.ATTACK and move in UP_SPECIAL_PHASES:
+		return false
+	return ropes() != null and state not in [State.HITSTUN, State.TRIPPED, State.SHIELD_BREAK,
+		State.HELD, State.KO, State.SHIELD, State.SHIELD_DROP, State.SPOT_DODGE, State.ROLL,
+		State.AIR_DODGE]
+
+
+## Rope i's position in turns (it starts i / count of a turn on).
+func _rope_turns(i: int) -> float:
+	return rope_turns + float(i) / ropes().count
+
+
+func _rope_period() -> int:
+	return ropes().long_period if rope_long else ropes().short_period
+
+
+## Where rope i's tip is (world): round her body middle, over her head, down in front, under her
+## feet, up behind.
+func rope_tip(i: int, ahead: float = 0.0) -> Vector2:
+	var data := ropes()
+	var radius := data.long_radius if rope_long else data.short_radius
+	var angle := TAU * _rope_turns(i) + ahead
+	return global_position + Vector2(data.center.x * facing, data.center.y) \
+		+ Vector2(sin(angle) * radius.x * facing, -cos(angle) * radius.y)
+
+
+## The box round rope i's tip that hurts.
+func rope_box(i: int) -> Rect2:
+	var size := ropes().tip_size
+	return Rect2(rope_tip(i) - size / 2.0, size)
+
+
+## The hit of a rope tip at the current length (in a frenzy: the frenzy's hit).
+func rope_hit() -> MoveData:
+	if frenzy_frames_left > 0 and _frenzy_hit != null:
+		return _frenzy_hit
+	return ropes().long_hit if rope_long else ropes().short_hit
+
+
+## Starts the ropes' frenzy with a charge of 0…1: faster ropes whose hits only knock back.
+func start_frenzy(charge: float) -> void:
+	var data := ropes()
+	_frenzy_hit = data.frenzy_hit.duplicate() as MoveData
+	_frenzy_hit.base_knockback = data.frenzy_hit.base_knockback + data.frenzy_charge_knockback * charge
+	frenzy_frames_left = data.frenzy_frames
+	frenzy_meter = 0.0
+
+
+## Rope i hasn't hit fighter `victim_index` yet in its current turn.
+func rope_can_hit(i: int, victim_index: int) -> bool:
+	if _rope_hits.size() <= i:
+		return true
+	return _rope_hits[i].get(victim_index, -1) != floori(_rope_turns(i))
+
+
+func register_rope_hit(i: int, victim_index: int) -> void:
+	while _rope_hits.size() <= i:
+		_rope_hits.append({})
+	_rope_hits[i][victim_index] = floori(_rope_turns(i))
+
+
+## The command grab in progress (its grab box is out now), or null.
+func active_grab() -> GrabData:
+	var data := current_move()
+	if data == null or data.grab == null or not data.is_active_frame(state_frame):
+		return null
+	return data.grab
+
+
+## Catches `victim` in the command grab in progress: starts the throw (docs/specs/moves.md#mads--grappler).
+func start_throw(victim: Fighter) -> void:
+	throwing = victim
+	throw_facing = facing
+	move = &"grab_throw"
+	state_frame = 0
+	victim.become_held(self)
+
+
+## Caught by `holder`'s command grab: can't act and isn't moved by physics until thrown.
+func become_held(holder: Fighter) -> void:
+	held_by = holder
+	state = State.HELD
+	state_frame = 0
+	velocity = Vector2.ZERO
+	move = NO_MOVE
+	_charged_punch = null
+	_launched = false
+	_fast_falling = false
+	if ledge != null:
+		ledge = null
+		_ledge_regrab_left = stats.ledge_regrab_frames
+
+
+## Where the held fighter's feet are on throw frame `frame` (docs/specs/moves.md#mads--grappler):
+## the middle of its body follows the grab's path (in the thrower's grip).
+func throw_position(frame: int) -> Vector2:
+	var grab := stats.moveset.side_special.grab
+	var t := clampf(float(frame) / grab.slam_frame, 0.0, 1.0) * (grab.path.size() - 1)
+	var i := mini(int(t), grab.path.size() - 2)
+	var middle := grab.path[i].lerp(grab.path[i + 1], t - i)
+	return global_position + Vector2(middle.x * throw_facing, middle.y + grab.held_middle)
+
+
+## The slam: the held fighter lands behind, is launched away, and this fighter turns round.
+func slam() -> void:
+	var grab := stats.moveset.side_special.grab
+	var victim := throwing
+	throwing = null
+	victim.held_by = null
+	# On the floor (his feet line) where the path ends.
+	victim.global_position = global_position + Vector2(grab.path[-1].x * throw_facing, 0.0)
+	victim.take_hit(grab.slam_hit, -throw_facing, global_position.x)
+	facing = -throw_facing
 
 
 ## On a dodge's intangible frames, early in a ledge grab (if earned) and while climbing up, hits
@@ -268,6 +421,17 @@ func knock_out() -> void:
 	_launched = false
 	_hit_victims.clear()
 	ledge = null
+	release_held()
+	held_by = null
+
+
+## Lets go of a fighter it was throwing (it falls, free), e.g. when knocked out mid-throw.
+func release_held() -> void:
+	if throwing != null:
+		throwing.held_by = null
+		throwing.state = State.AIR
+		throwing.state_frame = 0
+		throwing = null
 
 
 ## The data of the move in progress (the charged punch for the neutral special), or null when
@@ -278,7 +442,8 @@ func current_move() -> MoveData:
 	if move == &"neutral_special":
 		# The charged punch, or a summon's own data (it has no charge).
 		return _charged_punch if _charged_punch != null else stats.moveset.neutral_special
-	if move == &"neutral_special_charge" or move in VINE_PHASES:
+	if move == &"neutral_special_charge" or move in VINE_PHASES or move in IPAD_PHASES \
+			or move == &"grab_throw":
 		return null
 	if move == &"pyramid_rise":
 		return stats.moveset.up_special.pyramid.tip_hit
@@ -307,7 +472,8 @@ func get_hitbox_rect() -> Rect2:
 ## True on the side special's last startup frame: the Match then adds this fighter's projectile.
 func wants_projectile() -> bool:
 	return state == State.ATTACK and move == &"side_special" \
-			and state_frame == stats.moveset.side_special.startup
+			and state_frame == stats.moveset.side_special.startup \
+			and stats.moveset.side_special.grab == null
 
 
 ## True on a summoning neutral special's last startup frame: the Match then adds the hand.
@@ -338,6 +504,49 @@ func start_vine_pull(target: Ledge) -> void:
 	_vine_from = global_position
 	velocity = Vector2.ZERO
 	move = &"vine_pull"
+	state_frame = 0
+
+
+## The lasso catches `victim` (Sjippepigen's up special): it's held and reeled in.
+func start_lasso(victim: Fighter) -> void:
+	throwing = victim
+	throw_facing = facing
+	_lasso_from = victim.global_position
+	vine_anchor = victim.get_center()  # The rope points at it from the first tick.
+	velocity = Vector2.ZERO
+	move = &"lasso_reel"
+	state_frame = 0
+	victim.become_held(self)
+
+
+## Where the lassoed fighter's feet are on reel frame `frame`: in a straight line from where it was
+## caught to `reel_to` in front of her.
+func lasso_position(frame: int) -> Vector2:
+	var vine := stats.moveset.up_special.vine
+	var to := global_position + Vector2(vine.reel_to.x * throw_facing, vine.reel_to.y)
+	return _lasso_from.lerp(to, clampf(float(frame) / vine.reel_frames, 0.0, 1.0))
+
+
+## Reeled in: the lassoed fighter is hit away (forward), and she pops up like a launched up special.
+func finish_lasso() -> void:
+	var vine := stats.moveset.up_special.vine
+	var victim := throwing
+	throwing = null
+	victim.held_by = null
+	victim.global_position = lasso_position(vine.reel_frames)
+	victim.take_hit(vine.grab_hit, throw_facing, global_position.x)
+	if ropes() != null:
+		victim.rope_immune_frames = ropes().immune_frames  # Her ropes don't hit it straight after.
+	velocity = Vector2(0.0, -vine.pop_speed)
+	move = &"up_special"
+	_launched = true
+
+
+## The lasso caught nothing: the rope flies out (45° up and forward) and back while she falls.
+func start_lasso_miss() -> void:
+	var vine := stats.moveset.up_special.vine
+	vine_anchor = get_center() + Vector2(facing, -1.0).normalized() * vine.grab_range
+	move = &"lasso_miss"
 	state_frame = 0
 
 
@@ -492,6 +701,16 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	_ledge_intangibility_earned = true
 	_ledge_intangible = false
 	_down_held = false
+	held_by = null
+	throwing = null
+	rope_long = false
+	rope_tick = 0
+	rope_turns = 0.0
+	frenzy_frames_left = 0
+	_frenzy_hit = null
+	frenzy_meter = 0.0
+	rope_immune_frames = 0
+	_rope_hits.clear()
 	stance = Stance.PLUS
 	set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
 
@@ -501,6 +720,10 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 func tick(input: FighterInput) -> void:
 	assert(Engine.is_in_physics_frame(), "Fighter.tick() must run inside a physics frame")
 	if state == State.KO:
+		return
+	if state == State.HELD:
+		# Placed by the Match; nothing of its own.
+		state_frame += 1
 		return
 	_end_finished_state(input)
 	match state:
@@ -527,6 +750,15 @@ func tick(input: FighterInput) -> void:
 		if is_on_floor():
 			_ledge_intangibility_earned = true
 	_count_down_drop_through()
+	if ropes_active():
+		rope_tick += 1
+		var speed := ropes().frenzy_speed if frenzy_frames_left > 0 else 1.0
+		rope_turns += speed / _rope_period()
+	if ropes() != null and frenzy_frames_left == 0:
+		frenzy_meter = minf(frenzy_meter + 1.0 / ropes().frenzy_refill_frames, 1.0)
+		if frenzy_meter > 1.0 - 1e-6:
+			frenzy_meter = 1.0  # (Adding up 1/n n times can fall just short of 1.)
+	frenzy_frames_left = maxi(frenzy_frames_left - 1, 0)
 	_update_platform_collision(input)
 	_ledge_regrab_left = maxi(_ledge_regrab_left - 1, 0)
 	_down_held = input.down_held
@@ -540,8 +772,16 @@ func tick(input: FighterInput) -> void:
 func _end_finished_state(input: FighterInput) -> void:
 	match state:
 		State.ATTACK:
-			if move not in OPEN_ENDED and state_frame >= current_move().total_frames():
+			var stood_up := move == &"ipad_stand" \
+				and state_frame >= stats.moveset.down_special.recovery
+			var thrown := move == &"grab_throw" \
+				and state_frame >= stats.moveset.side_special.grab.throw_frames
+			var missed := move == &"lasso_miss" \
+				and state_frame >= stats.moveset.up_special.vine.miss_frames
+			if stood_up or thrown or missed or (move not in OPEN_ENDED and state_frame >= current_move().total_frames()):
 				move = NO_MOVE
+				if is_on_floor():
+					up_special_available = true  # A move that ends standing counts as landed.
 				_set_state(_free_state(input))
 		State.HITSTUN:
 			if state_frame >= _hitstun_frames:
@@ -595,7 +835,7 @@ func _free_state(input: FighterInput) -> State:
 ## IDLE/RUN/CROUCH, first that applies: attack, special, drop through a platform (jump with down
 ## held), jump, shield, drop through a platform (down pressed twice), crouch, run, stand.
 func _ground_actions(input: FighterInput) -> void:
-	if input.attack_pressed:
+	if input.attack_pressed and ropes() == null:
 		_start_move(_pick_normal(input), input)
 	elif input.special_pressed and _pick_special(input) != NO_MOVE:
 		_start_move(_pick_special(input), input)
@@ -620,7 +860,7 @@ func _ground_actions(input: FighterInput) -> void:
 
 ## AIR: attack, special, double jump, or cut a ground jump short.
 func _air_actions(input: FighterInput) -> void:
-	if input.attack_pressed:
+	if input.attack_pressed and ropes() == null:
 		_start_move(_pick_normal(input), input)
 	elif input.special_pressed and _pick_special(input) != NO_MOVE:
 		_start_move(_pick_special(input), input)
@@ -748,6 +988,29 @@ func _special_phases(input: FighterInput) -> void:
 			# On its frame `startup` (state_frame counts up at the end of the tick).
 			if data.stances != null and state_frame + 1 == data.startup:
 				stance = ((stance + 1) % Stance.size()) as Stance
+			elif data.rope_switch and state_frame + 1 == data.startup:
+				rope_long = not rope_long
+				_rope_hits.clear()
+			elif data.ipad != null and state_frame + 1 == data.startup:
+				move = &"ipad_watch"  # Seated: starts watching.
+				state_frame = 0
+		&"belly_hop":
+			if state_frame > 0 and velocity.y >= 0.0:
+				# Stopped rising: flat on her belly, down she goes.
+				move = &"down_special_dive"
+				state_frame = 0
+				_hit_victims.clear()
+		&"ipad_watch":
+			var ipad := stats.moveset.down_special.ipad
+			if not input.down_held:
+				move = &"ipad_stand"
+				state_frame = 0
+			else:
+				if state_frame > 0 and state_frame % ipad.heal_every == 0:
+					percent = maxf(percent - ipad.heal, 0.0)
+				if state_frame >= ipad.watch_frames:
+					move = &"ipad_stand"
+					state_frame = 0
 		&"pyramid_rise":
 			var pyramid := stats.moveset.up_special.pyramid
 			if state_frame >= pyramid.rise_frames:
@@ -811,13 +1074,31 @@ func _pick_normal(input: FighterInput) -> StringName:
 
 ## The special for the held direction, or none when it can't be used now.
 func _pick_special(input: FighterInput) -> StringName:
+	if ropes() != null:
+		# Only the rope up special, the rope switch (down special) and the frenzy (neutral special,
+		# not while a frenzy is on).
+		if input.up_held:
+			return &"up_special" if up_special_available else NO_MOVE
+		if input.down_held:
+			return &"down_special" if stats.moveset.down_special.rope_switch else NO_MOVE
+		if input.move_x == 0.0 and stats.moveset.neutral_special.rope_frenzy \
+				and frenzy_frames_left == 0 and frenzy_meter >= 1.0:
+			return &"neutral_special_charge"
+		return NO_MOVE
 	if input.up_held:
 		return &"up_special" if up_special_available else NO_MOVE
 	if input.down_held:
+		if stats.moveset.down_special.ipad != null:
+			return &"down_special" if state != State.AIR else NO_MOVE  # On the ground only.
 		if stats.moveset.down_special.peel != null or stance_data() != null:
 			return &"down_special"  # Places a banana peel / switches stance, also in the air.
-		return &"down_special_dive" if state == State.AIR else &"down_special"
+		if state == State.AIR:
+			return &"down_special_dive"
+		# Pia's belly flop hops up first.
+		return &"belly_hop" if stats.moveset.down_special.hop_speed > 0.0 else &"down_special"
 	if input.move_x != 0.0:
+		if stats.moveset.side_special.grab != null:
+			return &"side_special"  # A grab: no projectile to wait for.
 		return &"side_special" if not has_projectile else NO_MOVE
 	if stats.moveset.neutral_special.hand != null:
 		# A summon: no charge, one hand at a time.
@@ -835,6 +1116,9 @@ func _start_move(move_name: StringName, input: FighterInput) -> void:
 		up_special_available = false
 		_launched = false
 		_fast_falling = false
+	if move_name == &"belly_hop":
+		velocity.y = -stats.moveset.down_special.hop_speed
+		_fast_falling = false
 	_move_airborne = not on_ground
 	_can_short_hop = false
 	_hit_victims.clear()
@@ -847,6 +1131,8 @@ func _start_move(move_name: StringName, input: FighterInput) -> void:
 ## Turns the charge into the punch: a copy of the punch's data with the charge's extra power.
 func _release_punch(charge: float) -> void:
 	var punch := stats.moveset.neutral_special
+	if punch.rope_frenzy and charge * punch.charge_frames >= punch.min_charge_frames:
+		start_frenzy(charge)  # No punch: the ropes go faster instead (if charged long enough).
 	_charged_punch = punch.duplicate() as MoveData
 	_charged_punch.damage = punch.damage + punch.charge_damage * charge
 	_charged_punch.base_knockback = punch.base_knockback + punch.charge_knockback * charge
@@ -915,6 +1201,8 @@ func _move_during_attack(input: FighterInput) -> void:
 		velocity = (target - global_position) / DELTA
 	elif move == &"down_special_dive":
 		velocity = Vector2(0.0, stats.moveset.down_special.dive_speed)
+	elif move == &"grab_throw" or move == &"lasso_reel":
+		velocity = Vector2.ZERO  # Stands (or hangs in the air) while throwing or reeling in.
 	elif move == &"up_special" and _launched:
 		_steer(input.move_x, stats.moveset.up_special.drift_speed, stats.air_accel, stats.air_friction)
 		_apply_gravity()
@@ -980,6 +1268,11 @@ func _after_move(input: FighterInput) -> void:
 func _after_move_in_attack(input: FighterInput) -> void:
 	if not is_on_floor():
 		_move_airborne = true
+		if move == &"down_special" and stats.moveset.down_special.ipad != null or move in IPAD_PHASES:
+			# The floor went from under her: she stops sitting and falls.
+			move = NO_MOVE
+			_set_state(State.AIR)
+			return
 		# Up special: helpless once the launch stops rising.
 		if move == &"up_special" and _launched and velocity.y >= 0.0:
 			move = NO_MOVE

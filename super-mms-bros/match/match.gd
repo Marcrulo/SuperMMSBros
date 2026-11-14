@@ -109,6 +109,7 @@ func step() -> void:
 		fighter.has_hand = _hand_of(fighter.player_index) != null
 	for i in _fighters.size():
 		_fighters[i].tick(inputs[i])
+	_advance_throws()
 	_grab_ledges()
 	_start_vines()
 	_advance_pyramids()
@@ -120,6 +121,7 @@ func step() -> void:
 	_advance_peels()
 	_spawn_peels()
 	_trip_on_peels()
+	_resolve_grabs()
 	_resolve_hits()
 	_check_kos_and_respawns()
 	_advance_timers()
@@ -263,10 +265,34 @@ func _start_vines() -> void:
 					and distance < best_distance:
 				best = ledge
 				best_distance = distance
+		var target := _lasso_target(fighter, vine) if best == null else null
 		if best != null:
 			fighter.start_vine_pull(best)
-		else:
+		elif target != null:
+			fighter.start_lasso(target)
+		elif vine.swing:
 			fighter.start_vine_swing()
+		else:
+			fighter.start_lasso_miss()
+
+
+## The fighter a lasso catches: the nearest that can be hit and isn't held, within the vine's
+## grab_range of the thrower's center, in front of it or above (not behind), or null.
+func _lasso_target(fighter: Fighter, vine: VineData) -> Fighter:
+	if vine.grab_range <= 0.0:
+		return null
+	var best: Fighter = null
+	var best_distance := INF
+	for victim in _fighters:
+		if victim == fighter or not victim.can_be_hit():
+			continue
+		var offset := victim.get_center() - fighter.get_center()
+		var distance := offset.length()
+		var behind := offset.x * fighter.facing < -8.0 and offset.y > -8.0
+		if distance <= vine.grab_range and not behind and distance < best_distance:
+			best = victim
+			best_distance = distance
+	return best
 
 
 func get_pyramids() -> Array[Pyramid]:
@@ -353,6 +379,46 @@ func _remove_peel(peel: Peel) -> void:
 	peel.queue_free()
 
 
+## Command grabs (docs/specs/moves.md#mads--grappler): a grab box catches the first fighter it
+## touches that can be hit, shield or not, and starts the throw. P1 first.
+func _resolve_grabs() -> void:
+	for attacker in _fighters:
+		if attacker.active_grab() == null:
+			continue
+		var box := attacker.get_hitbox_rect()
+		for victim in _fighters:
+			if victim != attacker and victim.can_be_hit() and box.intersects(victim.get_hurtbox_rect()):
+				attacker.start_throw(victim)
+				break
+
+
+## Throws in progress: the held fighter is carried round its arc, and slammed on the slam frame.
+func _advance_throws() -> void:
+	for thrower in _fighters:
+		if thrower.throwing == null:
+			continue
+		var victim := thrower.throwing
+		if thrower.state == Fighter.State.ATTACK and thrower.move == &"lasso_reel":
+			if thrower.state_frame >= thrower.stats.moveset.up_special.vine.reel_frames:
+				thrower.finish_lasso()
+				fighter_hit.emit(victim.player_index)
+			else:
+				victim.global_position = thrower.lasso_position(thrower.state_frame)
+				thrower.vine_anchor = victim.get_center()
+			continue
+		if thrower.state != Fighter.State.ATTACK or thrower.move != &"grab_throw":
+			thrower.release_held()
+			continue
+		var grab := thrower.stats.moveset.side_special.grab
+		if thrower.state_frame >= grab.turn_frame:
+			thrower.facing = -thrower.throw_facing  # Turned round with the victim overhead.
+		if thrower.state_frame >= grab.slam_frame:
+			thrower.slam()
+			fighter_hit.emit(victim.player_index)
+		else:
+			victim.global_position = thrower.throw_position(thrower.state_frame)
+
+
 ## Collects every hit for this tick — moves and projectiles — then applies them all, so two
 ## fighters can trade. A shielding victim blocks instead. The knockback side and the attacker's
 ## position are taken while collecting, before anyone turns
@@ -360,8 +426,8 @@ func _remove_peel(peel: Peel) -> void:
 func _resolve_hits() -> void:
 	var hits: Array[Dictionary] = []
 	for attacker in _fighters:
-		if not attacker.is_hitbox_active():
-			continue
+		if not attacker.is_hitbox_active() or attacker.active_grab() != null:
+			continue  # (A grab box never hits.)
 		var hitbox := attacker.get_hitbox_rect()
 		var normal := attacker.move in Fighter.NORMALS
 		var data := attacker.boosted(attacker.current_move(), not normal)
@@ -377,6 +443,26 @@ func _resolve_hits() -> void:
 					"attacker_x": attacker.global_position.x,
 					"normal": normal,
 				})
+	for owner in _fighters:
+		if not owner.ropes_active():
+			continue
+		for victim in _fighters:
+			if victim == owner or not victim.can_be_hit() or victim.rope_immune_frames > 0:
+				continue
+			# At most one rope hit per fighter per tick (the first rope whose tip touches).
+			for i in owner.ropes().count:
+				if owner.rope_can_hit(i, victim.player_index) \
+						and owner.rope_box(i).intersects(victim.get_hurtbox_rect()):
+					var dx := victim.get_center().x - owner.get_center().x
+					hits.append({
+						"rope_owner": owner,
+						"rope": i,
+						"victim": victim,
+						"move": owner.rope_hit(),
+						"side": owner.facing if is_zero_approx(dx) else int(signf(dx)),
+						"attacker_x": owner.global_position.x,
+					})
+					break
 	for projectile in _projectiles:
 		for victim in _fighters:
 			if victim.player_index == projectile.owner_index or not victim.can_be_hit():
@@ -409,6 +495,8 @@ func _resolve_hits() -> void:
 		var victim := hit.victim as Fighter
 		if hit.has("attacker"):
 			(hit.attacker as Fighter).register_hit(victim.player_index)
+		elif hit.has("rope_owner"):
+			(hit.rope_owner as Fighter).register_rope_hit(hit.rope, victim.player_index)
 		elif hit.has("hand"):
 			(hit.hand as Hand).register_hit(victim.player_index)
 		else:
@@ -418,6 +506,9 @@ func _resolve_hits() -> void:
 			fighter_blocked.emit(victim.player_index)
 		else:
 			victim.take_hit(hit.move, hit.side, hit.attacker_x)
+			if hit.has("rope_owner"):
+				# Hurt by a rope: no more rope hits for a while (so they can't be stacked).
+				victim.rope_immune_frames = (hit.rope_owner as Fighter).ropes().immune_frames
 			if hit.get("normal", false):
 				# − stance: a normal attack that lands heals the attacker.
 				var attacker := hit.attacker as Fighter
@@ -453,6 +544,7 @@ func _advance_timers() -> void:
 	for i in _fighters.size():
 		_respawn_frames_left[i] = maxi(_respawn_frames_left[i] - 1, 0)
 		_fighters[i].invulnerable_frames = maxi(_fighters[i].invulnerable_frames - 1, 0)
+		_fighters[i].rope_immune_frames = maxi(_fighters[i].rope_immune_frames - 1, 0)
 
 
 ## Puts everything back to the start of a match, without reloading the scene.

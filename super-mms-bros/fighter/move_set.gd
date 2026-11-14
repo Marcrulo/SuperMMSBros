@@ -17,3 +17,6 @@ extends Resource
 @export var down_special_dive: MoveData
 @export var side_special: MoveData
 @export var up_special: MoveData
+## Jump ropes always spinning round the fighter (Sjippepigen), or null. A fighter with ropes has no
+## attacks but its up special (docs/specs/moves.md#sjippepigen--jump-ropes).
+@export var ropes: RopeData

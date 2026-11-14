@@ -18,6 +18,9 @@ const DEFAULT_ID := "slot_01"
 @export var moveset: MoveSet
 ## Where the neutral special's charge glow is drawn (relative to the feet, facing right).
 @export var charge_glow := Vector2(7, -14)
+## Colors of the ropes/vines the game draws for this character (jump ropes, the rope up special);
+## empty = the defaults.
+@export var rope_colors: PackedColorArray = PackedColorArray()
 
 ## The stats with its own move set applied (made once).
 var _fighter_stats: FighterStats

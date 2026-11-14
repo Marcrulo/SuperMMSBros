@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 0
+active = 0
+recovery = 0
