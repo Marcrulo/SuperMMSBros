@@ -92,6 +92,8 @@ func test_the_flop_matches_the_spec() -> void:
 		[11.0, 200.0, 1.4, 70.0])
 	assert_eq(flop.direction, MoveData.Direction.AWAY)
 	assert_eq([(flop.ability as FlopData).hop_speed, flop.dive_speed], [240.0, 400.0])
+	assert_eq([(flop.ability as FlopData).dive_ticks_per_damage, (flop.ability as FlopData).max_dive_damage],
+		[5, 10.0])
 
 
 func test_the_belly_dive_matches_the_spec() -> void:
@@ -189,7 +191,7 @@ func test_the_flop_hits_on_the_landing_tick() -> void:
 	assert_true(_p1.is_on_floor())
 	assert_true(_p1.is_hitbox_active(), "the impact is on the landing tick")
 	assert_eq(_p2.state, Fighter.State.HITSTUN)
-	assert_eq(_p2.percent, 11.0)
+	assert_eq(_p2.percent, 12.0, "11, +1 for the short dive after the hop")
 	assert_gt(_p2.velocity.x, 0.0, "away from her")
 	var angle := rad_to_deg(atan2(-_p2.velocity.y, _p2.velocity.x))
 	assert_almost_eq(angle, 70.0, 0.5, "70° above horizontal")
@@ -200,7 +202,7 @@ func test_the_flop_hits_behind_her_too() -> void:
 	await _place(Vector2(240, 192), Vector2(210, 192), _flop())
 	_steps(1)
 	_step_until_move(&"belly_flop")
-	assert_eq(_p2.percent, 11.0)
+	assert_eq(_p2.percent, 12.0)
 	assert_lt(_p2.velocity.x, 0.0, "launched away from her, to the left")
 
 
@@ -217,6 +219,61 @@ func test_a_shield_blocks_the_flop() -> void:
 	_steps(1)
 	assert_eq(_p2.state, Fighter.State.SHIELD)
 	assert_eq(_p2.percent, 0.0)
+
+
+## Pia dives from `height` px above the main platform onto P2 standing next to her; P2's damage.
+## x 110: clear of the platforms above the main one.
+func _flop_from(height: float) -> float:
+	await _place(Vector2(110, 192 - height), Vector2(140, 192), _flop())
+	_steps(1)
+	assert_gt(_step_until_move(&"belly_flop", 240), 0, "lands into the flop")
+	return _p2.percent
+
+
+func test_a_longer_dive_hits_harder() -> void:
+	var ticks := 0
+	await _place(Vector2(110, 92), Vector2(140, 192), _flop())
+	_steps(1)
+	while _p1.move != &"belly_flop" and ticks < 240:
+		_match.step()
+		if _p1.move == &"belly_dive":
+			ticks += 1
+	ticks += 1  # The landing tick moves at the dive speed too.
+	assert_eq(_p2.percent, 11.0 + floorf(ticks / 5.0), "+1 per 5 ticks of diving")
+	assert_gt(_p2.percent, 12.0, "harder than from the ground")
+
+
+func test_a_drop_from_the_top_reaches_the_cap() -> void:
+	# 340 px: just under the blast zone's top (y −160), about 51 ticks of diving.
+	assert_eq(await _flop_from(340.0), 21.0, "11 + at most 10")
+
+
+func test_the_dive_bonus_is_capped() -> void:
+	for a in _p1.abilities:
+		if a is FlopAbility:
+			var low_cap := a.data.duplicate() as FlopData
+			low_cap.max_dive_damage = 2.0
+			a.data = low_cap
+	assert_eq(await _flop_from(300.0), 13.0, "11 + at most the cap")
+
+
+func test_a_flop_from_higher_up_launches_further() -> void:
+	await _flop_from(40.0)
+	var low := _p2.velocity.length()
+	var high_percent := await _flop_from(300.0)
+	assert_gt(high_percent, 12.0)
+	assert_gt(_p2.velocity.length(), low, "more damage, more knockback")
+
+
+func test_the_bonus_starts_over_each_flop() -> void:
+	await _flop_from(300.0)
+	_p2.percent = 0.0
+	_p2.spawn_at(Vector2(140, 192), -1)
+	_steps(40)
+	_match.set_controller(0, ScriptedController.new(_flop()))
+	_steps(1)
+	_step_until_move(&"belly_flop")
+	assert_eq(_p2.percent, 12.0, "a ground flop again")
 
 
 func test_she_gets_up_after_the_flop() -> void:

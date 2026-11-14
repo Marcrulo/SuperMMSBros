@@ -7,3 +7,5 @@
 script = ExtResource("1_flop")
 dive_hit = ExtResource("2_dive")
 hop_speed = 240.0
+dive_ticks_per_damage = 5
+max_dive_damage = 10.0
