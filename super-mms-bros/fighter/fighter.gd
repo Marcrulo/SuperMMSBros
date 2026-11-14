@@ -25,7 +25,7 @@ const NORMALS: Array[StringName] = [&"jab", &"down_tilt", &"up_tilt", &"side_til
 ## Special phases that end by their own rule, not after total_frames.
 const OPEN_ENDED: Array[StringName] = [&"neutral_special_charge", &"down_special_dive", &"up_special",
 		&"vine_pull", &"vine_swing", &"pyramid_rise", &"ipad_watch", &"ipad_stand", &"grab_throw",
-		&"lasso_reel", &"lasso_miss", &"belly_hop"]
+		&"lasso_reel", &"lasso_miss", &"belly_hop", &"belly_dive"]
 ## Trine's iPad break after sitting down (docs/specs/moves.md#trine--ipad-break).
 const IPAD_PHASES: Array[StringName] = [&"ipad_watch", &"ipad_stand"]
 ## The vine up special's phases (docs/specs/moves.md#fidusen--banana-book-vine).
@@ -87,6 +87,8 @@ var rope_immune_frames: int = 0
 var _rope_hits: Array[Dictionary] = []
 ## Who holds this fighter in a command grab (state HELD), or null.
 var held_by: Fighter = null
+## Ticks left before Pia can eat cake again (her down special); 0 at every spawn.
+var cake_cooldown: int = 0
 ## The fighter this one is throwing (move &"grab_throw"), and which way it faced at the catch.
 var throwing: Fighter = null
 var throw_facing: int = 1
@@ -447,7 +449,40 @@ func current_move() -> MoveData:
 		return null
 	if move == &"pyramid_rise":
 		return stats.moveset.up_special.pyramid.tip_hit
+	if move == &"belly_hop":
+		return null
+	if move == &"belly_dive":
+		return flop_data().dive_hit
+	if move == &"belly_flop":
+		return flop_data()
+	if move == &"cake":
+		return cake_data()
 	return stats.moveset.get(move) as MoveData
+
+
+## Pia's belly flop: the special (neutral or down) that is one, or null.
+func flop_data() -> MoveData:
+	for data in [stats.moveset.neutral_special, stats.moveset.down_special]:
+		if data != null and data.dive_hit != null:
+			return data
+	return null
+
+
+## Pia's cake: the special (neutral or down) that eats it, or null.
+func cake_data() -> MoveData:
+	for data in [stats.moveset.neutral_special, stats.moveset.down_special]:
+		if data != null and data.heal > 0.0:
+			return data
+	return null
+
+
+## The belly flop or the cake when `data` (a special) is one of them, else NO_MOVE.
+func _pia_special(data: MoveData) -> StringName:
+	if data.dive_hit != null:
+		return &"belly_dive" if state == State.AIR else &"belly_hop"  # A hop first on the ground.
+	if data.heal > 0.0 and state != State.AIR and cake_cooldown == 0:
+		return &"cake"  # On the ground only, not during the cooldown.
+	return NO_MOVE
 
 
 ## True on the move's active frames.
@@ -711,6 +746,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	frenzy_meter = 0.0
 	rope_immune_frames = 0
 	_rope_hits.clear()
+	cake_cooldown = 0
 	stance = Stance.PLUS
 	set_collision_mask_value(STAGE_PLATFORM_LAYER, true)
 
@@ -725,6 +761,7 @@ func tick(input: FighterInput) -> void:
 		# Placed by the Match; nothing of its own.
 		state_frame += 1
 		return
+	cake_cooldown = maxi(cake_cooldown - 1, 0)
 	_end_finished_state(input)
 	match state:
 		State.AIR:
@@ -994,10 +1031,15 @@ func _special_phases(input: FighterInput) -> void:
 			elif data.ipad != null and state_frame + 1 == data.startup:
 				move = &"ipad_watch"  # Seated: starts watching.
 				state_frame = 0
+		&"cake":
+			var cake := cake_data()
+			if state_frame + 1 == cake.heal_frame:
+				percent = maxf(percent - cake.heal, 0.0)  # The last bite of cake.
+				cake_cooldown = cake.cooldown_frames
 		&"belly_hop":
 			if state_frame > 0 and velocity.y >= 0.0:
 				# Stopped rising: flat on her belly, down she goes.
-				move = &"down_special_dive"
+				move = &"belly_dive"
 				state_frame = 0
 				_hit_victims.clear()
 		&"ipad_watch":
@@ -1092,14 +1134,15 @@ func _pick_special(input: FighterInput) -> StringName:
 			return &"down_special" if state != State.AIR else NO_MOVE  # On the ground only.
 		if stats.moveset.down_special.peel != null or stance_data() != null:
 			return &"down_special"  # Places a banana peel / switches stance, also in the air.
-		if state == State.AIR:
-			return &"down_special_dive"
-		# Pia's belly flop hops up first.
-		return &"belly_hop" if stats.moveset.down_special.hop_speed > 0.0 else &"down_special"
+		if stats.moveset.down_special.dive_hit != null or stats.moveset.down_special.heal > 0.0:
+			return _pia_special(stats.moveset.down_special)
+		return &"down_special_dive" if state == State.AIR else &"down_special"
 	if input.move_x != 0.0:
 		if stats.moveset.side_special.grab != null:
 			return &"side_special"  # A grab: no projectile to wait for.
 		return &"side_special" if not has_projectile else NO_MOVE
+	if stats.moveset.neutral_special.dive_hit != null or stats.moveset.neutral_special.heal > 0.0:
+		return _pia_special(stats.moveset.neutral_special)
 	if stats.moveset.neutral_special.hand != null:
 		# A summon: no charge, one hand at a time.
 		return &"neutral_special" if not has_hand else NO_MOVE
@@ -1117,7 +1160,7 @@ func _start_move(move_name: StringName, input: FighterInput) -> void:
 		_launched = false
 		_fast_falling = false
 	if move_name == &"belly_hop":
-		velocity.y = -stats.moveset.down_special.hop_speed
+		velocity.y = -flop_data().hop_speed
 		_fast_falling = false
 	_move_airborne = not on_ground
 	_can_short_hop = false
@@ -1201,6 +1244,8 @@ func _move_during_attack(input: FighterInput) -> void:
 		velocity = (target - global_position) / DELTA
 	elif move == &"down_special_dive":
 		velocity = Vector2(0.0, stats.moveset.down_special.dive_speed)
+	elif move == &"belly_dive":
+		velocity = Vector2(0.0, flop_data().dive_speed)
 	elif move == &"grab_throw" or move == &"lasso_reel":
 		velocity = Vector2.ZERO  # Stands (or hangs in the air) while throwing or reeling in.
 	elif move == &"up_special" and _launched:
@@ -1284,6 +1329,13 @@ func _after_move_in_attack(input: FighterInput) -> void:
 		up_special_available = true
 		_hit_victims.clear()
 		move = &"down_special"
+		state_frame = 0
+	elif move == &"belly_dive":
+		# Pia's belly lands into the flop, from its first frame.
+		jumps_left = stats.max_air_jumps
+		up_special_available = true
+		_hit_victims.clear()
+		move = &"belly_flop"
 		state_frame = 0
 	elif _move_airborne and (move in NORMALS or (move == &"up_special" and _launched)):
 		# A normal attack (or a launched up special) ends on landing: no landing lag.

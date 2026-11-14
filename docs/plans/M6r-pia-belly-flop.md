@@ -35,3 +35,6 @@ sides. Sound: the hop plays `jump`; the dive `dive`; the impact `burst` (already
 - [x] **Task 3:** code — `MoveData.hop_speed`, `belly_hop` phase, visuals (jump drawings, dust), sound.
 - [x] **Task 4:** data + art — Pia's move files; generator poses (body turned 90°, head put back upright) + `dust.png`; viewer shows it. All 524 tests pass (`test_match_hits` dive test now reads P1's own dive damage, since P1 = Pia).
 - [ ] **Task 5:** user playtest.
+
+*Moved (2026-11-14, M6s):* the user moved the belly flop to her neutral special (Down+B became
+eating cake); see [M6s](M6s-pia-cake-and-flag.md).

@@ -43,6 +43,10 @@ const ANIMATIONS := {
 	"side_special": {"ticks": [5, 5, 6, 6], "loop": false},
 	"up_special": {"ticks": [4, 12, 1], "loop": false},
 }
+## Pia's cake (her neutral_special drawings): the last tick of each stretch and the drawing shown in
+## it (taking it out, bite, chew, bite, chew); after that, happy (3).
+const CAKE_ENDS: Array[int] = [10, 19, 28, 37, 45]
+const CAKE_DRAWINGS: Array[int] = [0, 1, 2, 1, 2]
 const HURTBOX_COLOR := Color(0.3, 0.6, 1.0, 0.35)
 const HITBOX_ACTIVE_COLOR := Color(1.0, 0.15, 0.15, 0.55)
 const HITBOX_IDLE_COLOR := Color(1.0, 0.3, 0.3, 0.5)
@@ -146,6 +150,12 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 				return "side_special"
 			if move == &"belly_hop":
 				return "jump"
+			if move == &"belly_dive":
+				return "down_special_dive"
+			if move == &"belly_flop":
+				return "down_special"
+			if move == &"cake":
+				return "neutral_special"
 			return String(move) if ANIMATIONS.has(String(move)) else "jab"
 		Fighter.State.HITSTUN, Fighter.State.TRIPPED, Fighter.State.HELD:
 			return "hurt"
@@ -172,6 +182,14 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 		Fighter.State.AIR:
 			return "jump" if velocity_y < 0.0 else "fall"
 	return "idle"
+
+
+## Which drawing of Pia's neutral_special strip (the cake) to show `ticks` ticks into it.
+static func cake_frame(ticks: int) -> int:
+	for i in CAKE_ENDS.size():
+		if ticks <= CAKE_ENDS[i]:
+			return CAKE_DRAWINGS[i]
+	return 3
 
 
 ## Which drawing of the down_special strip Trine's iPad break shows, `ticks` ticks into `phase`:
@@ -332,6 +350,9 @@ func _draw() -> void:
 		and _fighter.stats.moveset.down_special.ipad != null
 	if ipad:
 		frame = ipad_frame(_fighter.move, _fighter.state_frame)
+	var cake := _fighter.state == Fighter.State.ATTACK and _fighter.move == &"cake"
+	if cake:
+		frame = cake_frame(_fighter.state_frame)
 	var width := frame_width(texture, drawings)
 	var height := frame_size(texture)
 	# Mirror when facing left; the strips are drawn facing right. Tripped: tipped over backward.
@@ -366,7 +387,12 @@ func _draw() -> void:
 			_draw_charge_glow()
 	if _fighter.state == Fighter.State.ATTACK and _fighter.move == &"down_special":
 		_draw_burst()
+	if _fighter.state == Fighter.State.ATTACK and _fighter.move == &"belly_flop":
 		_draw_dust()
+	if cake:
+		var since := _fighter.state_frame - _fighter.cake_data().heal_frame
+		if since >= 0 and since < HEAL_PLUS_TICKS:
+			_draw_plus(since)
 	if ipad and _fighter.move == &"ipad_watch":
 		_draw_heal_plus()
 	if _fighter.state == Fighter.State.SHIELD:
@@ -518,15 +544,20 @@ func _draw_dust() -> void:
 
 ## Trine's heal "+" signs, rising and fading above her head while she watches.
 func _draw_heal_plus() -> void:
-	var s := _fighter.size_scale()
 	for age in heal_plus_ages(_fighter.stats.moveset.down_special.ipad, _fighter.state_frame):
-		var t := age / float(HEAL_PLUS_TICKS)
-		var at := (HEAL_PLUS_AT - Vector2(0, HEAL_PLUS_RISE * t)) * s
-		var fade := Color(1, 1, 1, 1.0 - t)
-		for part in [Rect2(at.x - 3, at.y - 1, 7, 3), Rect2(at.x - 1, at.y - 3, 3, 7)]:
-			draw_rect(part, HEAL_PLUS_DARK * fade)
-		for part in [Rect2(at.x - 2, at.y, 5, 1), Rect2(at.x, at.y - 2, 1, 5)]:
-			draw_rect(part, HEAL_PLUS * fade)
+		_draw_plus(age)
+
+
+## One heal "+", `age` ticks after its heal: rising and fading above the head.
+func _draw_plus(age: int) -> void:
+	var s := _fighter.size_scale()
+	var t := age / float(HEAL_PLUS_TICKS)
+	var at := (HEAL_PLUS_AT - Vector2(0, HEAL_PLUS_RISE * t)) * s
+	var fade := Color(1, 1, 1, 1.0 - t)
+	for part in [Rect2(at.x - 3, at.y - 1, 7, 3), Rect2(at.x - 1, at.y - 3, 3, 7)]:
+		draw_rect(part, HEAL_PLUS_DARK * fade)
+	for part in [Rect2(at.x - 2, at.y, 5, 1), Rect2(at.x, at.y - 2, 1, 5)]:
+		draw_rect(part, HEAL_PLUS * fade)
 
 
 ## How far Sjippepigen's frenzy is charged (0…1), or 0 when she isn't charging it.

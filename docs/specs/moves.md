@@ -486,30 +486,60 @@ grab ledges.
   rope color. **Her jump ropes rest** (no spinning, no hits, not drawn) for the whole up special:
   the throw, the pull, the reel and the miss (and while rising from a lasso's pop).
 
-### Pia — belly flop
+### Pia — cake, belly flop, flag
 
-Pia's down special is a ground pound done as a **belly flop**: she throws herself up, turns flat
-on her belly in the air and comes down on it, and the impact hits everyone near her on both
-sides. Everything else is the default move set.
+Pia's three own specials: **eating cake** (neutral special), the **belly flop** (down special)
+and **throwing a German flag** (side special). Her up special and normal attacks are the default.
 
-- **On the ground: a hop first** (`belly_hop`, a phase of the down special): she jumps straight
-  up at 240 px/s (`MoveData.hop_speed` on her down special; about 48 px high) and can steer in
-  the air as usual (no hitbox). When she stops rising, the dive starts.
+#### Neutral special — cake
+
+She takes out a slice of cake and eats it, healing (phase `cake`; no charging).
+
+- **On the ground only;** in the air the K press does nothing.
+- 45 / 0 / 15 (60) frames, no hitbox: she takes the slice out, takes bites and chews; on frame
+  45 (`heal_frame`) she's eaten it and her % drops by 8 (`heal`), not below 0; then she pats her
+  belly. She can't move, turn or act meanwhile (on the ground she slides to a stop).
+- **A hit stops it** like any move; if it comes before frame 45 she doesn't heal.
+- **Cooldown:** after a slice she can't eat again for 300 ticks (5 s, `cooldown_frames`,
+  counted from the heal; `Fighter.cake_cooldown`, 0 at every spawn). Until then the K press does
+  nothing.
+- **Data:** `MoveData.heal` (set = this special is eating cake), `heal_frame`,
+  `cooldown_frames`.
+- A green "+" rises above her head when she heals (like Trine's).
+
+#### Down special — belly flop
+
+A ground pound done as a belly flop: she throws herself up, turns flat on her belly in the air
+and comes down on it, and the impact hits everyone near her on both sides.
+
+- **On the ground: a hop first** (`belly_hop`): she jumps straight up at 240 px/s
+  (`hop_speed`; about 46 px high) and can steer in the air as usual (no hitbox). When she stops
+  rising, the dive starts.
 - **In the air:** the dive starts at once (no hop).
-- **The dive** (`down_special_dive`): flat on her belly, she drops straight down at 400 px/s
-  (no steering) until she lands. Her belly hits whoever is under her: hitbox (0, −7), 36×14,
-  damage 7, base 150, growth 1.1, angle −70°, AWAY — it drives the victim down (a victim standing
-  on the ground bounces up instead, like the default dive).
-- **The flop** (`down_special`, on landing, from frame 1): 0 / 6 / 22 (28) frames — the impact
-  is on the landing tick itself (no startup), then she lies flat and gets up. The shockwave hits
-  on both sides: hitbox (0, −8), 80×16 (40 px each side of her feet, up to 16 px high), damage
-  11, base 200, growth 1.4, angle 70°, AWAY: up and away from her. It can hit someone the belly
-  already hit. A shield blocks both.
-- The frames differ from the default down special's 10 / 6 / 12, but the total (28) is the same,
-  so her five drawings still fit the shared timing; the hit is on drawings 0–1, not drawing 2.
-- **Look:** see [art guide](art-guide.md#pias-belly-flop): a dust cloud bursts out on both sides on
+- **The dive** (`belly_dive`): flat on her belly, she drops straight down at 400 px/s
+  (`dive_speed`, no steering) until she lands. Her belly hits whoever is under her
+  (`dive_hit`): hitbox (0, −7), 36×14, damage 7, base 150, growth 1.1, angle −70°, AWAY — it
+  drives the victim down (a victim standing on the ground bounces up instead, like the default
+  dive).
+- **The flop** (`belly_flop`, on landing, from frame 1; the down special's own data):
+  0 / 6 / 22 (28) frames — the impact is on the landing tick itself (no startup), then she lies
+  flat and gets up. The shockwave hits on both sides: hitbox (0, −8), 80×16 (40 px each side of
+  her feet, up to 16 px high), damage 11, base 200, growth 1.4, angle 70°, AWAY: up and away from
+  her. It can hit someone the belly already hit. A shield blocks both.
+- **Data:** `MoveData.dive_hit` (set = this special is a belly flop), `hop_speed`, `dive_speed`.
+- **Look:** see [art guide](art-guide.md#pias-specials): a dust cloud bursts out on both sides on
   impact.
-- Files: `fighter/moves/pia/` (`moveset.tres`, `down_special.tres`, `down_special_dive.tres`).
+
+#### Side special — German flag
+
+She throws a German flag — just the cloth, no pole — straight ahead. It works like the
+[side special](#side-special--projectile) (same frames 10 / 0 / 12, one at a time, straight
+ahead, passes through platforms, gone on a hit, a shield, the blast zone or after 120 ticks),
+with its own picture and numbers: it appears at (16, −16), flies at 260 px/s, hitbox 12×8,
+damage 6, base 100, growth 0.6, angle 30°.
+
+Files: `fighter/moves/pia/` (`moveset.tres`, `neutral_special.tres`, `down_special.tres`,
+`belly_dive.tres`, `side_special.tres`).
 
 ## Damage % and knockback
 

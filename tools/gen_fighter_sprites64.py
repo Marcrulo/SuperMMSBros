@@ -447,7 +447,7 @@ def draw_frame(pose, c, p, heads):
 
     # Front arm: behind the head when raised, so it never covers the face.
     pts = arm_points((top_x - 1 + narrow / 2, top + 3), pose["fa"], pose["fe"], reach)
-    sipping = pose.get("mug") == "sip"
+    sipping = pose.get("mug") == "sip" or pose.get("cake") == "bite"
     if sipping:
         # Trine's sip: the fist up at her chin, holding the tipped mug to her mouth.
         pts = reach_to(pts[0], (neck[0] + SIP_FIST[0], neck[1] + SIP_FIST[1]))
@@ -493,6 +493,9 @@ def draw_frame(pose, c, p, heads):
             f.part(back_fist)
     if not raised:
         f.part(arm)
+    if "cake" in pose:
+        # Pia's slice of cake, in her front fist (at her mouth for a bite).
+        f.part(cake_slice(pts[2], neck, pose["cake"]))
     if "mug" in pose:
         # Her coffee mug, in the front hand (drawn over it); tipped to her lips for a sip, its
         # foot resting in her fist.
@@ -1490,14 +1493,16 @@ SUMMON_ANIMATIONS = {
 FLAT_LEGS = dict(ft=-0.25, fk=1.5, bt=-0.45, bk=1.3)
 FLAIL = dict(fa=-1.1, fe=-0.6, ba=-1.4, be=-0.5)
 SPLAYED = dict(fa=0.35, fe=0.2, ba=0.15, be=0.2)
-BELLY_FLOP_ANIMATIONS = {
-    "down_special_dive": [pose(flat=True, chin=2, **FLAIL, **FLAT_LEGS)],
-    "down_special": [
+# The flop on landing (her down_special strip).
+BELLY_FLOP = [
         pose(flat=True, squash=True, face="shut", **FLAIL, ft=-0.1, fk=0.9, bt=-0.2, bk=0.8),
         pose(flat=True, **SPLAYED, ft=-0.15, fk=0.5, bt=-0.3, bk=0.4),
         pose(flat=True, **SPLAYED, ft=-0.15, fk=0.3, bt=-0.3, bk=0.2),
         pose(crouch=5, lean=3, ft=1.5, fk=2.5, bt=1.1, bk=2.3, fa=1.2, fe=0.2, ba=1.0, be=0.2),
-        pose(crouch=2, lean=1, ft=0.6, fk=1.1, bt=0.3, bk=0.9, fa=0.5, ba=-0.2)],
+        pose(crouch=2, lean=1, ft=0.6, fk=1.1, bt=0.3, bk=0.9, fa=0.5, ba=-0.2)]
+BELLY_FLOP_ANIMATIONS = {
+    "down_special_dive": [pose(flat=True, chin=2, **FLAIL, **FLAT_LEGS)],
+    "down_special": BELLY_FLOP,
 }
 HEAD_OVERLAP = 3       # px of the head over the turned shoulders
 DUST = ((230, 220, 200), (186, 174, 156))   # pale dust, shade
@@ -1549,6 +1554,84 @@ def dust_image():
     return out
 
 
+# --- Pia's cake and flag (docs/specs/art-guide.md#pias-specials) --------------------------------
+
+SPONGE = ((246, 214, 120), (214, 176, 84))
+CREAM = (250, 248, 240)
+ICING = ((246, 150, 186), (214, 112, 152))
+BERRY = (214, 40, 52)
+# The slice, side on (7 wide): icing, cream, sponge, cream, sponge; B = strawberry on top.
+CAKE_ROWS = ["..BB...",
+             "IIIIIII",
+             "CCCCCCC",
+             "SSSSSSS",
+             "CCCCCCC",
+             "SSSSSSs"]
+BITE_FIST = (7, 2)     # the fist at her chin for a bite, from the neck point
+
+
+def cake_slice(fist, neck, look):
+    """Pia's slice of cake on her front fist: "low" at her chest, "bitten" with a bite out of its
+    front corner, "bite" held up at her mouth."""
+    fx, fy = round(fist[0]), round(fist[1])
+    x0, y0 = fx - 3, fy - 6
+    colors = {"B": BERRY, "I": ICING[0], "C": CREAM, "S": SPONGE[0], "s": SPONGE[1]}
+    out = {}
+    for y, row in enumerate(CAKE_ROWS):
+        for x, ch in enumerate(row):
+            if ch == ".":
+                continue
+            if look == "bitten" and x >= 5 and y <= 3:
+                continue                      # the bite out of its front corner
+            color = colors[ch]
+            if ch == "S" and x == 6:
+                color = SPONGE[1]
+            if ch == "I" and x == 6:
+                color = ICING[1]
+            out[(x0 + x, y0 + y)] = color
+    return out
+
+
+FLAG_FRAME = 32
+FLAG_COLORS = [(24, 24, 28), (214, 32, 40), (250, 204, 40)]   # black, red, gold
+
+
+def flag_image():
+    """The German flag thrown on its own (no pole), flying right: 16x9 cloth in black, red and
+    gold stripes, rippling (each column shifted by a wave that moves along it); 3 drawings of
+    32x32."""
+    n = FLAG_FRAME
+    w, top = 16, 11
+    x0 = (n - w) // 2
+    out = Image.new("RGBA", (n * 3, n), (0, 0, 0, 0))
+    for i in range(3):
+        f = Frame()
+        px = {}
+        for x in range(w):
+            dy = round(1.2 * math.sin(x * 0.6 - i * 2.1))
+            for stripe, color in enumerate(FLAG_COLORS):
+                for k in range(3):
+                    shade = (x - 2 * i) % 6 == 0
+                    px[(x0 + x, top + stripe * 3 + k + dy)] = \
+                        looks.scale(color, 0.82) if shade and stripe else color
+        f.part(px)
+        frame = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+        for (x, y), color in f.px.items():
+            if 0 <= x < n and 0 <= y < n:
+                frame.putpixel((x, y), color + (255,))
+        out.paste(frame, (i * n, 0))
+    return out
+
+
+CAKE_LOW = dict(fa=0.55, fe=1.9)
+CAKE_ANIMATIONS = {
+    "neutral_special": [pose(cake="low", **CAKE_LOW),
+                        pose(cake="bite", face="shut", head_dy=-1, fa=0.35, fe=2.5),
+                        pose(cake="bitten", bob=1, **CAKE_LOW),
+                        pose(face="shut", head_dy=-1, fa=0.3, fe=1.4, ba=-0.3)],
+}
+
+
 # --- Output -----------------------------------------------------------------------------------
 
 
@@ -1577,15 +1660,19 @@ def frames_for(c):
         own.update(SLAM_ANIMATIONS)
     if c.get("belly_flop"):
         own.update(BELLY_FLOP_ANIMATIONS)
+    if c.get("cake"):
+        own.update(CAKE_ANIMATIONS)
+    return {name: [draw_pose(ps, c, p, heads) for ps in own.get(name, poses)]
+            for name, poses in ANIMATIONS.items()}
 
-    def drawn(ps):
-        if not ps.get("flat"):
-            return draw_frame(ps, c, p, heads)
-        body = draw_frame(dict(ps, headless=True), c, p, heads)
-        head = draw_frame(dict(ps, head_only=True), c, p, heads)
-        return flat(body, head, ps.get("squash", False), ps.get("chin", 0))
 
-    return {name: [drawn(ps) for ps in own.get(name, poses)] for name, poses in ANIMATIONS.items()}
+def draw_pose(ps, c, p, heads):
+    """One drawing; a `flat` pose (Pia's belly flop) turned to lie on its belly."""
+    if not ps.get("flat"):
+        return draw_frame(ps, c, p, heads)
+    body = draw_frame(dict(ps, headless=True), c, p, heads)
+    head = draw_frame(dict(ps, head_only=True), c, p, heads)
+    return flat(body, head, ps.get("squash", False), ps.get("chin", 0))
 
 
 def left_strip(c, name):
@@ -1662,6 +1749,8 @@ def write_character(c, out):
         left_strip(c, "down_special").save(out / "fighter_down_special_left.png")
     if c.get("belly_flop"):
         dust_image().save(out / "dust.png")
+    if c.get("flag"):
+        flag_image().save(out / "projectile.png")
     if c.get("peel"):
         peel_image().save(out / "peel.png")
         book_image().save(out / "projectile.png")

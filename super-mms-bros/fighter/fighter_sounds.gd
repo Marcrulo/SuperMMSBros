@@ -55,7 +55,7 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 			out.append(&"swing_heavy")
 		elif move == &"neutral_special_charge":
 			out.append(&"charge")
-		elif move == &"down_special_dive":
+		elif move == &"down_special_dive" or move == &"belly_dive":
 			out.append(&"dive")
 		elif move == &"belly_hop":
 			out.append(&"jump")  # Pia's hop before her belly flop.
@@ -66,7 +66,8 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 		out.append(&"charge_stop")
 	if after.projectile_out and not before.projectile_out:
 		out.append(&"zap")
-	if move == &"down_special" and after.hitbox_active and not before.hitbox_active:
+	if (move == &"down_special" or move == &"belly_flop") and after.hitbox_active \
+			and not before.hitbox_active:
 		out.append(&"burst")
 	var popped: bool = before.move == &"pyramid_rise"  # Off the pyramid's tip.
 	if move == &"up_special" and state == Fighter.State.ATTACK \

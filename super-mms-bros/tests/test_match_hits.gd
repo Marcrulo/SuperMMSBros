@@ -12,7 +12,14 @@ var _p1: Fighter
 var _p2: Fighter
 
 
+## P1 plays a character with the default move set (Pia, the default P1, has her own specials).
+const DEFAULT_MOVES_ID := "slot_04"
+
+var _saved_character_id: String = ""
+
 func before_each() -> void:
+	_saved_character_id = Game.character_id
+	Game.character_id = DEFAULT_MOVES_ID
 	_match = MATCH_SCENE.instantiate()
 	_match.auto_step = false
 	add_child_autofree(_match)
@@ -162,3 +169,7 @@ func test_blocked_hit_is_announced() -> void:
 	assert_eq(_p2.state, Fighter.State.SHIELD, "the jab hit the shield")
 	assert_signal_emitted_with_parameters(_match, "fighter_blocked", [1])
 	assert_signal_not_emitted(_match, "fighter_hit", "a blocked hit isn't a hit")
+
+
+func after_each() -> void:
+	Game.character_id = _saved_character_id

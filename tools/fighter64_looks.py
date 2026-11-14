@@ -138,7 +138,8 @@ WHITE_SHIRT = (232, 236, 240)
 CHARACTERS = {
     "slot_01": dict(name="Pia", skin=(232, 160, 122), hair=(150, 52, 26),
                     hair_light=(190, 82, 40), hair_style="bob", blush=(222, 120, 110), mouth="soft", build="heavy",
-                    shirt=(132, 78, 182), pants=JEANS, belly_flop=True),
+                    shirt=(132, 78, 182), pants=JEANS, belly_flop=True, cake=True,
+                    flag=True),
     "slot_02": dict(name="Gitte", skin=FAIR, hair=(232, 236, 242), hair_shade=(184, 190, 204),
                     hair_light=(255, 255, 255), hair_style="puff", shirt=(226, 48, 120),
                     shirt_shade=(160, 16, 88), inner=(250, 150, 190), lips=(196, 40, 112), pants=DARK,

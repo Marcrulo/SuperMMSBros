@@ -10,7 +10,14 @@ var _p1: Fighter
 var _p2: Fighter
 
 
+## P1 plays a character with the default move set (Pia, the default P1, has her own specials).
+const DEFAULT_MOVES_ID := "slot_04"
+
+var _saved_character_id: String = ""
+
 func before_each() -> void:
+	_saved_character_id = Game.character_id
+	Game.character_id = DEFAULT_MOVES_ID
 	_match = MATCH_SCENE.instantiate()
 	_match.auto_step = false
 	add_child_autofree(_match)
@@ -146,3 +153,7 @@ func test_shield_blocks_a_jab_in_the_match() -> void:
 	assert_eq(_p2.percent, 0.0)
 	assert_eq(_p2.state, Fighter.State.SHIELD)
 	assert_gt(_p2.position.x, 250.0, "pushed away")
+
+
+func after_each() -> void:
+	Game.character_id = _saved_character_id

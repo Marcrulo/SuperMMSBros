@@ -153,6 +153,20 @@ func test_every_sound_has_a_stream_in_the_default_set() -> void:
 var _match: Match
 
 
+## P1 plays a character with the default move set (Pia, the default P1, has her own specials).
+const DEFAULT_MOVES_ID := "slot_04"
+
+var _saved_character_id: String = ""
+
+func before_each() -> void:
+	_saved_character_id = Game.character_id
+	Game.character_id = DEFAULT_MOVES_ID
+
+
+func after_each() -> void:
+	Game.character_id = _saved_character_id
+
+
 func _start_match() -> void:
 	_match = MATCH_SCENE.instantiate()
 	_match.auto_step = false

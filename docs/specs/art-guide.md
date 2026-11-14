@@ -226,17 +226,27 @@ strips like any body part, by the 64 px generator from the poses, so it follows 
   drawings of 16×16 turned 120° further each.
 - **Stances ÷ and ×** draw her frames at ×0.75 / ×1.25 of the usual ¾ size, feet at the origin.
 
-### Pia's belly flop
+### Pia's specials
 
-No weapon; her frames stay 64×64. Her down special (see [moves](moves.md#pia--belly-flop)):
+No weapon; her frames stay 64×64. See [moves](moves.md#pia--cake-belly-flop-flag).
+
+**Cake** (her `neutral_special` strip, 4 drawings, shown by the move's own timing, not the shared
+one): a slice of layer cake (7×6, side on: pink icing with a red strawberry on top, white cream,
+yellow sponge, cream, sponge) in her front hand. 1 taking it out, held at her chest (ticks 1–10);
+2 a bite, the slice at her mouth, eyes shut (11–19 and 29–37); 3 chewing, the slice lowered, a
+bite out of its front corner (20–28 and 38–45); 4 happy, eyes shut, slice gone, hand on her belly
+(46–60).
+
+**Belly flop** (her down special):
 
 - **The hop** uses her usual `jump` drawings.
 - **The dive** (`down_special_dive`, 1 drawing): flat on her belly in the air, shoulders toward
   the facing side, her head upright at the front looking ahead, one arm flailing up behind it,
   knees bent so her feet kick up behind her.
-- **The flop** (`down_special`, 5 drawings): 1 the impact, flat on the floor, squashed a pixel,
-  arm flailing, eyes shut; 2 and 3 lying flat, arms back along her body, her chin on the floor;
-  4 pushing herself up, crouched low and leaning forward; 5 crouching, getting up.
+- **The flop** (`down_special`, 5 drawings, the shared timing): 1 the impact, flat on the floor,
+  squashed a pixel, arm flailing, eyes shut; 2 and 3 lying flat, arms back along her body, her
+  chin on the floor; 4 pushing herself up, crouched low and leaning forward; 5 crouching, getting
+  up.
 - The flat drawings are posed upright without the head, turned 90° (a quarter turn moves every
   pixel onto the grid, so the art isn't distorted) and set down with the lowest pixel on the
   floor row; then the head is drawn on upright at the front (3 px over the shoulders), so the
@@ -245,6 +255,10 @@ No weapon; her frames stay 64×64. Her down special (see [moves](moves.md#pia--b
   6 px out from her feet; 3 ticks each from the first active frame, so on impact): puffs of
   pale dust (230, 220, 200) shaded (186, 174, 156) rolling out along the floor and up, growing,
   then breaking up and fading. Presentation only.
+
+**German flag** (`projectile.png`, 3 drawings of 32×32, drawn at ¾): just the cloth, no pole:
+16×9, black, red and gold stripes (3 px each), rippling as it flies — each column shifted up or
+down a pixel by a wave that moves along it from drawing to drawing, a few columns shaded.
 
 ### Gitte's pyramid
 

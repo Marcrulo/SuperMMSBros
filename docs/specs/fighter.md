@@ -311,8 +311,11 @@ Drawn from the fighter's state; never changes gameplay state.
 - **Pyramid:** while Gitte rides her pyramid up (`pyramid_rise`), her up special's second drawing
   (arms up); the pyramid itself is drawn by its own node (see
   [art guide](art-guide.md#gittes-pyramid)).
-- **Belly hop:** while Pia hops before her belly flop (`belly_hop`), her `jump` drawings; the
-  flop's dust is drawn on both sides of her (see [art guide](art-guide.md#pias-belly-flop)).
+- **Pia:** eating cake (`cake`), her `neutral_special` drawings by the cake's own timing, and a
+  green "+" when she heals; hopping before her belly flop (`belly_hop`), her `jump` drawings;
+  diving (`belly_dive`), her `down_special_dive` drawing; the flop (`belly_flop`), her
+  `down_special` drawings, with dust drawn on both sides of her (see
+  [art guide](art-guide.md#pias-specials)).
 - **Charge:** a glow grows as the neutral special charges, at the character's
   `CharacterData.charge_glow` point (the fists by default; Henrik: his raised guitar).
 - **Invulnerable:** the whole fighter blinks (hidden 4 ticks, shown 4 ticks).

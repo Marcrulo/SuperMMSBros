@@ -38,8 +38,17 @@ enum Direction { FACING, AWAY }
 @export var drift_speed: float
 ## Down special in the air: diving speed.
 @export var dive_speed: float
-## Down special on the ground: hops up this fast first (`belly_hop`), then dives (0 = no hop).
+## Neutral special as a belly flop (Pia): the belly's hit while diving; set = this neutral
+## special is a belly flop (on the ground a hop at `hop_speed`, then a dive at `dive_speed`, then
+## the flop on landing, which is this move's own hit).
+@export var dive_hit: MoveData
+## Belly flop: hops up this fast first on the ground (`belly_hop`), then dives.
 @export var hop_speed: float
+## Down special as eating (Pia's cake; no hitbox, ground only): heals this many % on frame
+## `heal_frame`, then can't be used again for `cooldown_frames` ticks.
+@export var heal: float
+@export var heal_frame: int
+@export var cooldown_frames: int
 ## Side special: the projectile (its size, damage and knockback are this move's hitbox and hit
 ## values; it appears at hitbox_center on frame `startup`).
 @export var projectile_speed: float
