@@ -78,3 +78,43 @@ Full details in `docs/specs/architecture.md`. In short:
 - The user playtests — Claude can't see the game window, so ask the user how things look and feel.
 - Git: branch `main`, remote `origin` = github.com/Marcrulo/SuperMMSBros. Commit only when asked
   or when a plan step says so; don't push unless asked.
+
+## Character branches (parallel sessions)
+
+Each character has its own branch, `char/<name>` (lowercase first name, as in
+`fighter/moves/<name>/`): `char/pia`, `char/gitte`, `char/trine`, `char/nina`, `char/michael`,
+`char/henrik`, `char/stig`, `char/casper`, `char/kim`, `char/mette`, `char/mads`,
+`char/sjippepigen`, `char/fidusen`, `char/magnus`. Work that isn't about one character (engine,
+stages, menus, CPU, milestones) happens on `main` or its own feature branch.
+
+- **Work on a character only on its branch, in its own worktree.** Several sessions run at once,
+  and one folder can only have one branch checked out, so each branch lives in its own folder:
+  `git worktree add ../SuperMMSBros-<name> char/<name>` (run from the repo root; skip if the
+  folder exists). Work and run every command from that folder. In a new worktree, first link
+  the gitignored assets from the main checkout, then import:
+  ```bash
+  M=../SuperMMSBros/super-mms-bros; W=super-mms-bros
+  ln -s "$(realpath $M/assets/music)" $W/assets/music
+  for f in fonts/ink_yugo.otf sfx/menu_confirm.wav; do ln -s "$(realpath $M/assets/$f)" $W/assets/$f; done
+  godot --headless --path super-mms-bros --import
+  ```
+- **Stay inside the character.** Character-owned files: `fighter/moves/<name>/`,
+  `fighter/characters/slot_NN.tres`, `assets/fighters/slot_NN/` and its portrait,
+  `tests/test_<name>*.gd`, `docs/plans/` files for that character, and that character's
+  section of `docs/specs/moves.md` / `docs/specs/art-guide.md` / the look entry in
+  `tools/fighter64_looks.py`.
+- **Shared files** are everything else — mainly `fighter/fighter.gd`, `fighter/fighter_visuals.gd`,
+  `fighter/move_data.gd` and other `*_data.gd`, `match/match.gd`, `tools/gen_fighter_sprites64.py`,
+  `tests/test_character_moves.gd`, and other characters' sections of the specs. Change them
+  only when the feature truly needs it, keep the change small and generic (a hook or a new
+  field other characters could use, not a big `if character == ...` block), and never change
+  another character's behaviour or look.
+- **Mark shared changes** so merging is easy: put them in their own commits whose message starts
+  with `shared:` and says what changed and why (e.g. `shared: Fighter gets on_landed() hook for
+  Pia's belly flop`). Generated sprites for other characters that change only because the shared
+  generator changed also go in a `shared:` commit. Mention every shared change to the user.
+- **Merging back:** first `git merge main` into the character branch, fix conflicts, regenerate
+  generated files (sprites, sounds) instead of hand-merging them, run the full test suite, then
+  merge into `main` (only when the user asks). Merge `main` into the character branch often —
+  small conflicts early beat big ones late. List the `shared:` commits for the user before the
+  merge into `main`.
