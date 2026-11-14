@@ -14,8 +14,8 @@ physics toward the tip; hitbox `tip_hit` placed at the tip) and a `Pyramid` node
 rises with its owner's ride and sinks once it ends. Visuals: Gitte's own up special poses;
 `pyramid.png` drawn clipped at the floor line.
 
-**Spec:** [moves](../specs/moves.md#gitte--scissors-and-stances),
-[art guide](../specs/art-guide.md#gittes-pyramid), [architecture](../specs/architecture.md#tick-order),
+**Spec:** [moves](../specs/characters/gitte.md#gitte--scissors-and-stances),
+[art guide](../specs/characters/gitte.md#gittes-pyramid), [architecture](../specs/architecture.md#tick-order),
 [sound](../specs/sound.md), [fighter](../specs/fighter.md#visuals-fightervisuals)
 
 ## Review Focus

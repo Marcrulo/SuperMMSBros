@@ -1,11 +1,11 @@
 class_name Pyramid
 extends Node2D
-## Gitte's pyramid (docs/specs/moves.md#gitte--scissors-and-stances): rises out of the floor while
+## Gitte's pyramid (docs/specs/characters/gitte.md#gitte--scissors-and-stances): rises out of the floor while
 ## she rides its tip, then sinks back into it and is gone. It isn't solid and has no hitbox of its
 ## own (the tip's hit is her move's). Owned and advanced by the Match; drawing only reads.
 
 const SINK_SHAKE_TICKS := 2
-## Its drawing (docs/specs/art-guide.md#gittes-pyramid), drawn at the fighters' 3/4 scale.
+## Its drawing (docs/specs/characters/gitte.md#gittes-pyramid), drawn at the fighters' 3/4 scale.
 const DRAWING := Vector2(168, 128)
 const SCALE := 0.75
 

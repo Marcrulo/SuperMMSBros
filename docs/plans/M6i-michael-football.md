@@ -13,7 +13,7 @@ picks the target angle or NAN; the Match picks a random angle from its new seede
 (`Match.rng`, seeded at start and in `reset(seed)`, `--seed=N`) when there's none. Michael's
 `side_special.tres` + generator: ball picture and his kick pose.
 
-**Spec:** [moves](../specs/moves.md#michael-bech--football), [art guide](../specs/art-guide.md#michaels-football),
+**Spec:** [moves](../specs/characters/michael.md#michael-bech--football), [art guide](../specs/characters/michael.md#michaels-football),
 [match and stage](../specs/match-and-stage.md#reset)
 
 ## Review Focus

@@ -1,5 +1,5 @@
 extends GutTest
-## Michael's big hand (docs/specs/moves.md#michael-bech--big-hand). P1 is Michael; scripted
+## Michael's big hand (docs/specs/characters/michael.md#michael-bech--big-hand). P1 is Michael; scripted
 ## [idle, neutral special] starts the summon on step 2, so the hand appears on step 11 (frame 10).
 ## The main platform's top is y 192 (x 96…384); the left platform's top y 150 (x 132…204).
 

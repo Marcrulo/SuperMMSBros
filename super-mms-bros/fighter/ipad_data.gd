@@ -1,6 +1,6 @@
 class_name IpadData
 extends Resource
-## Trine's iPad break (docs/specs/moves.md#trine--ipad-break): how long she can watch and how
+## Trine's iPad break (docs/specs/characters/trine.md#trine--ipad-break): how long she can watch and how
 ## fast it heals her.
 
 ## Ticks she can watch at most (while down is held).

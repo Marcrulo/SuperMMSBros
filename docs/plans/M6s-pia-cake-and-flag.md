@@ -19,7 +19,7 @@ bite. Generator: look flags `belly_flop` (flop poses now in the `belly_flop` str
 `flag`.
 
 **Spec:** [moves](../specs/moves.md#pia--belly-flop-cake-flag),
-[art guide](../specs/art-guide.md#pias-specials), [fighter](../specs/fighter.md)
+[art guide](../specs/characters/pia.md#pias-specials), [fighter](../specs/fighter.md)
 
 ---
 

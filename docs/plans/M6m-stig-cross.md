@@ -11,7 +11,7 @@ placement; a weapon flag `choke=False` keeps the hand on the hilt where Henrik c
 neck. `fighter/moves/stig/` copies Henrik's three moves (same frames, damage, knockback, charge)
 with hitboxes fitted to the drawn cross; `slot_07.tres` gets the move set and `charge_glow`.
 
-**Spec:** [moves](../specs/moves.md#stig--cross), [art guide](../specs/art-guide.md#weapons)
+**Spec:** [moves](../specs/characters/stig.md#stig--cross), [art guide](../specs/art-guide.md#weapons)
 
 ## Review Focus
 

@@ -9,7 +9,7 @@ enum State {
 	SPOT_DODGE, ROLL, AIR_DODGE, LEDGE, LEDGE_CLIMB, TRIPPED, HELD,
 }
 
-## Gitte's stances (docs/specs/moves.md#gitte--scissors-and-stances), in switching order.
+## Gitte's stances (docs/specs/characters/gitte.md#gitte--scissors-and-stances), in switching order.
 enum Stance { PLUS, MINUS, DIVIDE, MULTIPLY }
 
 ## One tick of game time, in seconds (the game runs at 60 ticks per second).
@@ -26,9 +26,9 @@ const NORMALS: Array[StringName] = [&"jab", &"down_tilt", &"up_tilt", &"side_til
 const OPEN_ENDED: Array[StringName] = [&"neutral_special_charge", &"down_special_dive", &"up_special",
 		&"vine_pull", &"vine_swing", &"pyramid_rise", &"ipad_watch", &"ipad_stand", &"grab_throw",
 		&"lasso_reel", &"lasso_miss", &"belly_hop", &"belly_dive"]
-## Trine's iPad break after sitting down (docs/specs/moves.md#trine--ipad-break).
+## Trine's iPad break after sitting down (docs/specs/characters/trine.md#trine--ipad-break).
 const IPAD_PHASES: Array[StringName] = [&"ipad_watch", &"ipad_stand"]
-## The vine up special's phases (docs/specs/moves.md#fidusen--banana-book-vine).
+## The vine up special's phases (docs/specs/characters/fidusen.md#fidusen--banana-book-vine).
 const VINE_PHASES: Array[StringName] = [&"vine_pull", &"vine_swing", &"lasso_reel", &"lasso_miss"]
 ## The up special and its phases (her jump ropes rest during them).
 const UP_SPECIAL_PHASES: Array[StringName] = [&"up_special", &"vine_pull", &"vine_swing",
@@ -304,7 +304,7 @@ func active_grab() -> GrabData:
 	return data.grab
 
 
-## Catches `victim` in the command grab in progress: starts the throw (docs/specs/moves.md#mads--grappler).
+## Catches `victim` in the command grab in progress: starts the throw (docs/specs/characters/mads.md#mads--grappler).
 func start_throw(victim: Fighter) -> void:
 	throwing = victim
 	throw_facing = facing
@@ -328,7 +328,7 @@ func become_held(holder: Fighter) -> void:
 		_ledge_regrab_left = stats.ledge_regrab_frames
 
 
-## Where the held fighter's feet are on throw frame `frame` (docs/specs/moves.md#mads--grappler):
+## Where the held fighter's feet are on throw frame `frame` (docs/specs/characters/mads.md#mads--grappler):
 ## the middle of its body follows the grab's path (in the thrower's grip).
 func throw_position(frame: int) -> Vector2:
 	var grab := stats.moveset.side_special.grab

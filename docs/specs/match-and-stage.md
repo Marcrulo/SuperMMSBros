@@ -106,7 +106,7 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
   - for a fighter with the **frenzy** (Sjippepigen): the frenzy meter, a 62×4 bar along the card's
     bottom at (30, 25) (`FrenzyBar`): dark `#1a1c2c`, filled from the left in her first rope color
     as the meter refills, flashing (lightened 60 %, 8 frames on, 8 off) when full (see
-    [moves](moves.md#sjippepigen--jump-ropes)).
+    [moves](characters/sjippepigen.md#sjippepigen--jump-ropes)).
 - **Stage name:** the stage's name in the top-left corner for the first 3 seconds of a match.
 - **Countdown:** large text in the center ("3", "2", "1", "GO!").
 - **Off-screen arrows:** when a fighter (not `KO`) is fully outside the visible screen, a small

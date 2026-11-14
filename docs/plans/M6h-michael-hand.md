@@ -14,8 +14,8 @@ lists), removes them on finish/KO/reset, emits `hand_landed`. `Stage.floor_below
 landing y. Michael (`slot_05`) gets `fighter/moves/michael/` via `CharacterData.moveset`. The
 generator draws `hand.png` and Michael's own summon pose.
 
-**Spec:** [moves](../specs/moves.md#michael-bech--big-hand), [architecture](../specs/architecture.md#tick-order),
-[match and stage](../specs/match-and-stage.md), [art guide](../specs/art-guide.md#michaels-hand),
+**Spec:** [moves](../specs/characters/michael.md#michael-bech--big-hand), [architecture](../specs/architecture.md#tick-order),
+[match and stage](../specs/match-and-stage.md), [art guide](../specs/characters/michael.md#michaels-hand),
 [sound](../specs/sound.md)
 
 ## Review Focus

@@ -1,5 +1,5 @@
 extends GutTest
-## Mads's lollipop (docs/specs/moves.md#mads--grappler): a crossing guard's stop sign on his back,
+## Mads's lollipop (docs/specs/characters/mads.md#mads--grappler): a crossing guard's stop sign on his back,
 ## swung in his side tilt; its hitbox fitted to where the sign is drawn.
 
 const MADS := "slot_11"

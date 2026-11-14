@@ -54,8 +54,8 @@ the Match and assigned one per fighter.
 | `FighterStats` | `Resource` | All fighter tuning numbers and its `MoveSet`. One `.tres` file per fighter design. |
 | `MoveSet` / `MoveData` | `Resource` | The eight moves of a design and each move's frame data, hitbox and knockback (see [moves](moves.md)). |
 | `Projectile` | `Node2D` | The side special's projectile: position, direction, owner, age; advanced by the Match. |
-| `Hand` / `HandData` | `Node2D` / `Resource` | Michael's summoned hand (hover, slam, impact) and its tuning; advanced by the Match (see [moves](moves.md#michael-bech--big-hand)). |
-| `Pyramid` / `PyramidData` | `Node2D` / `Resource` | Gitte's rising pyramid (rise, sink) and its up special's tuning; advanced by the Match (see [moves](moves.md#gitte--scissors-and-stances)). |
+| `Hand` / `HandData` | `Node2D` / `Resource` | Michael's summoned hand (hover, slam, impact) and its tuning; advanced by the Match (see [moves](characters/michael.md#michael-bech--big-hand)). |
+| `Pyramid` / `PyramidData` | `Node2D` / `Resource` | Gitte's rising pyramid (rise, sink) and its up special's tuning; advanced by the Match (see [moves](characters/gitte.md#gitte--scissors-and-stances)). |
 | `FighterVisuals` | `Node2D` (child of Fighter) | Draws the fighter's sprite from its state, plus shield, charge glow and the debug view. |
 | `FighterInput` | `RefCounted` | One tick of input (see [fighter](fighter.md#input)). |
 | `Controller` | `RefCounted` (base class) | `get_input(state) -> FighterInput`, `reset()`. |

@@ -1,5 +1,5 @@
 extends GutTest
-## Mads's side special, the over-the-head slam: a command grab (docs/specs/moves.md#mads--grappler).
+## Mads's side special, the over-the-head slam: a command grab (docs/specs/characters/mads.md#mads--grappler).
 ## P1 is Mads; scripted [idle, side special] starts it on step 2, so frame N of it is step N + 1:
 ## the grab box is out on frames 10–13 = steps 11–14. A catch on step 11 starts the throw, whose
 ## frame k is step 11 + k: the slam on throw frame 24 = step 35, free after frame 40 = step 52.

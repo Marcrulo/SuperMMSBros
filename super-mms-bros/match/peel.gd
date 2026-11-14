@@ -1,6 +1,6 @@
 class_name Peel
 extends Node2D
-## A banana peel (docs/specs/moves.md#fidusen--banana-book-vine): falls to the floor below, then
+## A banana peel (docs/specs/characters/fidusen.md#fidusen--banana-book-vine): falls to the floor below, then
 ## lies there until someone slips on it or its time is up. Owned and advanced by the Match, one
 ## tick at a time; drawing only reads.
 

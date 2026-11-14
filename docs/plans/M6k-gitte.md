@@ -15,7 +15,7 @@ applies `+` to projectiles at spawn, `−`'s lifesteal on normal-attack hits, sp
 Visuals draw at the size scale; `PlayerCard` gets a `StanceBadge`. Generator: scissors weapon
 (with an opening angle), weapon-specific back placement, Gitte's poses, volley picture.
 
-**Spec:** [moves](../specs/moves.md#gitte--scissors-and-stances), [HUD](../specs/match-and-stage.md#hud),
+**Spec:** [moves](../specs/characters/gitte.md#gitte--scissors-and-stances), [HUD](../specs/match-and-stage.md#hud),
 [art guide](../specs/art-guide.md#weapons), [fighter](../specs/fighter.md#visuals-fightervisuals)
 
 ## Review Focus

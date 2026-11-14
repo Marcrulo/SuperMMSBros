@@ -1,5 +1,5 @@
 extends GutTest
-## Gitte's pyramid up special (docs/specs/moves.md#gitte--scissors-and-stances). P1 is Gitte;
+## Gitte's pyramid up special (docs/specs/characters/gitte.md#gitte--scissors-and-stances). P1 is Gitte;
 ## scripted [idle, up special] starts it on step 2, so its frame 4 (the choice) is step 5, the
 ## rise's 18 ticks are steps 6–23 and the pop is step 24. Main platform top y 192 (x 96…384);
 ## left platform top y 150 (x 132…204). x 110 has no platform above the main one.

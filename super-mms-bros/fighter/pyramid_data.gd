@@ -1,6 +1,6 @@
 class_name PyramidData
 extends Resource
-## Gitte's pyramid up special's tuning (docs/specs/moves.md#gitte--scissors-and-stances).
+## Gitte's pyramid up special's tuning (docs/specs/characters/gitte.md#gitte--scissors-and-stances).
 
 ## A floor at most this far below her feet (px) raises a pyramid; otherwise she hops.
 @export var reach: float

@@ -1,5 +1,5 @@
 extends GutTest
-## Sjippepigen's jump ropes (docs/specs/moves.md#sjippepigen--jump-ropes): three ropes always
+## Sjippepigen's jump ropes (docs/specs/characters/sjippepigen.md#sjippepigen--jump-ropes): three ropes always
 ## spinning round her, hurting with their tips; no attacks; down special switches short ↔ long;
 ## up special is the lasso.
 ## P1 is Sjippepigen. Main platform top y 192 (x 96…384).

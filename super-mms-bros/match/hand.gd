@@ -1,6 +1,6 @@
 class_name Hand
 extends Node2D
-## A summoned hand (docs/specs/moves.md#michael-bech--big-hand): hovers, slams straight down to
+## A summoned hand (docs/specs/characters/michael.md#michael-bech--big-hand): hovers, slams straight down to
 ## the floor below, stays a moment, then is gone. Owned and advanced by the Match, one tick at a
 ## time; drawing only reads.
 

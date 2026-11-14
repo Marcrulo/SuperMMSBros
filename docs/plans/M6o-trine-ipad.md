@@ -16,7 +16,7 @@ heals, ends when down is released or at `watch_frames`) → `ipad_stand` (the mo
 frames) → free. `FighterVisuals` picks the strip's drawing per phase and draws the "+".
 Art: new seated poses in `tools/gen_fighter_sprites64.py` behind a look flag `ipad`.
 
-**Spec:** [moves](../specs/moves.md#trine--ipad-break), [art guide](../specs/art-guide.md#weapons)
+**Spec:** [moves](../specs/characters/trine.md#trine--ipad-break), [art guide](../specs/art-guide.md#weapons)
 
 ## Review Focus
 

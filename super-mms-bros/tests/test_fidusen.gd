@@ -1,5 +1,5 @@
 extends GutTest
-## Fidusen's specials (docs/specs/moves.md#fidusen--banana-book-vine). P1 is Fidusen; scripted
+## Fidusen's specials (docs/specs/characters/fidusen.md#fidusen--banana-book-vine). P1 is Fidusen; scripted
 ## [idle, special] starts a special on step 2, so frame N of it is step N + 1 (peel on step 9, book
 ## on step 11, the vine's choice on step 7). Main platform top y 192 (x 96…384, ledges at its
 ## corners); left platform top y 150 (x 132…204).

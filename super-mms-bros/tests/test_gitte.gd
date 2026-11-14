@@ -1,5 +1,5 @@
 extends GutTest
-## Gitte's scissors and stances (docs/specs/moves.md#gitte--scissors-and-stances). P1 is Gitte;
+## Gitte's scissors and stances (docs/specs/characters/gitte.md#gitte--scissors-and-stances). P1 is Gitte;
 ## scripted [idle, input] starts a move on step 2, so its frame N is step N + 1.
 
 const MATCH_SCENE := preload("res://match/match.tscn")

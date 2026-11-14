@@ -1,6 +1,6 @@
 class_name PeelData
 extends Resource
-## A banana peel's tuning (docs/specs/moves.md#fidusen--banana-book-vine).
+## A banana peel's tuning (docs/specs/characters/fidusen.md#fidusen--banana-book-vine).
 
 ## Peels of one fighter out at once; another removes the oldest.
 @export var max_out: int

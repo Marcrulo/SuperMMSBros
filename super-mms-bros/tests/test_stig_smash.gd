@@ -1,5 +1,5 @@
 extends GutTest
-## Stig's down special, the cross smash (docs/specs/moves.md#down-special--cross-smash): a burst of
+## Stig's down special, the cross smash (docs/specs/characters/stig.md#down-special--cross-smash): a burst of
 ## light in front that launches nearly sideways. P1 is Stig; scripted [idle, down special] starts it
 ## on step 2, so frame N of it is step N + 1 (the hitbox is out on frames 11–16 = steps 12–17).
 ## Main platform top y 192 (x 96…384).

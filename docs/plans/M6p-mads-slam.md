@@ -17,7 +17,7 @@ ends facing the victim.
 on the arc, slams on `slam_frame`). Visuals: the victim's hurt drawing rotated along the arc; Mads's
 own `side_special` drawings picked per phase (`FighterVisuals.grab_frame`).
 
-**Spec:** [moves](../specs/moves.md#mads--grappler), [fighter](../specs/fighter.md#states),
+**Spec:** [moves](../specs/characters/mads.md#mads--grappler), [fighter](../specs/fighter.md#states),
 [art guide](../specs/art-guide.md#weapons)
 
 ## Review Focus

@@ -15,7 +15,7 @@ game as lines.
 `rope_tick`, `ropes_active()`, `rope_tip(i)`, `rope_box(i)`, per-rope hit memory; no attacks when
 ropes are set. `Match._resolve_hits` collects rope hits. `FighterVisuals._draw_ropes()`.
 
-**Spec:** [moves](../specs/moves.md#sjippepigen--jump-ropes)
+**Spec:** [moves](../specs/characters/sjippepigen.md#sjippepigen--jump-ropes)
 
 ## Review Focus
 

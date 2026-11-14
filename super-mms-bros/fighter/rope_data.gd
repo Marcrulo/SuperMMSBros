@@ -1,6 +1,6 @@
 class_name RopeData
 extends Resource
-## Sjippepigen's jump ropes (docs/specs/moves.md#sjippepigen--jump-ropes): always spinning round
+## Sjippepigen's jump ropes (docs/specs/characters/sjippepigen.md#sjippepigen--jump-ropes): always spinning round
 ## her; their tips hurt. Two lengths, switched by her down special.
 
 ## How many ropes, a 1/count turn apart.

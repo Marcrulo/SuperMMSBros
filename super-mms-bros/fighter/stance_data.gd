@@ -1,6 +1,6 @@
 class_name StanceData
 extends Resource
-## Gitte's stances (docs/specs/moves.md#gitte--scissors-and-stances): what each one changes.
+## Gitte's stances (docs/specs/characters/gitte.md#gitte--scissors-and-stances): what each one changes.
 
 ## + : her projectiles' damage ×this.
 @export var projectile_damage: float

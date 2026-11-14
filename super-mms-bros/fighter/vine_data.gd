@@ -1,6 +1,6 @@
 class_name VineData
 extends Resource
-## The vine up special's tuning (docs/specs/moves.md#fidusen--banana-book-vine).
+## The vine up special's tuning (docs/specs/characters/fidusen.md#fidusen--banana-book-vine).
 
 ## Swing: the vine's length (anchor straight above the feet), the angle swung, and in how many ticks.
 @export var length: float

@@ -1,6 +1,6 @@
 class_name GrabData
 extends Resource
-## A command grab's throw (docs/specs/moves.md#mads--grappler): Mads's over-the-head slam.
+## A command grab's throw (docs/specs/characters/mads.md#mads--grappler): Mads's over-the-head slam.
 
 ## Frames of the throw from the catch; the thrower is free after the last.
 @export var throw_frames: int

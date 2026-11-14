@@ -1,6 +1,6 @@
 class_name HandData
 extends Resource
-## A summoned hand's tuning (docs/specs/moves.md#michael-bech--big-hand): where it appears, how
+## A summoned hand's tuning (docs/specs/characters/michael.md#michael-bech--big-hand): where it appears, how
 ## long it hovers, how fast it slams, and what its touches and its slam do.
 
 ## Where the palm (the bottom center of the hitbox) appears, from the summoner's feet, facing right.

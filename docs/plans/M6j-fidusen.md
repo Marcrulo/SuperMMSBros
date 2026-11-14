@@ -14,8 +14,8 @@ book in an arc, and his up special is a vine: pulled to a nearby ledge, or a swi
 vine choice after ledge grabs, books land on floors. `Stage.floor_below(point, platforms)`.
 Visuals: tripped rotation, vine line, peel and book pictures, Fidusen's own poses.
 
-**Spec:** [moves](../specs/moves.md#fidusen--banana-book-vine), [fighter](../specs/fighter.md#states),
-[match and stage](../specs/match-and-stage.md), [art guide](../specs/art-guide.md#fidusens-peel-and-book)
+**Spec:** [moves](../specs/characters/fidusen.md#fidusen--banana-book-vine), [fighter](../specs/fighter.md#states),
+[match and stage](../specs/match-and-stage.md), [art guide](../specs/characters/fidusen.md#fidusens-peel-and-book)
 
 ## Review Focus
 

@@ -1,5 +1,5 @@
 extends GutTest
-## Stig's gold cross, used as a sword (docs/specs/moves.md#stig--cross, docs/specs/art-guide.md#weapons):
+## Stig's gold cross, used as a sword (docs/specs/characters/stig.md#stig--cross, docs/specs/art-guide.md#weapons):
 ## swung in the same three moves as Henrik's guitar, with the same poses.
 
 const MATCH_SCENE := preload("res://match/match.tscn")

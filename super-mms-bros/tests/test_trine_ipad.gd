@@ -1,5 +1,5 @@
 extends GutTest
-## Trine's down special, the iPad break (docs/specs/moves.md#trine--ipad-break): she sits down
+## Trine's down special, the iPad break (docs/specs/characters/trine.md#trine--ipad-break): she sits down
 ## and watches her iPad while down is held, healing 1 % every 10 ticks, up to 300 ticks. P1 is
 ## Trine; scripted [idle, down special, down held…] starts it on step 2, so she's seated after
 ## step 11 and heal n comes on step 11 + 10 × n. Main platform top y 192 (x 96…384).

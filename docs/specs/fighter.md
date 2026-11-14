@@ -112,8 +112,8 @@ action. Shield, crouch and charging act while their button is *held*.
 | `LEDGE` | Hanging from a ledge |
 | `LEDGE_CLIMB` | Climbing up from a ledge onto the stage |
 | `KO` | Knocked out; hidden and inactive until the Match respawns it |
-| `HELD` | Caught by a command grab: can't act, no physics; placed by the Match until thrown (see [moves](moves.md#mads--grappler)) |
-| `TRIPPED` | Slipped on a banana peel: lying on the floor, can't act (see [moves](moves.md#fidusen--banana-book-vine)) |
+| `HELD` | Caught by a command grab: can't act, no physics; placed by the Match until thrown (see [moves](characters/mads.md#mads--grappler)) |
+| `TRIPPED` | Slipped on a banana peel: lying on the floor, can't act (see [moves](characters/fidusen.md#fidusen--banana-book-vine)) |
 
 Every fighter also tracks `state_frame`: ticks spent in the current state, starting at 1 on the tick
 the state is entered.
@@ -310,12 +310,12 @@ Drawn from the fighter's state; never changes gameplay state.
   anchor, off the top of the view).
 - **Pyramid:** while Gitte rides her pyramid up (`pyramid_rise`), her up special's second drawing
   (arms up); the pyramid itself is drawn by its own node (see
-  [art guide](art-guide.md#gittes-pyramid)).
+  [art guide](characters/gitte.md#gittes-pyramid)).
 - **Pia:** eating cake (`cake`), her `neutral_special` drawings by the cake's own timing, and a
   green "+" when she heals; hopping before her belly flop (`belly_hop`), her `jump` drawings;
   diving (`belly_dive`), her `down_special_dive` drawing; the flop (`belly_flop`), her
   `down_special` drawings, with dust drawn on both sides of her (see
-  [art guide](art-guide.md#pias-specials)).
+  [art guide](characters/pia.md#pias-specials)).
 - **Charge:** a glow grows as the neutral special charges, at the character's
   `CharacterData.charge_glow` point (the fists by default; Henrik: his raised guitar).
 - **Invulnerable:** the whole fighter blinks (hidden 4 ticks, shown 4 ticks).

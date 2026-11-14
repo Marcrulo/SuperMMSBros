@@ -1,5 +1,5 @@
 extends GutTest
-## Pia's specials (docs/specs/moves.md#pia--cake-belly-flop-flag): eating cake (neutral special:
+## Pia's specials (docs/specs/characters/pia.md#pia--cake-belly-flop-flag): eating cake (neutral special:
 ## heals, with a cooldown), the belly flop (down special: on the ground a hop, then flat on her
 ## belly she drops — the belly spikes — and the landing's shockwave hits on both sides) and the
 ## German flag (side special). P1 is Pia; scripted [idle, special] starts a move on step 2.

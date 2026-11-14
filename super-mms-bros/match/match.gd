@@ -191,7 +191,7 @@ func _spawn_projectiles() -> void:
 
 
 ## A projectile's flight angle: straight ahead, or (an aimed one) at the nearest fighter it can
-## see, else a random angle in its cone (docs/specs/moves.md#michael-bech--football).
+## see, else a random angle in its cone (docs/specs/characters/michael.md#michael-bech--football).
 func _kick_angle(fighter: Fighter, at: Vector2, data: MoveData) -> float:
 	if data.aim_cone_deg <= 0.0:
 		return data.projectile_angle_deg
@@ -249,7 +249,7 @@ func _remove_hand(hand: Hand) -> void:
 
 
 ## A vine up special on its choice frame: pulled to the nearest free ledge in reach that the
-## fighter is beside or below, else a swing (docs/specs/moves.md#fidusen--banana-book-vine).
+## fighter is beside or below, else a swing (docs/specs/characters/fidusen.md#fidusen--banana-book-vine).
 func _start_vines() -> void:
 	for fighter in _fighters:
 		if not fighter.wants_vine():
@@ -308,7 +308,7 @@ func _advance_pyramids() -> void:
 
 
 ## A pyramid up special on its choice frame: a pyramid out of the floor below if it's in reach,
-## else a hop (docs/specs/moves.md#gitte--scissors-and-stances).
+## else a hop (docs/specs/characters/gitte.md#gitte--scissors-and-stances).
 func _start_pyramids() -> void:
 	for fighter in _fighters:
 		if not fighter.wants_pyramid():
@@ -379,7 +379,7 @@ func _remove_peel(peel: Peel) -> void:
 	peel.queue_free()
 
 
-## Command grabs (docs/specs/moves.md#mads--grappler): a grab box catches the first fighter it
+## Command grabs (docs/specs/characters/mads.md#mads--grappler): a grab box catches the first fighter it
 ## touches that can be hit, shield or not, and starts the throw. P1 first.
 func _resolve_grabs() -> void:
 	for attacker in _fighters:

@@ -1,5 +1,5 @@
 extends GutTest
-## Michael's football (docs/specs/moves.md#michael-bech--football). P1 is Michael; scripted
+## Michael's football (docs/specs/characters/michael.md#michael-bech--football). P1 is Michael; scripted
 ## [idle, side special] starts the kick on step 2, so the ball appears on step 11 (frame 10).
 ## The right platform's top is y 150 (x 276…348).
 

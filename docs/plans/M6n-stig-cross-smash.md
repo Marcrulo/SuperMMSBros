@@ -17,7 +17,7 @@ weapon, `reach_to()`), `grip` (hold the weapon further up/down), `plant` (foot o
 `into_floor`) and `burst.png` (4 drawings, 80×28), drawn by `FighterVisuals._draw_burst()` from
 the first active frame (`burst_frame()`, 3 ticks per drawing, 7 px ahead of the feet).
 
-**Spec:** [moves](../specs/moves.md#down-special--cross-smash),
+**Spec:** [moves](../specs/characters/stig.md#down-special--cross-smash),
 [fighter](../specs/fighter.md#states), [art guide](../specs/art-guide.md#weapons)
 
 ## Review Focus
