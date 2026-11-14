@@ -91,11 +91,11 @@ func test_the_flop_matches_the_spec() -> void:
 	assert_eq([flop.damage, flop.base_knockback, flop.knockback_growth, flop.angle_deg],
 		[11.0, 200.0, 1.4, 70.0])
 	assert_eq(flop.direction, MoveData.Direction.AWAY)
-	assert_eq([flop.hop_speed, flop.dive_speed], [240.0, 400.0])
+	assert_eq([(flop.ability as FlopData).hop_speed, flop.dive_speed], [240.0, 400.0])
 
 
 func test_the_belly_dive_matches_the_spec() -> void:
-	var dive := _p1.stats.moveset.down_special.dive_hit
+	var dive := (_p1.stats.moveset.down_special.ability as FlopData).dive_hit
 	assert_not_null(dive)
 	assert_eq([dive.hitbox_center, dive.hitbox_size], [Vector2(0, -7), Vector2(36, 14)])
 	assert_eq([dive.damage, dive.base_knockback, dive.knockback_growth, dive.angle_deg],
@@ -107,7 +107,8 @@ func test_the_belly_dive_matches_the_spec() -> void:
 func test_the_cake_matches_the_spec() -> void:
 	var cake := _p1.stats.moveset.neutral_special
 	assert_eq([cake.startup, cake.active, cake.recovery], [45, 0, 15])
-	assert_eq([cake.heal, cake.heal_frame, cake.cooldown_frames], [8.0, 45, 300])
+	var eating := cake.ability as CakeData
+	assert_eq([eating.heal, eating.heal_frame, eating.cooldown_frames], [8.0, 45, 300])
 
 
 func test_the_flag_matches_the_spec() -> void:
@@ -122,9 +123,7 @@ func test_the_flag_matches_the_spec() -> void:
 func test_nobody_else_hops_or_eats() -> void:
 	var default := (load("res://fighter/default_stats.tres") as FighterStats).moveset
 	for data in [default.neutral_special, default.down_special]:
-		assert_eq(data.hop_speed, 0.0)
-		assert_null(data.dive_hit)
-		assert_eq(data.heal, 0.0)
+		assert_null(data.ability)
 
 
 # --- Belly flop: the hop and the dive -------------------------------------------------------------
@@ -250,7 +249,7 @@ func test_eating_cake_heals_on_frame_45() -> void:
 	assert_eq(_p1.percent, 20.0, "not yet on frame 44")
 	_steps(1)
 	assert_eq(_p1.percent, 12.0, "8 % less on frame 45")
-	assert_eq(_p1.cake_cooldown, 300)
+	assert_eq(_eating().cake_cooldown, 300)
 	_steps(15)
 	assert_eq(_p1.state, Fighter.State.ATTACK, "still eating on frame 60")
 	_steps(1)
@@ -272,14 +271,14 @@ func test_no_second_slice_during_the_cooldown() -> void:
 	await _place(Vector2(240, 192), Vector2(380, 192), inputs)
 	_steps(63)
 	assert_ne(_p1.state, Fighter.State.ATTACK, "the second press does nothing")
-	assert_gt(_p1.cake_cooldown, 0)
+	assert_gt(_eating().cake_cooldown, 0)
 
 
 func test_the_cooldown_runs_out() -> void:
 	await _place(Vector2(240, 192), Vector2(380, 192), _cake())
 	_steps(47)
 	_steps(300)
-	assert_eq(_p1.cake_cooldown, 0)
+	assert_eq(_eating().cake_cooldown, 0)
 
 
 func test_no_cake_in_the_air() -> void:
@@ -295,14 +294,14 @@ func test_a_hit_before_the_bite_means_no_heal() -> void:
 	_p1.take_hit(_p1.stats.moveset.jab, -1, _p2.global_position.x)
 	_steps(40)
 	assert_eq(_p1.percent, 23.0, "the jab's 3 %, no heal")
-	assert_eq(_p1.cake_cooldown, 0, "no slice eaten, no cooldown")
+	assert_eq(_eating().cake_cooldown, 0, "no slice eaten, no cooldown")
 
 
 func test_spawning_clears_the_cooldown() -> void:
 	await _place(Vector2(240, 192), Vector2(380, 192), _cake())
 	_steps(47)
 	_p1.spawn_at(Vector2(240, 192), 1)
-	assert_eq(_p1.cake_cooldown, 0)
+	assert_eq(_eating().cake_cooldown, 0)
 
 
 # --- Flag -----------------------------------------------------------------------------------------
@@ -324,19 +323,19 @@ func test_the_flag_flies_straight_and_hits() -> void:
 
 
 func test_animations_for_her_phases() -> void:
-	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, -100.0, &"belly_hop"), "jump")
-	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"belly_dive"),
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, -100.0, &"belly_hop", FighterVisuals.phase_animations_of(_p1)), "jump")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"belly_dive", FighterVisuals.phase_animations_of(_p1)),
 		"down_special_dive")
-	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"belly_flop"),
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"belly_flop", FighterVisuals.phase_animations_of(_p1)),
 		"down_special")
-	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"cake"), "neutral_special")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"cake", FighterVisuals.phase_animations_of(_p1)), "neutral_special")
 
 
 func test_cake_drawings_follow_the_bites() -> void:
 	var expected := {1: 0, 10: 0, 11: 1, 19: 1, 20: 2, 28: 2, 29: 1, 37: 1, 38: 2, 45: 2,
 		46: 3, 52: 3, 53: 3, 60: 3}
 	for ticks: int in expected:
-		assert_eq(FighterVisuals.cake_frame(ticks), expected[ticks], "tick %d" % ticks)
+		assert_eq(CakeAbility.cake_frame(ticks), expected[ticks], "tick %d" % ticks)
 
 
 ## The belly-flop drawings lie flat: wider than tall, resting on the floor row.
@@ -354,7 +353,11 @@ func test_her_dive_and_flop_drawings_lie_flat() -> void:
 
 func test_she_has_dust_and_a_flag() -> void:
 	var dust := load("res://assets/fighters/%s/dust.png" % PIA) as Texture2D
-	assert_eq(dust.get_size(), Vector2(40 * FighterVisuals.DUST_DRAWINGS, 20))
+	assert_eq(dust.get_size(), Vector2(40 * FlopAbility.DUST_DRAWINGS, 20))
 	var flag := load("res://assets/fighters/%s/projectile.png" % PIA) as Texture2D
 	assert_eq(flag.get_size(), Vector2(32 * 3, 32))
 
+
+## Her cake ability.
+func _eating() -> CakeAbility:
+	return _p1.ability(CakeAbility) as CakeAbility

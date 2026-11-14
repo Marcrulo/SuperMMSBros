@@ -8,4 +8,4 @@ script = ExtResource("1_move")
 startup = 10
 active = 0
 recovery = 12
-ipad = ExtResource("2_ipad")
+ability = ExtResource("2_ipad")

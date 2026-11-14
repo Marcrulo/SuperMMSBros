@@ -68,10 +68,10 @@ func test_boost_when_the_up_special_launches() -> void:
 func test_pyramid_rumbles_when_it_starts_rising() -> void:
 	var before := {"state": S.ATTACK, "move": &"up_special", "state_frame": 4}
 	var after := {"state": S.ATTACK, "move": &"pyramid_rise", "state_frame": 1,
-			"velocity": Vector2(0, -320), "on_floor": false}
+			"velocity": Vector2(0, -320), "on_floor": false, "sounds": PyramidAbility.new().sounds()}
 	assert_has(_events(before, after), &"burst")
 	var riding := {"state": S.ATTACK, "move": &"pyramid_rise", "state_frame": 2,
-			"velocity": Vector2(0, -320), "on_floor": false}
+			"velocity": Vector2(0, -320), "on_floor": false, "sounds": PyramidAbility.new().sounds()}
 	assert_does_not_have(_events(after, riding), &"burst", "only once")
 
 
@@ -79,7 +79,7 @@ func test_boost_when_she_pops_off_the_pyramid() -> void:
 	var before := {"state": S.ATTACK, "move": &"pyramid_rise", "state_frame": 18,
 			"velocity": Vector2(0, -320), "on_floor": false}
 	var after := {"state": S.ATTACK, "move": &"up_special", "state_frame": 19,
-			"velocity": Vector2(0, -170), "on_floor": false}
+			"velocity": Vector2(0, -170), "on_floor": false, "sounds": PyramidAbility.new().sounds()}
 	assert_has(_events(before, after), &"boost")
 
 

@@ -29,7 +29,7 @@ angle 35°, FACING. His other normals are the default ones (the sign stays on hi
 and burst timing (own copies of the files, so the two can be tuned apart). The lollipop turns into
 a stop sign for the smash, and the burst is stop-sign red (see [art guide](#look)).
 
-**Side special — over-the-head slam** (`side_special.tres` with `grab` → `GrabData`):
+**Side special — over-the-head slam** (`side_special.tres` with `ability` → `GrabData`):
 - **On the ground and in the air.** It turns toward the held side first, like every side special.
   It throws no projectile. In the air he keeps falling while reaching.
 - **Reach:** 9 / 4 / 24 (37) frames; he stays put. Grab box (16, −14), 18×24: about one body
@@ -44,9 +44,9 @@ a stop sign for the smash, and the burst is stop-sign red (see [art guide](#look
   down in front of him. On frame 24 (`slam_frame`) the victim lands on his feet line, 13 px from
   him on that far side, and is hit by the slam: damage 12, base 220, growth 1.3, angle 60°,
   launched **away from Mads** (they bounce up off the floor and fly). He is free after frame 40.
-- **Data:** `MoveData.grab` → `GrabData` (`throw_frames` 40, `turn_frame` 15, `slam_frame` 24,
+- **Data:** `MoveData.ability` → `GrabData` (`throw_frames` 40, `turn_frame` 15, `slam_frame` 24,
   `path`, `held_middle` 16, `slam_hit` → a `MoveData` with the slam's hit values). Files:
-  `fighter/moves/mads/` (`moveset.tres`, `side_special.tres`, `slam.tres`, `slam_hit.tres`).
+  `characters/mads/moves/` (`moveset.tres`, `side_special.tres`, `slam.tres`, `slam_hit.tres`).
 - **Look** (see [art guide](#look)): his own throw drawings; the victim is drawn in
   their hurt pose behind him (his hands and head in front), turning over round the middle of their
   body as they go (half a turn by the slam, head first onto the floor).

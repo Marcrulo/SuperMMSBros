@@ -1,5 +1,5 @@
 class_name HandData
-extends Resource
+extends AbilityData
 ## A summoned hand's tuning (docs/specs/characters/michael.md#michael-bech--big-hand): where it appears, how
 ## long it hovers, how fast it slams, and what its touches and its slam do.
 
@@ -16,3 +16,7 @@ extends Resource
 ## The hit while hovering, and while slamming and on impact (damage and knockback values).
 @export var hover_hit: MoveData
 @export var slam_hit: MoveData
+
+
+func create_ability() -> FighterAbility:
+	return HandAbility.new()

@@ -39,12 +39,17 @@ var _rng := RandomNumberGenerator.new()
 
 
 ## What sounds a fighter's state change over one tick makes (and &"charge_stop" when the neutral
-## special's charge ends). `before` and `after` come from snapshot().
+## special's charge ends). `before` and `after` come from snapshot(); `after.sounds` holds the
+## fighter's abilities' sounds (FighterAbility.sounds()).
 static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 	var out: Array[StringName] = []
 	var state: Fighter.State = after.state
 	var entered: bool = state != before.state
 	var move: StringName = after.move
+	var sounds: Dictionary = after.get("sounds", {})
+	var starts: Dictionary = sounds.get("start", {})
+	var hit_moves: Array = sounds.get("hit", [])
+	var pops: Array = sounds.get("pop", [])
 	var move_started: bool = state == Fighter.State.ATTACK and (
 			move != before.move or before.state != Fighter.State.ATTACK
 			or after.state_frame < before.state_frame)
@@ -55,21 +60,19 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 			out.append(&"swing_heavy")
 		elif move == &"neutral_special_charge":
 			out.append(&"charge")
-		elif move == &"down_special_dive" or move == &"belly_dive":
+		elif move == &"down_special_dive":
 			out.append(&"dive")
-		elif move == &"belly_hop":
-			out.append(&"jump")  # Pia's hop before her belly flop.
-		elif move == &"pyramid_rise":
-			out.append(&"burst")  # Gitte's pyramid starts rising.
+		elif starts.has(move):
+			out.append(starts[move])  # An ability's phase (FighterAbility.sounds()).
 	var was_charging: bool = before.state == Fighter.State.ATTACK and before.move == &"neutral_special_charge"
 	if was_charging and not (state == Fighter.State.ATTACK and move == &"neutral_special_charge"):
 		out.append(&"charge_stop")
 	if after.projectile_out and not before.projectile_out:
 		out.append(&"zap")
-	if (move == &"down_special" or move == &"belly_flop") and after.hitbox_active \
+	if (move == &"down_special" or move in hit_moves) and after.hitbox_active \
 			and not before.hitbox_active:
 		out.append(&"burst")
-	var popped: bool = before.move == &"pyramid_rise"  # Off the pyramid's tip.
+	var popped: bool = before.move in pops  # Out of an ability's phase (off a pyramid's tip).
 	if move == &"up_special" and state == Fighter.State.ATTACK \
 			and (before.velocity.y >= 0.0 or popped) and after.velocity.y < -BOOST_SPEED:
 		out.append(&"boost")
@@ -104,8 +107,19 @@ static func snapshot(fighter: Fighter, projectile_out: bool) -> Dictionary:
 		"state": fighter.state, "state_frame": fighter.state_frame, "move": fighter.move,
 		"jumps_left": fighter.jumps_left, "velocity": fighter.velocity,
 		"on_floor": fighter.is_on_floor(), "hitbox_active": fighter.is_hitbox_active(),
-		"projectile_out": projectile_out,
+		"projectile_out": projectile_out, "sounds": ability_sounds(fighter),
 	}
+
+
+## Every sound of `fighter`'s abilities, merged: {"start": {phase: sound}, "hit": [...], "pop": [...]}.
+static func ability_sounds(fighter: Fighter) -> Dictionary:
+	var merged := {"start": {}, "hit": [], "pop": []}
+	for ability in fighter.abilities:
+		var own := ability.sounds()
+		(merged.start as Dictionary).merge(own.get("start", {}))
+		(merged.hit as Array).append_array(own.get("hit", []))
+		(merged.pop as Array).append_array(own.get("pop", []))
+	return merged
 
 
 func _ready() -> void:
@@ -132,7 +146,7 @@ func _ready() -> void:
 	_match.fighter_blocked.connect(_on_blocked)
 	_match.fighter_ko.connect(_on_ko)
 	_match.fighter_respawned.connect(_on_respawned)
-	_match.hand_landed.connect(_on_hand_landed)
+	_match.owner_sound.connect(_on_owner_sound)
 	# The first "before": once the Match has placed the fighters (after everyone's _ready).
 	_take_snapshot.call_deferred()
 
@@ -225,9 +239,9 @@ func _on_ko(player_index: int) -> void:
 		_play_flat(&"ko")
 
 
-func _on_hand_landed(player_index: int) -> void:
+func _on_owner_sound(player_index: int, sound: StringName) -> void:
 	if player_index == _fighter.player_index:
-		play(&"burst")
+		play(sound)
 
 
 func _on_respawned(player_index: int) -> void:

@@ -1,5 +1,5 @@
 class_name PyramidData
-extends Resource
+extends AbilityData
 ## Gitte's pyramid up special's tuning (docs/specs/characters/gitte.md#gitte--scissors-and-stances).
 
 ## A floor at most this far below her feet (px) raises a pyramid; otherwise she hops.
@@ -20,3 +20,7 @@ extends Resource
 ## How high the tip is above the floor after `frames` ticks of rising.
 func tip_height(frames: int) -> float:
 	return height * clampf(float(frames) / rise_frames, 0.0, 1.0)
+
+
+func create_ability() -> FighterAbility:
+	return PyramidAbility.new()

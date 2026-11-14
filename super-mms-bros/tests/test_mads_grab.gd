@@ -63,7 +63,7 @@ func _shield(ticks: int) -> Array[FighterInput]:
 
 
 func _grab() -> GrabData:
-	return _p1.stats.moveset.side_special.grab
+	return _p1.stats.moveset.side_special.ability as GrabData
 
 
 # --- Data -----------------------------------------------------------------------------------------
@@ -71,7 +71,7 @@ func _grab() -> GrabData:
 
 func test_the_slam_matches_the_spec() -> void:
 	var reach := _p1.stats.moveset.side_special
-	assert_not_null(reach.grab, "Mads's side special is a command grab")
+	assert_true(reach.ability is GrabData, "Mads's side special is a command grab")
 	assert_eq([reach.startup, reach.active, reach.recovery], [9, 4, 24])
 	assert_eq(reach.hitbox_center, Vector2(16, -14))
 	assert_eq(reach.hitbox_size, Vector2(18, 24))
@@ -89,7 +89,7 @@ func test_only_his_side_special_changes() -> void:
 	var moves := _p1.stats.moveset
 	for name in ["jab", "neutral_special", "up_special", "down_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
-	assert_null(_p2.stats.moveset.side_special.grab, "Kim keeps the projectile")
+	assert_null(_p2.stats.moveset.side_special.ability, "Kim keeps the projectile")
 
 
 # --- The grab -------------------------------------------------------------------------------------
@@ -196,17 +196,17 @@ func test_he_is_free_after_the_throw() -> void:
 
 func test_the_drawings() -> void:
 	assert_eq(FighterVisuals.animation_for(Fighter.State.HELD, 0.0), "hurt")
-	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"grab_throw"), "side_special")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"grab_throw", FighterVisuals.phase_animations_of(_p1)), "side_special")
 	var grab := GrabData.new()
 	grab.slam_frame = 24
 	var expected := {1: 0, 3: 0, 4: 1, 8: 1, 9: 2, 14: 2, 15: 3, 18: 3, 19: 4, 30: 4, 31: 5, 40: 5}
 	for ticks: int in expected:
-		assert_eq(FighterVisuals.throw_frame(ticks), expected[ticks], "throw tick %d" % ticks)
+		assert_eq(GrabAbility.throw_frame(ticks), expected[ticks], "throw tick %d" % ticks)
 	var textures := FighterVisuals.textures_for(MADS)
 	assert_true(textures.has("grab_throw"), "his throw strip")
 	assert_eq((textures["grab_throw"] as Texture2D).get_size(), Vector2(112 * 6, 80))
-	assert_almost_eq(FighterVisuals.held_turn(12, grab), PI / 2.0, 0.001, "half way round")
-	assert_almost_eq(FighterVisuals.held_turn(40, grab), PI, 0.001)
+	assert_almost_eq(GrabAbility.held_turn(12, grab), PI / 2.0, 0.001, "half way round")
+	assert_almost_eq(GrabAbility.held_turn(40, grab), PI, 0.001)
 
 
 ## Runs FighterVisuals._draw for both mid-throw (the held victim turned over).

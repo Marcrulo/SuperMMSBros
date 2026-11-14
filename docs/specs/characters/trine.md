@@ -19,8 +19,8 @@ down. Everything else is the default move set.
   ground she only slides to a stop). That's the price for healing.
 - **A hit ends it** at once (like any move: the hit lands normally); so does slipping on a banana
   peel. Should the floor go from under her, she falls (`AIR`).
-- **Data:** `MoveData.ipad` → `IpadData` (`watch_frames` 300, `heal_every` 10, `heal` 1.0).
-  Files: `fighter/moves/trine/` (`moveset.tres`, `down_special.tres`, `ipad.tres`).
+- **Data:** `MoveData.ability` → `IpadData` (`watch_frames` 300, `heal_every` 10, `heal` 1.0).
+  Files: `characters/trine/moves/` (`moveset.tres`, `down_special.tres`, `ipad.tres`).
 - **Look:** see [art guide](#look). While watching, a small green "+" floats up
   above her head after each heal.
 

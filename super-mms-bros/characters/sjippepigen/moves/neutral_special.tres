@@ -8,5 +8,3 @@ startup = 3
 active = 0
 recovery = 8
 charge_frames = 60
-rope_frenzy = true
-min_charge_frames = 20

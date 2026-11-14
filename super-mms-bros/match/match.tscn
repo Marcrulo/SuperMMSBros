@@ -11,7 +11,7 @@ script = ExtResource("1_match")
 
 [node name="Stage" parent="." instance=ExtResource("2_stage")]
 
-[node name="Pyramids" type="Node2D" parent="."]
+[node name="BehindFighters" type="Node2D" parent="."]
 
 [node name="Fighters" type="Node2D" parent="."]
 

@@ -18,10 +18,12 @@ placeholder sprites. See `docs/vision.md`.
 ## Where things are
 
 - `super-mms-bros/` — the Godot project (`project.godot` lives here; `res://` = this folder).
+  Each character's own files are in `super-mms-bros/characters/<name>/`.
 - `docs/vision.md` — what the game is, v1 scope, later ideas.
 - `docs/roadmap.md` — milestones M1–M6.
 - `docs/specs/` — the design, one file per area. **The specs are the source of truth**: read the
   relevant spec before working on an area, and update the spec first if the design changes.
+  Each character's own moves and drawings are in `docs/specs/characters/<name>.md`.
 - `docs/plans/` — one implementation plan per milestone.
 
 ## Commands
@@ -82,37 +84,48 @@ Full details in `docs/specs/architecture.md`. In short:
 ## Character branches (parallel sessions)
 
 Each character has its own branch, `char/<name>` (lowercase first name, as in
-`fighter/moves/<name>/`): `char/pia`, `char/gitte`, `char/trine`, `char/nina`, `char/michael`,
-`char/henrik`, `char/stig`, `char/casper`, `char/kim`, `char/mette`, `char/mads`,
+`super-mms-bros/characters/<name>/`): `char/pia`, `char/gitte`, `char/trine`, `char/nina`,
+`char/michael`, `char/henrik`, `char/stig`, `char/casper`, `char/kim`, `char/mette`, `char/mads`,
 `char/sjippepigen`, `char/fidusen`, `char/magnus`. Work that isn't about one character (engine,
 stages, menus, CPU, milestones) happens on `main` or its own feature branch.
 
-- **Work on a character only on its branch, in its own worktree.** Several sessions run at once,
-  and one folder can only have one branch checked out, so each branch lives in its own folder:
-  `git worktree add ../SuperMMSBros-<name> char/<name>` (run from the repo root; skip if the
-  folder exists). Work and run every command from that folder. In a new worktree, first link
-  the gitignored assets from the main checkout, then import:
+- **Work on a character only on its branch, in its own worktree — Claude sets this up.** Several
+  sessions run at once, and one folder can only have one branch checked out, so each branch
+  lives in its own folder, `../SuperMMSBros-<name>` (next to this repo). When asked to work on a
+  character, first check where the session is (`git branch --show-current`, `git worktree
+  list`); if it isn't that character's worktree, create it if needed and do all the work and
+  every command there (absolute paths). To create one, from the main checkout:
   ```bash
-  M=../SuperMMSBros/super-mms-bros; W=super-mms-bros
+  git worktree add ../SuperMMSBros-<name> char/<name>
+  cd ../SuperMMSBros-<name>
+  M=../SuperMMSBros/super-mms-bros; W=super-mms-bros   # link the gitignored assets
   ln -s "$(realpath $M/assets/music)" $W/assets/music
   for f in fonts/ink_yugo.otf sfx/menu_confirm.wav; do ln -s "$(realpath $M/assets/$f)" $W/assets/$f; done
   godot --headless --path super-mms-bros --import
   ```
-- **Stay inside the character.** Character-owned files: `fighter/moves/<name>/`,
-  `fighter/characters/slot_NN.tres`, `assets/fighters/slot_NN/` and its portrait,
-  `tests/test_<name>*.gd`, `docs/plans/` files for that character, and that character's
-  section of `docs/specs/moves.md` / `docs/specs/art-guide.md` / the look entry in
-  `tools/fighter64_looks.py`.
-- **Shared files** are everything else — mainly `fighter/fighter.gd`, `fighter/fighter_visuals.gd`,
-  `fighter/move_data.gd` and other `*_data.gd`, `match/match.gd`, `tools/gen_fighter_sprites64.py`,
-  `tests/test_character_moves.gd`, and other characters' sections of the specs. Change them
-  only when the feature truly needs it, keep the change small and generic (a hook or a new
-  field other characters could use, not a big `if character == ...` block), and never change
-  another character's behaviour or look.
+  Each worktree has its own `.godot/` cache, so importing in one is safe while the editor is
+  open in another (the editor-open rule above is per folder). Tell the user the worktree's path:
+  they open that folder to run or edit that branch (e.g. `godot --path
+  ../SuperMMSBros-<name>/super-mms-bros --editor`).
+- **Stay inside the character.** Character-owned files: `super-mms-bros/characters/<name>/`
+  (its `character.tres`, `moves/`, and the scripts of its mechanics: abilities, their data,
+  entities, HUD badges), `assets/fighters/slot_NN/` and its portrait, `tests/test_<name>*.gd`,
+  `docs/specs/characters/<name>.md`, `docs/plans/` files for that character,
+  `tools/sprites/characters/<name>.py`, and its look entry in `tools/fighter64_looks.py`. New
+  mechanics go in new files there: an `AbilityData` + `FighterAbility` (+ `MatchEntity`), plugged
+  in through the hooks (docs/specs/architecture.md#abilities) — no edits to shared files needed.
+- **Shared files** are everything else — mainly `fighter/fighter.gd`, `fighter/fighter_ability.gd`
+  (the hooks), `fighter/fighter_visuals.gd`, `fighter/move_data.gd`, `match/match.gd`,
+  `tools/sprites/body.py` and `weapons.py`, `docs/specs/moves.md` and `art-guide.md`, and a
+  mechanic another character also uses (the vine, in `characters/fidusen/`, is also
+  Sjippepigen's lasso). Change them only when the feature truly needs it — usually a new hook —
+  keep the change small and generic, and never change another character's behaviour or look.
+  `tests/test_character_split.gd` fails if shared code names a character's classes or phases.
 - **Mark shared changes** so merging is easy: put them in their own commits whose message starts
-  with `shared:` and says what changed and why (e.g. `shared: Fighter gets on_landed() hook for
-  Pia's belly flop`). Generated sprites for other characters that change only because the shared
-  generator changed also go in a `shared:` commit. Mention every shared change to the user.
+  with `shared:` and says what changed and why (e.g. `shared: FighterAbility gets an on_landed()
+  hook for Pia's belly flop`). Generated sprites for other characters that change only because
+  the shared generator changed also go in a `shared:` commit. Mention every shared change to the
+  user.
 - **Merging back:** first `git merge main` into the character branch, fix conflicts, regenerate
   generated files (sprites, sounds) instead of hand-merging them, run the full test suite, then
   merge into `main` (only when the user asks). Merge `main` into the character branch often —

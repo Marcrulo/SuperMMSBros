@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="MoveData" format=3]
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
-[ext_resource type="Resource" path="res://characters/pia/moves/belly_dive.tres" id="2_dive"]
+[ext_resource type="Resource" path="res://characters/pia/moves/flop.tres" id="2_flop"]
 
 [resource]
 script = ExtResource("1_move")
@@ -16,5 +16,4 @@ knockback_growth = 1.4
 angle_deg = 70.0
 direction = 1
 dive_speed = 400.0
-dive_hit = ExtResource("2_dive")
-hop_speed = 240.0
+ability = ExtResource("2_flop")

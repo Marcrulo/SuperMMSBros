@@ -85,12 +85,12 @@ func test_fidusen_has_his_own_specials() -> void:
 		assert_ne(moves.get(name), defaults.get(name), name)
 	for name in ["jab", "side_tilt", "neutral_air", "neutral_special"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
-	var peel := moves.down_special.peel
+	var peel := moves.down_special.ability as PeelData
 	assert_eq([peel.max_out, peel.lifetime, peel.trip_frames], [3, 600, 45])
 	assert_eq([peel.damage, peel.fall_speed, peel.size], [3.0, 300.0, Vector2(12, 4)])
 	var book := moves.side_special
 	assert_eq([book.projectile_angle_deg, book.projectile_gravity, book.damage], [25.0, 700.0, 7.0])
-	var vine := moves.up_special.vine
+	var vine := moves.up_special.ability as VineData
 	assert_eq([vine.length, vine.swing_degrees, vine.swing_frames], [140.0, 60.0, 30])
 	assert_eq([vine.ledge_range, vine.pull_frames], [100.0, 12])
 
@@ -108,10 +108,10 @@ func test_floor_below_with_platforms() -> void:
 func test_peel_drops_at_his_feet() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _special("down"))
 	_steps(8)
-	assert_eq(_match.get_peels().size(), 0, "not before frame 8")
+	assert_eq(_peels().size(), 0, "not before frame 8")
 	_steps(1)
-	assert_eq(_match.get_peels().size(), 1)
-	var peel := _match.get_peels()[0]
+	assert_eq(_peels().size(), 1)
+	var peel := _peels()[0]
 	assert_eq(peel.owner_index, 0)
 	assert_almost_eq(peel.global_position, Vector2(158, 192), Vector2(2.1, 0.5))
 	assert_true(peel.landed)
@@ -120,7 +120,7 @@ func test_peel_drops_at_his_feet() -> void:
 func test_peel_falls_to_the_platform_below() -> void:
 	await _place(Vector2(160, 80), Vector2(380, 192), _special("down"))
 	_steps(9)
-	var peel := _match.get_peels()[0]
+	var peel := _peels()[0]
 	assert_false(peel.landed)
 	_steps(30)
 	assert_true(peel.landed)
@@ -130,26 +130,26 @@ func test_peel_falls_to_the_platform_below() -> void:
 func test_peel_without_floor_falls_away() -> void:
 	await _place(Vector2(60, 100), Vector2(380, 192), _special("down"))
 	_steps(9)
-	assert_eq(_match.get_peels().size(), 1)
+	assert_eq(_peels().size(), 1)
 	_steps(60)
-	assert_eq(_match.get_peels().size(), 0)
+	assert_eq(_peels().size(), 0)
 
 
 func test_at_most_three_peels() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _special("down", 4, 25))
 	_steps(9)
-	var first := _match.get_peels()[0]
+	var first := _peels()[0]
 	_steps(27 * 3)
-	assert_eq(_match.get_peels().size(), 3)
-	assert_false(first in _match.get_peels(), "the oldest is gone")
+	assert_eq(_peels().size(), 3)
+	assert_false(first in _peels(), "the oldest is gone")
 
 
 func test_peels_last_ten_seconds() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _special("down"))
 	_steps(9 + 598)
-	assert_eq(_match.get_peels().size(), 1)
+	assert_eq(_peels().size(), 1)
 	_steps(2)
-	assert_eq(_match.get_peels().size(), 0)
+	assert_eq(_peels().size(), 0)
 
 
 func test_walking_onto_a_peel_trips() -> void:
@@ -164,7 +164,7 @@ func test_walking_onto_a_peel_trips() -> void:
 	assert_gt(tripped_at, 0, "P2 slipped")
 	assert_eq(_p2.percent, 3.0)
 	assert_eq(_p2.velocity.x, 0.0, "no launch")
-	assert_eq(_match.get_peels().size(), 0, "the peel is used up")
+	assert_eq(_peels().size(), 0, "the peel is used up")
 	assert_signal_emitted(_match, "fighter_hit")
 	assert_eq(_p2.get_hurtbox_rect().size.y, 15.0, "lying low")
 	_steps(44)
@@ -180,7 +180,7 @@ func test_fidusen_never_trips_on_his_own_peel() -> void:
 	for i in 40:
 		_match.step()
 		assert_ne(_p1.state, Fighter.State.TRIPPED)
-	assert_eq(_match.get_peels().size(), 1)
+	assert_eq(_peels().size(), 1)
 
 
 func test_a_tripped_fighter_can_be_hit() -> void:
@@ -241,7 +241,7 @@ func test_vine_swings_forward_and_flings() -> void:
 	_steps(7)
 	assert_eq(_p1.move, &"vine_swing")
 	var start := _p1.global_position
-	assert_almost_eq(_p1.vine_anchor, start + Vector2(0, -140), Vector2(0.5, 0.5))
+	assert_almost_eq((_p1.ability(VineAbility) as VineAbility).vine_anchor, start + Vector2(0, -140), Vector2(0.5, 0.5))
 	assert_false(_p1.up_special_available)
 	_steps(15)
 	assert_gt(_p1.global_position.x, start.x + 20.0, "forward")
@@ -279,3 +279,10 @@ func test_peel_and_book_pictures() -> void:
 	assert_eq((load("res://assets/fighters/slot_13/peel.png") as Texture2D).get_size(), Vector2(16, 8))
 	assert_eq((load("res://assets/fighters/slot_13/projectile.png") as Texture2D).get_size(),
 		Vector2(48, 16))
+
+
+## The banana peels in the match, oldest first.
+func _peels() -> Array[Peel]:
+	var found: Array[Peel] = []
+	found.assign(_match.get_entities(Peel))
+	return found

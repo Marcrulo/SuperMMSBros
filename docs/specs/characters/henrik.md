@@ -18,7 +18,7 @@ The hitboxes cover where the guitar is drawn in each move's strike drawing (jab 
 side tilt 41, the overhead swing 40 and up to 42 px above the feet). His charge glow is on the
 raised guitar's body, `charge_glow` (−21, −45).
 
-Files: `fighter/moves/henrik/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
+Files: `characters/henrik/moves/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
 `neutral_special.tres`).
 
 ## Look

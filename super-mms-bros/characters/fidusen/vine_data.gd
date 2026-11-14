@@ -1,5 +1,5 @@
 class_name VineData
-extends Resource
+extends AbilityData
 ## The vine up special's tuning (docs/specs/characters/fidusen.md#fidusen--banana-book-vine).
 
 ## Swing: the vine's length (anchor straight above the feet), the angle swung, and in how many ticks.
@@ -26,3 +26,7 @@ extends Resource
 ## The swing's angular speed, rad/s.
 func swing_speed() -> float:
 	return deg_to_rad(swing_degrees) / (swing_frames / 60.0)
+
+
+func create_ability() -> FighterAbility:
+	return VineAbility.new()

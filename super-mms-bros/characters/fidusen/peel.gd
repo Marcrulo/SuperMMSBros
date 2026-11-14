@@ -1,14 +1,12 @@
 class_name Peel
-extends Node2D
+extends MatchEntity
 ## A banana peel (docs/specs/characters/fidusen.md#fidusen--banana-book-vine): falls to the floor below, then
-## lies there until someone slips on it or its time is up. Owned and advanced by the Match, one
-## tick at a time; drawing only reads.
+## lies there until someone slips on it or its time is up. Added by PeelAbility, advanced by the
+## Match one tick at a time; drawing only reads.
 
 const DELTA := 1.0 / 60.0
 const SCALE := 0.75
 
-## Player index of the fighter who placed it (it never trips them).
-var owner_index: int
 var data: PeelData
 ## Ticks since it appeared.
 var age: int = 0
@@ -33,7 +31,7 @@ func setup(owner: int, at: Vector2, peel_data: PeelData, floor_at: float, charac
 
 
 ## One tick: falls until it reaches its floor.
-func advance() -> void:
+func advance(_match: Match) -> void:
 	age += 1
 	if not landed:
 		global_position.y += data.fall_speed * DELTA
@@ -43,8 +41,23 @@ func advance() -> void:
 	queue_redraw()
 
 
-func is_expired(blast_zone: Rect2) -> bool:
-	return age >= data.lifetime or not blast_zone.has_point(global_position)
+func is_finished(match_: Match) -> bool:
+	return age >= data.lifetime or not match_.get_stage().blast_zone.has_point(global_position)
+
+
+## Landed, it trips the first other fighter on the ground that touches it (never its owner), and
+## is gone.
+func interact(match_: Match) -> void:
+	if not landed:
+		return
+	for victim in match_.get_fighters():
+		if victim.player_index == owner_index or not victim.can_trip():
+			continue
+		if get_trip_rect().intersects(victim.get_hurtbox_rect()):
+			victim.trip(data.damage, data.trip_frames)
+			match_.fighter_hit.emit(victim.player_index)
+			match_.remove_entity(self)
+			return
 
 
 ## Where it trips: its size, bottom center at its position.

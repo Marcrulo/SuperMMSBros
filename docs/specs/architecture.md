@@ -31,11 +31,11 @@ test and a future trained agent all be swapped freely.
 ```
 Match                  (match/match.tscn, match.gd)
 ├── Stage              (stage/stage.tscn, stage.gd)
-├── Pyramids           (Node2D container; Gitte's pyramids, drawn behind the fighters)
+├── BehindFighters     (Node2D container; ability entities drawn behind the fighters)
 ├── Fighters           (Node2D container)
 │   ├── Fighter P1     (fighter/fighter.tscn)
 │   └── Fighter P2     (fighter/fighter.tscn)
-├── Projectiles        (Node2D container; projectiles and hands are added and removed by the Match)
+├── Projectiles        (Node2D container; projectiles and the other ability entities)
 ├── Camera2D           (match/match_camera.gd — follows and zooms; presentation only)
 └── HUD                (ui/hud.tscn — CanvasLayer)
 ```
@@ -54,8 +54,8 @@ the Match and assigned one per fighter.
 | `FighterStats` | `Resource` | All fighter tuning numbers and its `MoveSet`. One `.tres` file per fighter design. |
 | `MoveSet` / `MoveData` | `Resource` | The eight moves of a design and each move's frame data, hitbox and knockback (see [moves](moves.md)). |
 | `Projectile` | `Node2D` | The side special's projectile: position, direction, owner, age; advanced by the Match. |
-| `Hand` / `HandData` | `Node2D` / `Resource` | Michael's summoned hand (hover, slam, impact) and its tuning; advanced by the Match (see [moves](characters/michael.md#michael-bech--big-hand)). |
-| `Pyramid` / `PyramidData` | `Node2D` / `Resource` | Gitte's rising pyramid (rise, sink) and its up special's tuning; advanced by the Match (see [moves](characters/gitte.md#gitte--scissors-and-stances)). |
+| `FighterAbility` / `AbilityData` | `RefCounted` / `Resource` | One character mechanic and its tuning (see [Abilities](#abilities)). Each character's are in its folder and its [character spec](characters/). |
+| `MatchEntity` | `Node2D` | Something an ability adds to the match (a hand, a peel, a pyramid); advanced by the Match (see [Abilities](#abilities)). |
 | `FighterVisuals` | `Node2D` (child of Fighter) | Draws the fighter's sprite from its state, plus shield, charge glow and the debug view. |
 | `FighterInput` | `RefCounted` | One tick of input (see [fighter](fighter.md#input)). |
 | `Controller` | `RefCounted` (base class) | `get_input(state) -> FighterInput`, `reset()`. |
@@ -81,22 +81,24 @@ Every tick, `step()` does, in this order:
 3. Ask each fighter's controller for input, P1 then P2. During `COUNTDOWN` the inputs are replaced
    with empty input (controllers are still asked, so the CPU's reaction buffer fills).
 4. Advance each fighter one step with `fighter.tick(input)`, P1 then P2.
+   Then **held fighters**: every fighter holding someone (an ability's throw or reel) moves them
+   on (`advance_held`), or lets go if no ability does.
    Then **ledge grabs**: each fighter that can grab a ledge (P1, P2 order) grabs a free one
    whose corner is inside its grab box (see [fighter](fighter.md#ledge)).
-   Then **up special choices**: a vine up special on its choice frame starts a pull or a swing; a
-   pyramid up special on its choice frame raises a pyramid (added to `Pyramids`) or hops. Then
-   every pyramid advances (rising while its owner rides it, else sinking) and the sunk ones are
-   removed.
+   Then every ability's `after_ledges` (a vine up special's choice), P1's abilities first.
 5. Advance each existing projectile (in the order they were created) and remove those past their
    lifetime or outside the blast zone. Then add a projectile for every fighter whose side special
    reached its spawn frame this tick (P1, P2 order); a new projectile first moves next tick.
-   The same for hands: advance each (hover, slam, impact), remove the finished ones, then add a
-   hand for every fighter whose summon reached its spawn frame.
-6. Resolve hits: first collect every hit for this tick — move hitboxes, projectiles and hands against
-   hurtboxes — then apply them all (blocked by a shield, or damage + knockback). Two fighters can
-   hit each other on the same tick (a trade).
+   The same for the entities: advance each (in the order they were added), remove the finished
+   ones, then every ability's `spawn_entities` (a pyramid, a hand, a peel), then every entity's
+   `interact` (a peel trips someone). Then every ability's `resolve_contacts` (command grabs).
+6. Resolve hits: first collect every hit for this tick — move hitboxes, the abilities' own hits
+   (`collect_hits`: jump ropes), projectiles and entities against hurtboxes — then apply them all
+   (blocked by a shield, or damage + knockback). Two fighters can hit each other on the same tick
+   (a trade).
 7. Check KOs (fighter center outside the blast zone), stocks, respawns and the win condition.
-8. Advance timers (countdown, respawn, invulnerability) and the tick counter.
+8. Advance timers (countdown, respawn, invulnerability, every ability's `end_step`) and the tick
+   counter.
 
 The order is always the same, which is what makes matches repeatable.
 
@@ -104,6 +106,42 @@ The order is always the same, which is what makes matches repeatable.
 step from the physics engine, which is exactly 1/60 s there (also with `--speed`, see below). Outside
 a physics frame it would use the variable render-frame time and break repeatability. `Fighter.tick()`
 asserts this.
+
+## Abilities
+
+Everything one character brings beyond the default move set — a vine, jump ropes, a stance
+switch, a command grab, a summoned hand — is a **`FighterAbility`** (`fighter/fighter_ability.gd`),
+so that a character's code lives in its own folder and character branches don't clash in shared
+files (see the character branches in `CLAUDE.md`).
+
+- **Data:** each mechanic has a data resource extending **`AbilityData`** (`VineData`,
+  `RopeData`, …) with its tuning numbers. It sits on the move it belongs to (`MoveData.ability`,
+  e.g. the up special's) or on the whole move set (`MoveSet.ability`). `create_ability()` makes
+  the ability.
+- **Making them:** when a fighter's `stats` is set, it makes one ability per `AbilityData` in its
+  move set: its moves top to bottom, then the move set's own. The ability knows its `fighter`, its
+  `data` and its `slot` (the move set property it was on, e.g. `&"up_special"`). Every hook is
+  called in that order, P1's abilities before P2's.
+- **Phases:** an ability can add phases (values of `Fighter.move` while in `ATTACK`, e.g.
+  `&"vine_swing"`). While one is in progress the fighter asks its ability about it: its data
+  (hitbox and hit), its hitbox, its movement, when it ends.
+- **Hooks** (all do nothing by default; `fighter_ability.gd` documents each): on the fighter's
+  tick — `reset` (spawn), `before_tick`, `pick_special` (may pick another special, or none),
+  `allows_normals`, `replaces` (takes over a default move's behaviour: the up special's boost,
+  the side special's projectile, the charge glow), `on_move_started`, `on_charge_released`,
+  `move_tick`, `phase_*`, `left_floor_in_move`, `on_floor_in_move`, `places_fighter`/`place`,
+  `can_be_hit`, `size_scale`, `speed_scale`, `modify_hit`, `modify_projectile`, `lifesteal`,
+  `is_grab_box`, `after_tick`, `on_hit_dealt`; on the Match's step — `advance_held`,
+  `after_ledges`, `spawn_entities`, `resolve_contacts`, `collect_hits`, `end_step` (see
+  [Tick order](#tick-order)); presentation, only reading — `phase_animation`, `drawing`, `strip`,
+  `held_pose`, `draw`, `sounds`, `make_card_badge`.
+- **Entities:** what an ability adds to the match (a hand, a peel, a pyramid) is a
+  **`MatchEntity`** (`match/match_entity.gd`), added with `Match.add_entity()`. The Match keeps
+  them in one list and calls `advance`, `is_finished`, `interact`, `collect_hits`, and removes
+  those that go with their owner on a KO.
+- **Shared code never names a character's mechanic** (its classes, phases or name);
+  `tests/test_character_split.gd` checks this. A mechanic two characters use (the vine) lives
+  with the character that brought it and is shared code for the other.
 
 ## Hit detection
 
@@ -173,11 +211,14 @@ godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-t
 ```
 super-mms-bros/
 ├── project.godot
-├── match/         match.tscn, match.gd, match_camera.gd, projectile.gd, match_snapshot.gd,
-│                  fighter_snapshot.gd
+├── match/         match.tscn, match.gd, match_camera.gd, projectile.gd, match_entity.gd,
+│                  match_snapshot.gd, fighter_snapshot.gd
 ├── fighter/       fighter.tscn, fighter.gd, fighter_stats.gd, default_stats.tres, fighter_visuals.gd,
-│                  move_data.gd, move_set.gd, moves/default/*.tres, character_data.gd, roster.gd,
-│                  characters/*.tres
+│                  fighter_sounds.gd, fighter_ability.gd, ability_data.gd, move_data.gd,
+│                  move_set.gd, moves/default/*.tres, character_data.gd, roster.gd, roster.tres
+├── characters/    <name>/ for each character: character.tres (its CharacterData), moves/*.tres
+│                  (its own moves and ability data), and the scripts of its mechanics (abilities,
+│                  their data, entities, HUD badges)
 ├── controllers/   controller.gd, fighter_input.gd, keyboard_controller.gd, cpu_controller.gd,
 │                  cpu_settings.gd, default_cpu.tres, scripted_controller.gd
 ├── stage/         battlefield.tscn, stage.gd, platform_look.gd, background.gdshader,
@@ -192,8 +233,9 @@ super-mms-bros/
 ```
 
 Outside the Godot project, `tools/` holds helper scripts that aren't part of the game, such as
-`tools/gen_fighter_sprites.py` (generates every character's sprite strips from the looks in
-`tools/fighter_looks.py`).
+`tools/gen_fighter_sprites64.py` (generates every character's sprite strips: the shared body in
+`tools/sprites/body.py`, each character's weapon, props and own poses in
+`tools/sprites/characters/<name>.py`, the heads and colors in `tools/fighter64_looks.py`).
 
 Group by feature: a scene lives next to its scripts.
 

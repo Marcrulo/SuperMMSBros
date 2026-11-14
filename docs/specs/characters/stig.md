@@ -36,7 +36,7 @@ ground ahead, launching whoever it hits **nearly straight sideways**.
 - **The light:** a picture drawn in front of him from the impact point on the active frames and a
   little after (see [art guide](#look)); presentation only.
 
-Files: `fighter/moves/stig/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
+Files: `characters/stig/moves/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
 `neutral_special.tres`, `down_special.tres`, `down_special_dive.tres`).
 
 ## Look

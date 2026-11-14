@@ -64,7 +64,7 @@ func test_kick_data_matches_the_spec() -> void:
 	assert_almost_eq(kick.knockback_growth, 0.6, 0.0001)
 	assert_eq([kick.projectile_speed, kick.projectile_lifetime], [240.0, 120])
 	assert_eq(defaults.side_special.aim_cone_deg, 0.0, "the default flies straight")
-	assert_eq(_p1.stats.moveset.neutral_special.hand != null, true, "still has his hand")
+	assert_eq(_p1.stats.moveset.neutral_special.ability is HandData, true, "still has his hand")
 
 
 # --- Aiming (pure) --------------------------------------------------------------------------------

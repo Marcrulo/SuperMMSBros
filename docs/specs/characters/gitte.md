@@ -20,7 +20,7 @@ base 90, growth 0.5, angle 30°, launched in their direction. Each can hit once 
 hit, a shield, the blast zone or its time. No new volley while any of hers is still out. They
 spin while flying (her own picture).
 
-**Down special — stance switch** (`down_special.tres` with `stances` → `StanceData`): 15 / 0 / 0
+**Down special — stance switch** (`down_special.tres` with `ability` → `StanceData`): 15 / 0 / 0
 (15) frames, on the ground or in the air (no dive, no hitbox). On frame 8 she switches to the next
 stance: `+` → `−` → `÷` → `×` → `+`. She starts every match and every stock in `+`
 (`spawn_at()`). The stance shows on her player card ([HUD](../match-and-stage.md#hud)).
@@ -35,7 +35,7 @@ stance: `+` → `−` → `÷` → `×` → `+`. She starts every match and ever
 The numbers live in `StanceData` (`projectile_damage` 1.5, `lifesteal` 0.5, `small_scale` 0.75,
 `small_speed` 1.25, `large_scale` 1.25, `large_special` 1.3).
 
-**Up special — pyramid** (`up_special.tres` with `pyramid` → `PyramidData`): a sandstone pyramid
+**Up special — pyramid** (`up_special.tres` with `ability` → `PyramidData`): a sandstone pyramid
 rises out of the ground under her and lifts her up. It needs ground: a strong move on the stage, a
 poor recovery off it.
 
@@ -65,7 +65,7 @@ poor recovery off it.
   hit values). Her own `up_special.tres` keeps the default's 4 startup frames and drift speed 80,
   with no hitbox of its own (active 0).
 
-Files: `fighter/moves/gitte/` (`moveset.tres`, `neutral_special.tres`, `side_special.tres`,
+Files: `characters/gitte/moves/` (`moveset.tres`, `neutral_special.tres`, `side_special.tres`,
 `down_special.tres`, `stances.tres`, `up_special.tres`, `pyramid.tres`, `pyramid_tip_hit.tres`).
 
 ## Look

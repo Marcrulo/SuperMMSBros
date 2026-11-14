@@ -1,5 +1,5 @@
 class_name GrabData
-extends Resource
+extends AbilityData
 ## A command grab's throw (docs/specs/characters/mads.md#mads--grappler): Mads's over-the-head slam.
 
 ## Frames of the throw from the catch; the thrower is free after the last.
@@ -16,3 +16,7 @@ extends Resource
 @export var held_middle: float
 ## The slam's hit (damage and knockback; launched away from the thrower).
 @export var slam_hit: MoveData
+
+
+func create_ability() -> FighterAbility:
+	return GrabAbility.new()

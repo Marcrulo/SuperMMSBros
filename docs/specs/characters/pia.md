@@ -18,10 +18,10 @@ She takes out a slice of cake and eats it, healing (phase `cake`; no charging).
   belly. She can't move, turn or act meanwhile (on the ground she slides to a stop).
 - **A hit stops it** like any move; if it comes before frame 45 she doesn't heal.
 - **Cooldown:** after a slice she can't eat again for 300 ticks (5 s, `cooldown_frames`,
-  counted from the heal; `Fighter.cake_cooldown`, 0 at every spawn). Until then the K press does
+  counted from the heal; `CakeAbility.cake_cooldown`, 0 at every spawn). Until then the K press does
   nothing.
-- **Data:** `MoveData.heal` (set = this special is eating cake), `heal_frame`,
-  `cooldown_frames`.
+- **Data:** the special's `MoveData.ability` is a `CakeData` (`cake.tres`: `heal`, `heal_frame`,
+  `cooldown_frames`); the `CakeAbility`.
 - A green "+" rises above her head when she heals (like Trine's).
 
 ### Down special — belly flop
@@ -43,7 +43,8 @@ and comes down on it, and the impact hits everyone near her on both sides.
   flat and gets up. The shockwave hits on both sides: hitbox (0, −8), 80×16 (40 px each side of
   her feet, up to 16 px high), damage 11, base 200, growth 1.4, angle 70°, AWAY: up and away from
   her. It can hit someone the belly already hit. A shield blocks both.
-- **Data:** `MoveData.dive_hit` (set = this special is a belly flop), `hop_speed`, `dive_speed`.
+- **Data:** the special's `MoveData.ability` is a `FlopData` (`flop.tres`: `dive_hit`, `hop_speed`);
+  the dive speed is the special's own `dive_speed`; the `FlopAbility`.
 - **Look:** see [art guide](#pias-specials): a dust cloud bursts out on both sides on
   impact.
 
@@ -55,7 +56,7 @@ ahead, passes through platforms, gone on a hit, a shield, the blast zone or afte
 with its own picture and numbers: it appears at (16, −16), flies at 260 px/s, hitbox 12×8,
 damage 6, base 100, growth 0.6, angle 30°.
 
-Files: `fighter/moves/pia/` (`moveset.tres`, `neutral_special.tres`, `down_special.tres`,
+Files: `characters/pia/moves/` (`moveset.tres`, `neutral_special.tres`, `down_special.tres`,
 `belly_dive.tres`, `side_special.tres`).
 
 ## Look

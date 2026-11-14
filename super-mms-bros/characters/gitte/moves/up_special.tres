@@ -9,4 +9,4 @@ startup = 4
 active = 0
 recovery = 0
 drift_speed = 80.0
-pyramid = ExtResource("2_pyramid")
+ability = ExtResource("2_pyramid")

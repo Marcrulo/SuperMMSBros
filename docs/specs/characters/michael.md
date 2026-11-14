@@ -20,7 +20,7 @@ after 120 ticks), with these differences:
 - It appears at (14, −8) from his feet (at his kicking foot), 240 px/s, hitbox 8×8. Damage 6,
   base 110, growth 0.6, angle 30°, launched in the ball's direction (left or right).
 - It spins while flying (its own picture: [art guide](#michaels-football)).
-- File: `fighter/moves/michael/side_special.tres`.
+- File: `characters/michael/moves/side_special.tres`.
 
 A projectile's flight angle is 0 for every other side special (straight ahead, as before).
 
@@ -46,9 +46,9 @@ hovers in front of him for a second, then slams down. Everything else is the def
 - With no main platform under it, it keeps falling and disappears when it leaves the blast zone.
 - It disappears after the impact, when Michael is KO'd, or on `Match.reset()`. A shield blocks it
   like a projectile hit (the hand keeps going). It can't hit Michael.
-- **Data:** the summon is a `MoveData` whose `hand` points at a `HandData` resource (offset, size,
+- **Data:** the summon is a `MoveData` whose `ability` is a `HandData` resource (offset, size,
   hover frames, slam speed, impact frames, `hover_hit` and `slam_hit` as `MoveData` for the hit
-  values). Files: `fighter/moves/michael/` (`moveset.tres`, `neutral_special.tres`,
+  values). Files: `characters/michael/moves/` (`moveset.tres`, `neutral_special.tres`,
   `hand.tres`, `hand_hover_hit.tres`, `hand_slam_hit.tres`).
 
 ## Look

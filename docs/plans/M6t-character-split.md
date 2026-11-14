@@ -38,3 +38,19 @@ branches would conflict.
 6. A guard test: the shared files don't mention character-only moves or mechanics.
 7. Update `architecture.md`, `CLAUDE.md` (character-owned files), commit, push, and re-create the
    character branches from the new `main`.
+
+## Execution notes (2026-11-14)
+
+- Done as planned. The mechanic fields on `MoveData` (`vine`, `grab`, `pyramid`, `stances`,
+  `peel`, `hand`, `ipad`, `rope_switch`, `rope_frenzy`, `min_charge_frames`, Pia's `dive_hit`,
+  `hop_speed`, `heal`, `heal_frame`, `cooldown_frames`) and `MoveSet.ropes` became one generic
+  `ability` field each; Pia got `CakeData` / `FlopData`, the rope flags moved into `RopeData`.
+- Match signal `hand_landed` became `owner_sound(player_index, sound)`; the `Pyramids` node
+  became `BehindFighters`; `FighterVisuals.load_textures()` loads every picture in a character's
+  folder; the HUD card shows abilities' badges (`get_badge(type)`).
+- Checked beyond the tests: all 196 matchups (14 × 14) played 900 ticks each with the same
+  seeded random inputs on the old and the new code gave byte-identical traces of every fighter's
+  position, velocity, state, move, frame, %, stocks, facing and shield, and of the projectile and
+  entity counts (176 400 ticks; plus a Mads-grabs-a-standing-opponent run for the throw, which
+  random play never reaches: 12 600 ticks, identical). The sprite generator's output for every
+  character is byte-identical too. 537 tests pass (535 + the 2 guard tests).

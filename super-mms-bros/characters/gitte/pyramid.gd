@@ -1,5 +1,5 @@
 class_name Pyramid
-extends Node2D
+extends MatchEntity
 ## Gitte's pyramid (docs/specs/characters/gitte.md#gitte--scissors-and-stances): rises out of the floor while
 ## she rides its tip, then sinks back into it and is gone. It isn't solid and has no hitbox of its
 ## own (the tip's hit is her move's). Owned and advanced by the Match; drawing only reads.
@@ -9,8 +9,6 @@ const SINK_SHAKE_TICKS := 2
 const DRAWING := Vector2(168, 128)
 const SCALE := 0.75
 
-## Player index of the fighter riding it.
-var owner_index: int
 var data: PyramidData
 ## The top of the floor it rises out of (its position is (owner's x, floor_y)).
 var floor_y: float
@@ -35,9 +33,14 @@ func setup(owner: int, at: Vector2, pyramid_data: PyramidData, character_id: Str
 	_texture = load(path) as Texture2D if ResourceLoader.exists(path) else null
 
 
-## One tick: rises while `rising` (its owner still rides it), else sinks.
-func advance(rising: bool) -> void:
-	if rising and not sinking:
+func behind_fighters() -> bool:
+	return true
+
+
+## One tick: rises while its owner still rides it, else sinks.
+func advance(match_: Match) -> void:
+	var ride := match_.get_fighter(owner_index).ability(PyramidAbility) as PyramidAbility
+	if ride != null and ride.is_riding() and not sinking:
 		_rise_age += 1
 	else:
 		sinking = true
@@ -45,6 +48,10 @@ func advance(rising: bool) -> void:
 		if _sink_age >= data.sink_frames:
 			finished = true
 	queue_redraw()
+
+
+func is_finished(_match: Match) -> bool:
+	return finished
 
 
 ## How high its tip is above the floor now.

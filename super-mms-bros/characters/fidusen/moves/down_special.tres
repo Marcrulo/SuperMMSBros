@@ -8,4 +8,4 @@ script = ExtResource("1_move")
 startup = 8
 active = 0
 recovery = 10
-peel = ExtResource("2_peel")
+ability = ExtResource("2_peel")

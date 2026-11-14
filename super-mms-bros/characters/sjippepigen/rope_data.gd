@@ -1,5 +1,5 @@
 class_name RopeData
-extends Resource
+extends AbilityData
 ## Sjippepigen's jump ropes (docs/specs/characters/sjippepigen.md#sjippepigen--jump-ropes): always spinning round
 ## her; their tips hurt. Two lengths, switched by her down special.
 
@@ -31,3 +31,13 @@ extends Resource
 ## (not during a frenzy); the frenzy can only be charged with a full meter, and starting one
 ## empties it.
 @export var frenzy_refill_frames: int
+## Her down special switches the ropes short ↔ long (on its frame `startup`; no dive, no hitbox).
+@export var down_special_switches: bool
+## Her neutral special is charged like the punch, but releasing it starts the frenzy instead of
+## punching (no hitbox); let go before this many ticks of charging and nothing happens.
+@export var neutral_special_frenzy: bool
+@export var frenzy_min_charge_frames: int
+
+
+func create_ability() -> FighterAbility:
+	return RopeAbility.new()

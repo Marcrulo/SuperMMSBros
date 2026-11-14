@@ -15,17 +15,14 @@ const BUMP_HEIGHT := 2.0
 ## Where the first stock icon sits on the card, and the distance to the next.
 const STOCKS_AT := Vector2(60, 4)
 const STOCK_STEP := 10.0
-## Where the frenzy meter sits: along the bottom, under the name and %.
-const FRENZY_BAR_AT := Vector2(30, 25)
 
 var player_color: Color
 var _fighter: Fighter
 var _bump_frames_left: int = 0
 var _stock_icons: Array[TextureRect] = []
-## Gitte's stance sign, on the portrait's bottom-right corner (only for a fighter with stances).
-var _stance_badge: StanceBadge
-## Sjippepigen's frenzy meter, along the card's bottom (only for a fighter with the frenzy).
-var _frenzy_bar: FrenzyBar
+## What the fighter's abilities show on the card (FighterAbility.make_card_badge()); each may have
+## a refresh() the card calls every tick.
+var _badges: Array[Control] = []
 
 @onready var _portrait_box := $Portrait as Panel
 @onready var _head := $Portrait/Head as TextureRect
@@ -75,24 +72,14 @@ func setup(fighter: Fighter, player_name: String, color: Color) -> void:
 	head.atlas = FighterVisuals.textures_for(fighter.character_id)["idle"]
 	head.region = head_region_of(head.atlas)
 	_head.texture = head
-	if _stance_badge != null:
-		_stance_badge.queue_free()
-		_stance_badge = null
-	if fighter.stance_data() != null:
-		_stance_badge = StanceBadge.new()
-		_stance_badge.border = color
-		_stance_badge.position = _portrait_box.position + _portrait_box.size \
-				- Vector2(StanceBadge.SIZE, StanceBadge.SIZE) + Vector2(2, 2)
-		add_child(_stance_badge)
-	if _frenzy_bar != null:
-		_frenzy_bar.queue_free()
-		_frenzy_bar = null
-	if fighter.ropes() != null and fighter.stats.moveset.neutral_special.rope_frenzy:
-		_frenzy_bar = FrenzyBar.new()
-		var colors := FighterVisuals.rope_colors_for(fighter.character_id)
-		_frenzy_bar.color = colors[0] if not colors.is_empty() else color
-		_frenzy_bar.position = FRENZY_BAR_AT
-		add_child(_frenzy_bar)
+	for badge in _badges:
+		badge.queue_free()
+	_badges.clear()
+	for ability in fighter.abilities:
+		var badge := ability.make_card_badge(self)
+		if badge != null:
+			add_child(badge)
+			_badges.append(badge)
 	for icon in _stock_icons:
 		icon.queue_free()
 	_stock_icons.clear()
@@ -113,10 +100,9 @@ func refresh() -> void:
 	_percent.text = percent_text(_fighter.percent)
 	_percent.add_theme_color_override("font_color", percent_color(_fighter.percent))
 	_percent.position.y = _percent_y + bump_offset()
-	if _stance_badge != null and _stance_badge.stance != _fighter.stance:
-		_stance_badge.stance = _fighter.stance
-	if _frenzy_bar != null:
-		_frenzy_bar.value = _fighter.frenzy_meter
+	for badge in _badges:
+		if badge.has_method(&"refresh"):
+			badge.call(&"refresh")
 
 
 ## Makes the number jump (the fighter was just hit).
@@ -133,18 +119,17 @@ func bump_offset() -> float:
 	return -BUMP_HEIGHT if _bump_frames_left > 0 else 0.0
 
 
-func has_stance_badge() -> bool:
-	return _stance_badge != null
+## Where the portrait square is on the card (for placing badges).
+func portrait_rect() -> Rect2:
+	return Rect2(_portrait_box.position, _portrait_box.size)
 
 
-## The frenzy meter bar, or null for a fighter without the frenzy.
-func get_frenzy_bar() -> FrenzyBar:
-	return _frenzy_bar
-
-
-## The stance the badge shows.
-func get_shown_stance() -> Fighter.Stance:
-	return _stance_badge.stance
+## The ability badge of class `type` (e.g. StanceBadge) on this card, or null.
+func get_badge(type: Script) -> Control:
+	for badge in _badges:
+		if is_instance_of(badge, type):
+			return badge
+	return null
 
 
 func get_name_text() -> String:

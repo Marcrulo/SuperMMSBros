@@ -2,6 +2,7 @@ class_name FrenzyBar
 extends Control
 ## Sjippepigen's frenzy meter on her player card (docs/specs/match-and-stage.md#hud): a thin bar that
 ## fills up as the meter refills, in her rope color, flashing when full (the frenzy is ready).
+## Only reads.
 
 const SIZE := Vector2(62, 4)
 const BACKGROUND := Color("#1a1c2c")
@@ -15,6 +16,7 @@ var value: float = 0.0:
 			value = v
 			queue_redraw()
 var color := Color.WHITE
+var ability: RopeAbility
 var _frames := 0
 
 
@@ -28,6 +30,12 @@ func fill_color() -> Color:
 	if value >= 1.0 and (_frames / FLASH_FRAMES) % 2 == 0:
 		return color.lightened(0.6)
 	return color
+
+
+## Called by the card every tick.
+func refresh() -> void:
+	if ability != null:
+		value = ability.frenzy_meter
 
 
 func _process(_delta: float) -> void:

@@ -58,7 +58,7 @@ func _sit(held: int) -> Array[FighterInput]:
 
 
 func _ipad() -> IpadData:
-	return _p1.stats.moveset.down_special.ipad
+	return _p1.stats.moveset.down_special.ability as IpadData
 
 
 # --- Data -----------------------------------------------------------------------------------------
@@ -66,7 +66,7 @@ func _ipad() -> IpadData:
 
 func test_the_ipad_break_matches_the_spec() -> void:
 	var sit := _p1.stats.moveset.down_special
-	assert_not_null(sit.ipad, "Trine's down special is the iPad break")
+	assert_true(sit.ability is IpadData, "Trine's down special is the iPad break")
 	assert_eq([sit.startup, sit.active, sit.recovery], [10, 0, 12])
 	assert_eq([_ipad().watch_frames, _ipad().heal_every], [300, 10])
 	assert_almost_eq(_ipad().heal, 1.0, 0.001)
@@ -77,7 +77,7 @@ func test_only_her_down_special_changes() -> void:
 	var moves := _p1.stats.moveset
 	for name in ["jab", "side_tilt", "neutral_special", "side_special", "up_special", "down_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
-	assert_null(_p2.stats.moveset.down_special.ipad, "Kim keeps the default down special")
+	assert_null(_p2.stats.moveset.down_special.ability, "Kim keeps the default down special")
 
 
 # --- Healing --------------------------------------------------------------------------------------
@@ -166,29 +166,29 @@ func test_nothing_happens_in_the_air() -> void:
 
 func test_every_phase_uses_the_down_special_strip() -> void:
 	for phase in [&"down_special", &"ipad_watch", &"ipad_stand"]:
-		assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, phase), "down_special")
+		assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, phase, FighterVisuals.phase_animations_of(_p1)), "down_special")
 
 
 func test_the_drawing_for_each_phase() -> void:
-	assert_eq(FighterVisuals.ipad_frame(&"down_special", 1), 0, "bending down")
-	assert_eq(FighterVisuals.ipad_frame(&"down_special", 6), 1, "seated")
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 1), 1, "watching")
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 16), 2, "watching, the screen shifts")
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 30), 2)
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 31), 3, "a sip of coffee")
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 60), 3)
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 61), 1, "back to watching")
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_watch", 91), 3, "the next sip")
-	assert_eq(FighterVisuals.ipad_frame(&"ipad_stand", 3), 4, "getting up")
+	assert_eq(IpadAbility.ipad_frame(&"down_special", 1), 0, "bending down")
+	assert_eq(IpadAbility.ipad_frame(&"down_special", 6), 1, "seated")
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 1), 1, "watching")
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 16), 2, "watching, the screen shifts")
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 30), 2)
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 31), 3, "a sip of coffee")
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 60), 3)
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 61), 1, "back to watching")
+	assert_eq(IpadAbility.ipad_frame(&"ipad_watch", 91), 3, "the next sip")
+	assert_eq(IpadAbility.ipad_frame(&"ipad_stand", 3), 4, "getting up")
 
 
 func test_the_heal_plus_rises_after_each_heal() -> void:
 	var ipad := IpadData.new()
 	ipad.heal_every = 10
-	assert_eq(FighterVisuals.heal_plus_ages(ipad, 9), [], "before the first heal")
-	assert_eq(FighterVisuals.heal_plus_ages(ipad, 10), [0])
-	assert_eq(FighterVisuals.heal_plus_ages(ipad, 25), [15, 5], "two at once")
-	assert_eq(FighterVisuals.heal_plus_ages(ipad, 45), [15, 5])
+	assert_eq(IpadAbility.heal_plus_ages(ipad, 9), [], "before the first heal")
+	assert_eq(IpadAbility.heal_plus_ages(ipad, 10), [0])
+	assert_eq(IpadAbility.heal_plus_ages(ipad, 25), [15, 5], "two at once")
+	assert_eq(IpadAbility.heal_plus_ages(ipad, 45), [15, 5])
 
 
 ## Runs FighterVisuals._draw while she watches (with the "+"), facing either way.

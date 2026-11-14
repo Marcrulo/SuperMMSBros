@@ -22,3 +22,6 @@ frenzy_speed = 2.0
 frenzy_hit = ExtResource("4_frenzy")
 frenzy_charge_knockback = 200.0
 frenzy_refill_frames = 720
+down_special_switches = true
+neutral_special_frenzy = true
+frenzy_min_charge_frames = 20

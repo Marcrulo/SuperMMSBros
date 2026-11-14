@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="FlopData" format=3]
+
+[ext_resource type="Script" path="res://characters/pia/flop_data.gd" id="1_flop"]
+[ext_resource type="Resource" path="res://characters/pia/moves/belly_dive.tres" id="2_dive"]
+
+[resource]
+script = ExtResource("1_flop")
+dive_hit = ExtResource("2_dive")
+hop_speed = 240.0

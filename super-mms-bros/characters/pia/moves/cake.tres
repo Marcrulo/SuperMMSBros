@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="CakeData" format=3]
+
+[ext_resource type="Script" path="res://characters/pia/cake_data.gd" id="1_cake"]
+
+[resource]
+script = ExtResource("1_cake")
+heal = 8.0
+heal_frame = 45
+cooldown_frames = 300

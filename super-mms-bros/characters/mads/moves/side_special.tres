@@ -10,4 +10,4 @@ active = 4
 recovery = 24
 hitbox_center = Vector2(16, -14)
 hitbox_size = Vector2(18, 24)
-grab = ExtResource("2_grab")
+ability = ExtResource("2_grab")

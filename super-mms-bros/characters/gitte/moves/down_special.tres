@@ -8,4 +8,4 @@ script = ExtResource("1_move")
 startup = 8
 active = 0
 recovery = 7
-stances = ExtResource("2_stances")
+ability = ExtResource("2_stances")

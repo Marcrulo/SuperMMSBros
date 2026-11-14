@@ -1,12 +1,11 @@
 [gd_resource type="Resource" script_class="MoveData" format=3]
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/pia/moves/cake.tres" id="2_cake"]
 
 [resource]
 script = ExtResource("1_move")
 startup = 45
 active = 0
 recovery = 15
-heal = 8.0
-heal_frame = 45
-cooldown_frames = 300
+ability = ExtResource("2_cake")

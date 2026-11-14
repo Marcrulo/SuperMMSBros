@@ -1,5 +1,5 @@
 class_name StanceData
-extends Resource
+extends AbilityData
 ## Gitte's stances (docs/specs/characters/gitte.md#gitte--scissors-and-stances): what each one changes.
 
 ## + : her projectiles' damage ×this.
@@ -12,3 +12,7 @@ extends Resource
 ## × : size ×large_scale, specials' damage and base knockback ×large_special.
 @export var large_scale: float
 @export var large_special: float
+
+
+func create_ability() -> FighterAbility:
+	return StanceAbility.new()

@@ -67,7 +67,7 @@ func _hold_shield(ticks: int) -> Array[FighterInput]:
 
 
 func _hand_data() -> HandData:
-	return _p1.stats.moveset.neutral_special.hand
+	return _p1.stats.moveset.neutral_special.ability as HandData
 
 
 # --- Data -----------------------------------------------------------------------------------------
@@ -82,7 +82,7 @@ func test_michael_summons_and_keeps_the_other_default_moves() -> void:
 		assert_eq(moves.get(name), defaults.get(name), name)
 	var summon := moves.neutral_special
 	assert_eq([summon.startup, summon.active, summon.recovery, summon.charge_frames], [10, 0, 7, 0])
-	assert_null(defaults.neutral_special.hand, "the default neutral special charges")
+	assert_null(defaults.neutral_special.ability, "the default neutral special charges")
 
 
 func test_hand_data_matches_the_spec() -> void:
@@ -115,10 +115,10 @@ func test_floor_below() -> void:
 func test_summon_spawns_the_hand_in_front() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _summon())
 	_steps(SPAWN - 1)
-	assert_eq(_match.get_hands().size(), 0, "not before frame 10")
+	assert_eq(_hands().size(), 0, "not before frame 10")
 	_steps(1)
-	assert_eq(_match.get_hands().size(), 1)
-	var hand := _match.get_hands()[0]
+	assert_eq(_hands().size(), 1)
+	var hand := _hands()[0]
 	assert_eq(hand.owner_index, 0)
 	assert_almost_eq(hand.global_position, Vector2(210, 142), Vector2(4.1, 0.01))
 
@@ -130,7 +130,7 @@ func test_hand_faces_and_appears_on_michaels_side() -> void:
 	_match.set_controller(1, ScriptedController.new([]))
 	await wait_physics_frames(1)
 	_steps(SPAWN)
-	var hand := _match.get_hands()[0]
+	var hand := _hands()[0]
 	assert_eq(hand.facing, -1)
 	assert_almost_eq(hand.global_position.x, 240.0, 4.1)
 
@@ -139,13 +139,13 @@ func test_michael_is_free_while_the_hand_hovers() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _summon())
 	_steps(SPAWN + 8)
 	assert_ne(_p1.state, Fighter.State.ATTACK, "free after its 17 frames")
-	assert_eq(_match.get_hands().size(), 1, "the hand still hovers")
+	assert_eq(_hands().size(), 1, "the hand still hovers")
 
 
 func test_one_hand_at_a_time() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _summon(2, 10))
 	_steps(SPAWN + 12)
-	assert_eq(_match.get_hands().size(), 1)
+	assert_eq(_hands().size(), 1)
 	assert_ne(_p1.state, Fighter.State.ATTACK, "the second press does nothing")
 
 
@@ -157,10 +157,10 @@ func test_hand_stays_put_when_michael_moves() -> void:
 		inputs.append(walk)
 	await _place(Vector2(200, 192), Vector2(380, 192), inputs)
 	_steps(SPAWN)
-	var at := _match.get_hands()[0].global_position
+	var at := _hands()[0].global_position
 	_steps(30)
 	assert_lt(_p1.global_position.x, 190.0, "Michael walked away")
-	assert_eq(_match.get_hands()[0].global_position, at)
+	assert_eq(_hands()[0].global_position, at)
 
 
 # --- Hover and slam -------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ func test_hand_stays_put_when_michael_moves() -> void:
 func test_hand_hovers_for_a_second_then_slams() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _summon())
 	_steps(SPAWN + 60)
-	var hand := _match.get_hands()[0]
+	var hand := _hands()[0]
 	assert_eq(hand.global_position.y, 142.0, "still hovering")
 	_steps(1)
 	assert_almost_eq(hand.global_position.y, 152.0, 0.01, "dropping 10 px a tick")
@@ -179,28 +179,28 @@ func test_hand_lands_on_the_floor_below() -> void:
 	watch_signals(_match)
 	await _place(Vector2(150, 192), Vector2(380, 192), _summon())
 	_steps(SPAWN + 60 + 5)
-	var hand := _match.get_hands()[0]
+	var hand := _hands()[0]
 	assert_eq(hand.global_position.y, 192.0, "on the main platform")
-	assert_signal_emit_count(_match, "hand_landed", 1)
-	assert_signal_emitted_with_parameters(_match, "hand_landed", [0])
+	assert_signal_emit_count(_match, "owner_sound", 1)
+	assert_signal_emitted_with_parameters(_match, "owner_sound", [0, &"burst"])
 	_steps(8)
-	assert_eq(_match.get_hands().size(), 0, "gone after the impact")
+	assert_eq(_hands().size(), 0, "gone after the impact")
 
 
 func test_hand_goes_through_platforms() -> void:
 	await _place(Vector2(100, 192), Vector2(380, 192), _summon())
 	_steps(SPAWN + 60 + 2)
-	assert_almost_eq(_match.get_hands()[0].global_position.y, 162.0, 0.01, "past the left platform")
+	assert_almost_eq(_hands()[0].global_position.y, 162.0, 0.01, "past the left platform")
 	_steps(3)
-	assert_eq(_match.get_hands()[0].global_position.y, 192.0, "on the main platform")
+	assert_eq(_hands()[0].global_position.y, 192.0, "on the main platform")
 
 
 func test_hand_without_floor_falls_away() -> void:
 	await _place(Vector2(370, 192), Vector2(150, 192), _summon())
 	_steps(SPAWN + 60 + 10)
-	assert_eq(_match.get_hands().size(), 1, "still falling")
+	assert_eq(_hands().size(), 1, "still falling")
 	_steps(20)
-	assert_eq(_match.get_hands().size(), 0, "gone below the blast zone")
+	assert_eq(_hands().size(), 0, "gone below the blast zone")
 
 
 func test_slam_launches_straight_up() -> void:
@@ -220,7 +220,7 @@ func test_touching_the_hovering_hand_hurts_a_little() -> void:
 	await _place(Vector2(150, 192), Vector2(210, 130), _summon())
 	_steps(SPAWN)
 	assert_eq(_p2.percent, 4.0)
-	assert_eq(_match.get_hands().size(), 1, "the hand keeps hovering")
+	assert_eq(_hands().size(), 1, "the hand keeps hovering")
 
 
 func test_shield_blocks_the_slam() -> void:
@@ -251,14 +251,14 @@ func test_hand_disappears_when_michael_is_knocked_out() -> void:
 	_p1.global_position = Vector2(150, 400)
 	_steps(1)
 	assert_eq(_p1.state, Fighter.State.KO)
-	assert_eq(_match.get_hands().size(), 0)
+	assert_eq(_hands().size(), 0)
 
 
 func test_reset_removes_hands() -> void:
 	await _place(Vector2(150, 192), Vector2(380, 192), _summon())
 	_steps(SPAWN)
 	_match.reset()
-	assert_eq(_match.get_hands().size(), 0)
+	assert_eq(_hands().size(), 0)
 
 
 # --- Art ------------------------------------------------------------------------------------------
@@ -275,3 +275,10 @@ func test_hand_picture_has_an_open_and_a_flat_drawing() -> void:
 			if color.a > 0.5 and color.r > 0.9 and color.g > 0.9 and color.b > 0.9:
 				white += 1
 	assert_gt(white, 200, "a white glove")
+
+
+## The summoned hands in the match, oldest first.
+func _hands() -> Array[Hand]:
+	var found: Array[Hand] = []
+	found.assign(_match.get_entities(Hand))
+	return found

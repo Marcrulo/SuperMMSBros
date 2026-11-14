@@ -35,13 +35,13 @@ from the rightmost wraps to the leftmost (on both screens). Up and down don't wr
 
 ## Characters and the roster
 
-- A **`CharacterData`** resource per character (`fighter/characters/<id>.tres`): `id`,
+- A **`CharacterData`** resource per character (`characters/<name>/character.tres`): `id`,
   `display_name`, `playable`, `portrait` (a select-screen picture, optional) and `stats` (its
   `FighterStats`, which holds its move set; empty for a character that isn't playable yet), and
   optionally `moveset` (its own move set, used instead of the one in `stats`; see
   [moves](moves.md#character-move-sets)) and `charge_glow` (where the neutral special's charge
   glow is drawn, relative to the feet, facing right; default the fists at (7, −14)). Its sprites are in `assets/fighters/<id>/` (see [art guide](art-guide.md#export)).
-- The **`Roster`** resource (`fighter/characters/roster.tres`) lists the characters in
+- The **`Roster`** resource (`fighter/roster.tres`) lists the characters in
   select-screen order and the number of slots: **15**. A slot holding a character that isn't
   `playable`, or past the list, is **locked**.
 - v1 has fourteen playable characters in slots 1–14, `slot_01` … `slot_14`, all using

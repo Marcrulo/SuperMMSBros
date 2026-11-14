@@ -8,4 +8,4 @@ script = ExtResource("1_move")
 startup = 6
 active = 0
 recovery = 0
-vine = ExtResource("2_vine")
+ability = ExtResource("2_vine")

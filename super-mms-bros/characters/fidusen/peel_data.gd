@@ -1,5 +1,5 @@
 class_name PeelData
-extends Resource
+extends AbilityData
 ## A banana peel's tuning (docs/specs/characters/fidusen.md#fidusen--banana-book-vine).
 
 ## Peels of one fighter out at once; another removes the oldest.
@@ -13,3 +13,7 @@ extends Resource
 ## % added to the fighter who slips, and the ticks they lie on the floor.
 @export var damage: float
 @export var trip_frames: int
+
+
+func create_ability() -> FighterAbility:
+	return PeelAbility.new()

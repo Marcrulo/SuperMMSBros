@@ -7,4 +7,3 @@ script = ExtResource("1_move")
 startup = 6
 active = 0
 recovery = 6
-rope_switch = true

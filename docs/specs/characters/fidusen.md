@@ -7,7 +7,7 @@ and the [art guide](../art-guide.md).
 
 Fidusen's down, side and up specials are his own; everything else is the default move set.
 
-**Down special — banana peel** (`down_special.tres` with `peel` → `PeelData`):
+**Down special — banana peel** (`down_special.tres` with `ability` → `PeelData`):
 
 - 8 / 0 / 10 (18) frames, on the ground or in the air (no dive). On frame 8 a peel appears at
   (8, 0) from his feet, facing side mirrored. In the air it falls at 300 px/s to the floor below it
@@ -27,7 +27,7 @@ hitbox 10×8; damage 7, base 120, growth 0.7, angle 40°, launched in its direct
 hit or a shield, when it lands on the main platform (it passes through the pass-through
 platforms), out of the blast zone, or after 120 ticks.
 
-**Up special — vine** (`up_special.tres` with `vine` → `VineData`):
+**Up special — vine** (`up_special.tres` with `ability` → `VineData`):
 
 - 6 frames of startup (no launch), on the ground or in the air; once per stay in the air like the
   default up special.
@@ -43,7 +43,7 @@ platforms), out of the blast zone, or after 120 ticks.
   `HELPLESS` once he stops rising, ledges can be grabbed while rising.
 - Getting hit ends the vine.
 
-Files: `fighter/moves/fidusen/` (`moveset.tres`, `down_special.tres`, `peel.tres`,
+Files: `characters/fidusen/moves/` (`moveset.tres`, `down_special.tres`, `peel.tres`,
 `side_special.tres`, `up_special.tres`, `vine.tres`).
 
 ## Look

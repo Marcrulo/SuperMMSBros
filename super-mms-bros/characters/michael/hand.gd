@@ -1,8 +1,8 @@
 class_name Hand
-extends Node2D
+extends MatchEntity
 ## A summoned hand (docs/specs/characters/michael.md#michael-bech--big-hand): hovers, slams straight down to
-## the floor below, stays a moment, then is gone. Owned and advanced by the Match, one tick at a
-## time; drawing only reads.
+## the floor below, stays a moment, then is gone. Added by HandAbility, advanced by the Match one
+## tick at a time; drawing only reads.
 
 enum Phase { HOVER, SLAM, IMPACT }
 
@@ -12,8 +12,6 @@ const DRAWING := Vector2(56, 44)
 const SCALE := 0.75
 const SHADOW := Color(0.0, 0.0, 0.0, 0.3)
 
-## Player index of the fighter who summoned it.
-var owner_index: int
 ## The summoner's facing when it appeared: 1 = right, -1 = left.
 var facing: int
 var data: HandData
@@ -43,8 +41,40 @@ func setup(owner: int, owner_facing: int, at: Vector2, hand_data: HandData, floo
 	_texture = load(path) as Texture2D if ResourceLoader.exists(path) else null
 
 
-## One tick. Returns true on the tick it lands.
-func advance() -> bool:
+## One tick; on the tick it lands, its owner's sounds play the burst.
+func advance(match_: Match) -> void:
+	if _step():
+		match_.owner_sound.emit(owner_index, &"burst")
+
+
+func is_finished(match_: Match) -> bool:
+	return finished or not match_.get_stage().blast_zone.has_point(global_position)
+
+
+func removed_with_owner() -> bool:
+	return true
+
+
+## Hits whoever it touches (once per part: hover, or slam + impact).
+func collect_hits(match_: Match, hits: Array[Dictionary]) -> void:
+	var hitbox := get_hitbox_rect()
+	for victim in match_.get_fighters():
+		if victim.player_index == owner_index or not victim.can_be_hit() \
+				or has_hit(victim.player_index):
+			continue
+		if hitbox.intersects(victim.get_hurtbox_rect()):
+			var dx := victim.get_center().x - global_position.x
+			hits.append({
+				"victim": victim,
+				"move": current_hit(),
+				"side": facing if is_zero_approx(dx) else int(signf(dx)),
+				"attacker_x": global_position.x,
+				"register": register_hit,
+			})
+
+
+## One tick of its own. Returns true on the tick it lands.
+func _step() -> bool:
 	age += 1
 	var landed := false
 	match phase:

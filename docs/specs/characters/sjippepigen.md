@@ -30,14 +30,14 @@ grab ledges.
   (by which side of her middle the victim's middle is). The short ropes hit harder, the long ones
   reach further: short damage 3, base 110, growth 1.0, angle 40°; long damage 2, base 60, growth
   0.4, angle 40°.
-- **Down special — switch length** (`down_special.tres`, `rope_switch` on): 6 / 0 / 6 (12) frames,
+- **Down special — switch length** (`down_special.tres`, `RopeData.down_special_switches` on): 6 / 0 / 6 (12) frames,
   on the ground or in the air (no dive, no hitbox): on frame 6 the ropes switch between short and
   long (a switch forgets which turns already hit).
-- **Data:** `MoveSet.ropes` → `RopeData` (`count` 3, `center`, `short_radius`, `long_radius`,
+- **Data:** `MoveSet.ability` → `RopeData` (`count` 3, `center`, `short_radius`, `long_radius`,
   `short_period`, `long_period`, `tip_size`, `immune_frames`, `short_hit` and `long_hit` as
-  `MoveData`, `frenzy_frames`, `frenzy_speed`, `frenzy_hit`, `frenzy_charge_knockback`);
-  `MoveData.rope_switch` on her down special, `MoveData.rope_frenzy` on her neutral special
-  (`neutral_special.tres`, `frenzy_hit.tres`). Files: `fighter/moves/sjippepigen/`
+  `MoveData`, `frenzy_frames`, `frenzy_speed`, `frenzy_hit`, `frenzy_charge_knockback`,
+  `down_special_switches` and `neutral_special_frenzy` on, `frenzy_min_charge_frames` 20; her
+  `neutral_special.tres` and `frenzy_hit.tres`); the `RopeAbility`. Files: `characters/sjippepigen/moves/`
   (`moveset.tres`, `down_special.tres`, `ropes.tres`, `rope_short_hit.tres`, `rope_long_hit.tres`,
   `up_special.tres`, `lasso.tres`, `lasso_hit.tres`).
 - **Look:** the game draws each rope as seen from the side while skipping: **from one hand of its
@@ -52,11 +52,11 @@ grab ledges.
   Her ropes are her own patina green: rope 1 (120, 128, 80), rope 2 lighter (146, 156, 100), rope 3
   darker (92, 100, 60) (`CharacterData.rope_colors`; a character without them would get red,
   blue, yellow).
-- **Neutral special — frenzy** (`neutral_special.tres`, `rope_frenzy` on): charged like the
+- **Neutral special — frenzy** (`neutral_special.tres`, `RopeData.neutral_special_frenzy` on): charged like the
   default neutral special (hold K up to 60 ticks; on the ground she slides to a stop, in the air she
   keeps falling; her ropes keep spinning normally meanwhile), but releasing it doesn't punch: a
   3 / 0 / 8 (11) frame release with no hitbox. **Let go before 20 ticks of charging
-  (`min_charge_frames`) and nothing more happens; otherwise the frenzy** starts: for 120 ticks
+  (`frenzy_min_charge_frames`) and nothing more happens; otherwise the frenzy** starts: for 120 ticks
   (`frenzy_frames`; she's free to act after the release) her ropes spin twice as fast
   (`frenzy_speed`; the ropes' turn grows by speed / period each tick, so a speed change doesn't make
   them jump) and every rope hit is the frenzy hit instead: **damage 0**, base 150 + 200 × the charge
@@ -70,7 +70,7 @@ grab ledges.
   ring 5 px in radius 44 px above her feet (3 px dark outline) fills clockwise from the top in her
   first rope color: dimmed and see-through before 20 ticks, lightened after, flashing white (4 ticks
   on, 4 off) when full.
-- **Up special — lasso** (`up_special.tres` with `vine` → `VineData`, `lasso.tres`): Fidusen's vine
+- **Up special — lasso** (`up_special.tres` with `ability` → `VineData`, `lasso.tres`): Fidusen's vine
   (see [Fidusen](fidusen.md#fidusen--banana-book-vine), the same numbers) thrown as a rope, with an air grab
   added. On frame 6 the Match picks, in this order: a free **ledge** in reach (as the vine) → pulled
   to it and hangs; else the nearest **opponent** that can be hit and isn't held, whose center is at

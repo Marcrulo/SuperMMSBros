@@ -30,7 +30,7 @@ retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
 | Charged punch | the neutral special's punch starts (Michael: his summon starts) | `swing_heavy` |
 | Charging | while the neutral special charges (loops; stops when the charge ends) | `charge` |
 | Projectile | the side special's projectile appears | `zap` |
-| Hand slam | Michael's hand reaches the floor (`Match.hand_landed`, owner's sounds) | `burst` |
+| Hand slam | Michael's hand reaches the floor (`Match.owner_sound`, owner's sounds) | `burst` |
 | Burst | the down special's ground burst starts its active frames | `burst` |
 | Dive | the down special's air dive starts | `dive` |
 | Boost | the up special launches (its frame 5; Gitte: her hop, or her pop off the pyramid's tip) | `boost` |
