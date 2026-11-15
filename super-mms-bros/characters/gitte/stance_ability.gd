@@ -2,8 +2,8 @@ class_name StanceAbility
 extends FighterAbility
 ## Gitte's stances (docs/specs/characters/gitte.md#gitte--scissors-and-stances): her down special
 ## switches stance on its frame `startup` (also in the air): + → − → ÷ → × → +, + at every spawn.
-## + makes her projectile hurt more, − heals her by a share of her landed normals, ÷ makes her
-## small and fast, × makes her big with stronger specials.
+## + makes all her hits knock back harder, − tugs opponents toward her with her normals, ÷ makes
+## her small and fast, × makes her big with stronger specials.
 
 ## In switching order.
 enum Stance { PLUS, MINUS, DIVIDE, MULTIPLY }
@@ -52,27 +52,25 @@ func speed_scale() -> float:
 	return _numbers().small_speed if stance == Stance.DIVIDE else 1.0
 
 
-## × makes specials hit harder.
+## + makes every hit knock back harder; × makes specials hit harder.
 func modify_hit(move_data: MoveData, special: bool) -> MoveData:
-	if not special or stance != Stance.MULTIPLY:
-		return move_data
-	var copy := move_data.duplicate() as MoveData
-	copy.damage = move_data.damage * _numbers().large_special
-	copy.base_knockback = move_data.base_knockback * _numbers().large_special
-	return copy
-
-
-## + makes the projectile hurt more; × (a special) too.
-func modify_projectile(move_data: MoveData) -> MoveData:
-	var copy := modify_hit(move_data, true)
+	var numbers := _numbers()
 	if stance == Stance.PLUS:
-		copy = copy.duplicate() as MoveData
-		copy.damage = move_data.damage * _numbers().projectile_damage
-	return copy
+		var copy := move_data.duplicate() as MoveData
+		copy.base_knockback = move_data.base_knockback * numbers.knockback
+		copy.knockback_growth = move_data.knockback_growth * numbers.knockback
+		return copy
+	if stance == Stance.MULTIPLY and special:
+		var copy := move_data.duplicate() as MoveData
+		copy.damage = move_data.damage * numbers.large_special
+		copy.base_knockback = move_data.base_knockback * numbers.large_special
+		return copy
+	return move_data
 
 
-func lifesteal() -> float:
-	return _numbers().lifesteal if stance == Stance.MINUS else 0.0
+## The volley counts as a special.
+func modify_projectile(move_data: MoveData) -> MoveData:
+	return modify_hit(move_data, true)
 
 
 ## The stance sign on the portrait's bottom-right corner.

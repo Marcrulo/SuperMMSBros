@@ -83,8 +83,8 @@ func test_gitte_has_her_own_specials() -> void:
 	for name in ["jab", "side_tilt", "neutral_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
 	var s := _stances()
-	assert_eq([s.projectile_damage, s.lifesteal, s.small_scale, s.small_speed, s.large_scale,
-		s.large_special], [1.5, 0.5, 0.75, 1.25, 1.25, 1.3])
+	assert_eq([s.knockback, s.pull_cone_deg, s.pull_reach, s.pull_speed, s.small_scale,
+		s.small_speed, s.large_scale, s.large_special], [1.25, 30.0, 120.0, 300.0, 0.75, 1.25, 1.25, 1.3])
 	var volley := moves.side_special
 	assert_eq([volley.projectile_count, volley.projectile_spread_deg, volley.damage], [3, 12.0, 4.0])
 	var cut := moves.neutral_special
@@ -134,7 +134,7 @@ func test_stance_resets_on_spawn() -> void:
 	assert_eq(_stance().stance, StanceAbility.Stance.PLUS)
 
 
-# --- Plus: projectiles ----------------------------------------------------------------------------
+# --- The volley; plus: knockback -----------------------------------------------------------------
 
 
 func test_volley_throws_three_in_a_fan() -> void:
@@ -154,43 +154,53 @@ func test_no_new_volley_while_one_is_out() -> void:
 	assert_eq(_match.get_projectiles().size(), 3)
 
 
-func _volley_damage(stance: StanceAbility.Stance) -> float:
+## Steps until P2 is first hit; returns [P2's %, its launch speed].
+func _first_hit(max_steps: int) -> Array:
+	for i in max_steps:
+		_match.step()
+		if _p2.percent > 0.0:
+			return [_p2.percent, _p2.velocity.length()]
+	return [0.0, 0.0]
+
+
+func _volley_hit(stance: StanceAbility.Stance) -> Array:
 	# Only the straight one reaches P2 this far away. (A fresh start: no scissors still flying.)
 	_match.reset()
 	await _place(Vector2(150, 192), Vector2(330, 192), _moves("volley"), stance)
-	_steps(60)
-	return _p2.percent
+	return _first_hit(60)
 
 
-func test_plus_projectiles_do_more_damage() -> void:
-	assert_eq(await _volley_damage(StanceAbility.Stance.MINUS), 4.0)
-	assert_eq(await _volley_damage(StanceAbility.Stance.PLUS), 6.0)
-
-
-# --- Minus: lifesteal -----------------------------------------------------------------------------
-
-
-func _jab_heal(stance: StanceAbility.Stance) -> float:
+func _jab_hit(stance: StanceAbility.Stance) -> Array:
 	await _place(Vector2(150, 192), Vector2(165, 192), _moves("jab"), stance)
+	return _first_hit(10)
+
+
+func test_plus_knocks_harder() -> void:
+	var plus: Array = await _jab_hit(StanceAbility.Stance.PLUS)
+	var minus: Array = await _jab_hit(StanceAbility.Stance.MINUS)
+	assert_gt(minus[1], 0.0, "the jab hit")
+	assert_almost_eq(plus[1], minus[1] * 1.25, 0.01)
+
+
+func test_plus_keeps_damage() -> void:
+	assert_eq((await _jab_hit(StanceAbility.Stance.PLUS))[0], 3.0)
+
+
+func test_plus_volley_knocks_harder() -> void:
+	var plus: Array = await _volley_hit(StanceAbility.Stance.PLUS)
+	var minus: Array = await _volley_hit(StanceAbility.Stance.MINUS)
+	assert_eq([plus[0], minus[0]], [4.0, 4.0], "same damage")
+	assert_almost_eq(plus[1], minus[1] * 1.25, 0.01)
+
+
+# --- Minus: no healing ----------------------------------------------------------------------------
+
+
+func test_minus_doesnt_heal() -> void:
+	await _place(Vector2(150, 192), Vector2(165, 192), _moves("jab"), StanceAbility.Stance.MINUS)
 	_p1.percent = 20.0
 	_steps(10)
 	assert_eq(_p2.percent, 3.0, "the jab hit")
-	return _p1.percent
-
-
-func test_minus_heals_on_normal_hits() -> void:
-	assert_eq(await _jab_heal(StanceAbility.Stance.MINUS), 18.5)
-
-
-func test_other_stances_dont_heal() -> void:
-	assert_eq(await _jab_heal(StanceAbility.Stance.PLUS), 20.0)
-
-
-func test_minus_doesnt_heal_on_specials() -> void:
-	await _place(Vector2(150, 192), Vector2(175, 192), _moves("cut"), StanceAbility.Stance.MINUS)
-	_p1.percent = 20.0
-	_steps(20)
-	assert_gt(_p2.percent, 7.9, "the cut hit")
 	assert_eq(_p1.percent, 20.0)
 
 
