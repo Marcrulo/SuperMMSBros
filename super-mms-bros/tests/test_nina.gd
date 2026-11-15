@@ -72,7 +72,7 @@ func test_nina_has_her_own_side_special() -> void:
 	var defaults := (load("res://fighter/default_stats.tres") as FighterStats).moveset
 	var moves := _p1.stats.moveset
 	assert_ne(moves.side_special, defaults.side_special)
-	for name in ["jab", "side_tilt", "neutral_special", "up_special", "down_special"]:
+	for name in ["jab", "side_tilt", "neutral_special", "up_special"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
 	var side := moves.side_special
 	assert_eq([side.startup, side.active, side.recovery], [10, 0, 16])

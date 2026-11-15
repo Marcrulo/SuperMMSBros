@@ -151,7 +151,7 @@ CHARACTERS = {
                     hair_light=(214, 64, 34), hair_style="long", hair_length=12,
                     freckles=(204, 120, 90), shirt=(232, 234, 238), shirt_shade=(178, 184, 198),
                     shirt_light=(255, 255, 255),
-                    pants=JEANS),
+                    pants=JEANS, lullaby=True),
     "slot_05": dict(name="Michael Bech", skin=(240, 128, 112), skin_shade=(196, 92, 84),
                     skin_light=(250, 166, 146), stubble=(214, 104, 94), collar="hood",
                     hair_style="buzz", hair=(178, 104, 86), hair_shade=(160, 90, 76),

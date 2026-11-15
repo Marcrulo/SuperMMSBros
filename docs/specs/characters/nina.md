@@ -5,7 +5,7 @@ and the [art guide](../art-guide.md).
 
 ## Nina — existentialism
 
-Nina's side special is her own; everything else is the default move set.
+Nina's side special and down special are her own; everything else is the default move set.
 
 **Side special — letter volley** (`side_special.tres` with `ability` → `LetterData`; phase
 `letters`): she shoots the letters of **E-K-S-I-S-T-E-N-T-I-A-L-I-S-M-E** (16, `text`) out of her
@@ -48,9 +48,45 @@ hands, one after the other, each flying straight ahead.
 Files: `characters/nina/moves/` (`moveset.tres`, `side_special.tres`, `letters.tres`);
 `characters/nina/letter_data.gd`, `letter_ability.gd`, `letter.gd`.
 
+## Down special — lullaby
+
+**Down special — lullaby** (`down_special.tres` with `ability` → `SongData`; phase `song`): she
+sings, and everyone near her falls asleep.
+
+- **Start:** Down+B on the ground **or in the air** (it replaces the default burst and dive).
+- **Frames:** 20 / 60 / 20 (the move's `startup`, `active`, `recovery`): 100 ticks in all. No
+  hitbox, no damage.
+- **She stands still:** no walking, turning, jumping or cancelling until it ends. On the ground she
+  slides to a stop (ground friction); in the air her sideways speed slows the same way and she
+  hovers, sinking at most `hover_fall_speed` (30 px/s; gravity brings her to it). Landing doesn't
+  end it.
+- **The song:** on each of the active frames (20…79), every other fighter whose hurtbox touches the
+  circle of radius `radius` (56 px) around her `voice` point ((0, −16) from her feet; both scale
+  with her size) falls asleep, if it can be hit at all (not KO'd, held, invulnerable or
+  intangible — a dodge through it is safe). **A shield doesn't protect.** Each fighter falls
+  asleep at most once per song.
+- **Asleep:** the shared stun (`Fighter.stun()`): dizzy (`SHIELD_BREAK`) for `sleep_ticks` (120,
+  2 s), whatever it was doing ends, its shield stays as it was. A hit wakes it (hitstun takes
+  over). Asleep in the air, it falls.
+- **Data:** `SongData`: `radius`, `voice`, `sleep_ticks`, `hover_fall_speed`.
+
+Files: `characters/nina/moves/down_special.tres`; `characters/nina/song_data.gd`,
+`song_ability.gd`, `sleep_mark.gd`.
+
 ## Look
 
 - **Pose:** her default side special strip (4 drawings): drawing 0 then 1 while winding up, 2
   (arms thrust out front) for the whole volley, 3 for the recovery.
 - **The letters** are drawn by the game, not a sprite: the letter in white with a dark outline,
   about 10 px tall, in the engine's fallback font, centered on the hitbox. The letter never turns.
+- **Singing:** her down special strip (5 drawings): 0 a breath in (hands rising to her chest,
+  eyes open) for the startup, then 1, 2, 3 swaying back, upright, forward (hands clasped at her
+  chest, head up, eyes shut, mouth a round "O"), shown 1, 2, 3, 2, … 10 ticks each for the active
+  frames, and 4 (hands lowering) for the recovery.
+- **Notes** (drawn by the game, over her): during the active frames little pixel music notes (♪,
+  a head, a stem and a flag, in four soft colors, dark outline) float out of her mouth upward and
+  to both sides (never down into the floor), drifting and bobbing out to the song's radius and fading there, so you can see how
+  far it reaches. A new note every 5 ticks.
+- **Asleep:** the sleeper's own dizzy animation, with a `SleepMark` (an entity drawn by the game)
+  over its head: three "z"s, one after another, each drifting up and to the side, growing and fading, white with
+  a dark outline, for as long as it sleeps.

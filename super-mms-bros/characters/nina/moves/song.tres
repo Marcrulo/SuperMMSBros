@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SongData" format=3]
+
+[ext_resource type="Script" path="res://characters/nina/song_data.gd" id="1_song"]
+
+[resource]
+script = ExtResource("1_song")
+radius = 56.0
+voice = Vector2(0, -16)
+sleep_ticks = 120
+hover_fall_speed = 30.0
