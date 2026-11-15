@@ -93,8 +93,13 @@ uses the default poses.
 - **Potion colours:** red (220, 52, 52), blue (60, 130, 230), green (90, 190, 70), each with a
   darker and a lighter shade.
 - **The flask:** a round-bottomed glass flask (a 7 px bulb and a 2 px neck with a cork), the
-  potion filling the bulb; it spins while flying. During her down and side specials (until the
-  throw) and her neutral special (until the smash) she holds one in her front hand. The smash
+  potion filling the bulb; it spins while flying. She **always holds a flask of the colour she
+  holds** in her front hand, in every drawing, so it's easy to see which potion is active
+  (during the down special, only the new colour, from frame 1). Her hand is empty only from the
+  throw to the end of her side special, and from the smash to the end of her neutral special.
+  Where her front hand is in each drawing comes from `assets/fighters/slot_10/hands.json`
+  (written by the sprite generator: per animation, per drawing, the front fist in game px from
+  the feet, facing right); the flask sits upright with its bulb in her fist. The smash
   shows a burst of glass and droplets of her potion's colour in front of her. Her neutral special
   uses the default punch drawings, timed to its frames (wind-up, smash on the active frames, then
   recovery).

@@ -70,6 +70,8 @@ EXTRAS = {
                                      "With blue: 4 %, strong knockback that grows fast with %. Every tick."),
     "mette_smash_green_preview.png": ("flask smash, green (B)", [1] * 48, False,
                                       "With green: 4 %, barely moves them, then they're dizzy for 1 s. Every tick."),
+    "mette_flask_preview.png": ("flask in hand (every drawing)", [10] * 105, True,
+                                "Every drawing of every animation in order (the last four: idle facing left), with the flask the game draws in her front hand. She always holds her current potion; the colours cycle here just to show all three."),
     "mette_switch_preview.png": ("pick a potion (down special)", [1] * 56, False,
                                  "Mette's down special three times, a real game frame every tick: red → blue → green → red. The flask in her hand shows only the new potion."),
     "mette_throw_preview.png": ("flask throw (side special)", [2] * 24, False,
