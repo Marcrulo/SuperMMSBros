@@ -389,6 +389,37 @@ func test_card_shows_her_stance() -> void:
 	assert_eq((hud.cards[0].get_badge(StanceBadge) as StanceBadge).stance, StanceAbility.Stance.DIVIDE)
 
 
+# --- Hand glow ------------------------------------------------------------------------------------
+
+
+func test_hands_json_covers_her_drawings() -> void:
+	var hands: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
+		FighterVisuals.SPRITES_DIR + GITTE + "/hands.json"))
+	for name in ["idle", "jab", "run", "forward_air", "down_special", "neutral_special", "up_special"]:
+		var drawings: Array = hands.get(name, [])
+		assert_eq(drawings.size(), (FighterVisuals.ANIMATIONS[name].ticks as Array).size(), name)
+		for drawing in drawings:
+			assert_eq((drawing as Array).size(), 2, name + ": front and back")
+			assert_eq((drawing[0] as Array).size(), 2, name + ": x, y")
+
+
+func test_glow_colors() -> void:
+	_stance().stance = StanceAbility.Stance.PLUS
+	var plus := _stance().glow_color()
+	assert_true(plus.r > 0.8 and plus.b < 0.4, "red")
+	_stance().stance = StanceAbility.Stance.MINUS
+	var minus := _stance().glow_color()
+	assert_true(minus.b > 0.8 and minus.r < 0.4, "blue")
+	for stance in [StanceAbility.Stance.DIVIDE, StanceAbility.Stance.MULTIPLY]:
+		_stance().stance = stance
+		assert_eq(_stance().glow_color().a, 0.0, "no glow")
+
+
+func test_hands_lookup() -> void:
+	assert_eq(StanceAbility.hands(GITTE, "idle", 0).size(), 2)
+	assert_eq(StanceAbility.hands(GITTE, "nope", 0), [] as Array[Vector2])
+
+
 # --- Art ------------------------------------------------------------------------------------------
 
 

@@ -8,6 +8,18 @@ extends FighterAbility
 ## In switching order.
 enum Stance { PLUS, MINUS, DIVIDE, MULTIPLY }
 
+## Her hands' glow in + and − (docs/specs/characters/gitte.md#weapon-and-own-drawings).
+const PLUS_GLOW := Color("#ff4a3d")
+const MINUS_GLOW := Color("#4aa8ff")
+const GLOW_HALO := 4.0
+const GLOW_CORE := 2.0
+## The halo's radius swings ±GLOW_PULSE px over GLOW_PULSE_TICKS ticks.
+const GLOW_PULSE := 0.5
+const GLOW_PULSE_TICKS := 30
+
+## Each character's fists per drawing (hands.json), looked up once.
+static var _hands: Dictionary[String, Dictionary] = {}
+
 ## Setting it resizes her body.
 var stance: Stance = Stance.PLUS:
 	set(value):
@@ -120,6 +132,47 @@ func tug_data(from: Vector2, to: Vector2) -> Array:
 	return [data, side]
 
 
+## Her hands' glow color: red in +, blue in −, none otherwise.
+func glow_color() -> Color:
+	match stance:
+		Stance.PLUS:
+			return PLUS_GLOW
+		Stance.MINUS:
+			return MINUS_GLOW
+	return Color.TRANSPARENT
+
+
+## The fists [front, back] in a drawing (game px from the feet, facing right, size 1), from the
+## character's hands.json (written by the sprite generator); [] when it isn't there.
+static func hands(character_id: String, animation: String, frame: int) -> Array[Vector2]:
+	if not _hands.has(character_id):
+		var path := FighterVisuals.SPRITES_DIR + character_id + "/hands.json"
+		var parsed: Variant = null
+		if FileAccess.file_exists(path):
+			parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+		_hands[character_id] = parsed if parsed is Dictionary else {}
+	var drawings: Array = _hands[character_id].get(animation, [])
+	var out: Array[Vector2] = []
+	if frame < drawings.size():
+		for point: Array in drawings[frame]:
+			out.append(Vector2(point[0], point[1]))
+	return out
+
+
+## A small pulsing glow on each fist in + and − (only reads).
+func draw(visuals: FighterVisuals, animation: String, frame: int) -> void:
+	var color := glow_color()
+	if color.a == 0.0:
+		return
+	var s := fighter.size_scale()
+	var phase := float(fighter.state_frame % GLOW_PULSE_TICKS) / GLOW_PULSE_TICKS
+	var halo := (GLOW_HALO + GLOW_PULSE * sin(phase * TAU)) * s
+	for hand in hands(fighter.character_id, animation, frame):
+		var at := Vector2(hand.x * fighter.facing, hand.y) * s
+		visuals.draw_circle(at, halo, Color(color, 0.35))
+		visuals.draw_circle(at, GLOW_CORE * s, Color(color, 0.8))
+
+
 ## The stance sign on the portrait's bottom-right corner.
 func make_card_badge(card: PlayerCard) -> Control:
 	var badge := StanceBadge.new()
@@ -128,4 +181,5 @@ func make_card_badge(card: PlayerCard) -> Control:
 	var portrait := card.portrait_rect()
 	badge.position = portrait.end - Vector2(StanceBadge.SIZE, StanceBadge.SIZE) + Vector2(2, 2)
 	return badge
+
 
