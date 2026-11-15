@@ -94,8 +94,7 @@ the air, or helpless) he goes into the Avatar State (`AvatarAbility`, on the mov
 3. **End:** after the flight he falls normally (state AIR) with his double jump, up special and
    air dodge back, and all four elements go dark again.
 
-The four elements circle him during rise and flight: a water drop, a flame, a swirl of air and a
-rock, on a ring of radius 22 px around the middle of his body, a full turn every 60 ticks.
+The four elements swirl around him during rise and flight (the look is below).
 
 ### Files
 
@@ -123,5 +122,18 @@ rock, on a ring of radius 22 px around the middle of his body, a full turn every
   behind his glasses), and the game draws a glow over each eye (`AvatarData.rise_eyes` /
   `fly_eyes`, game px from his feet, facing right): a soft pale-cyan halo (radius about 3 px)
   with a bright white-cyan core, pulsing a little (a cycle every 20 ticks); during the rise it
-  fades in over the first 15 ticks. The four element orbs circle him (drawn by the game), with a faint
-  pale-blue glow around him.
+  fades in over the first 15 ticks. A faint pale-blue glow surrounds him.
+- **The elements around him (Avatar State):** drawn by the game, the real elements swirling round
+  him, not icons. Three long tapering ribbons, each racing round its own tilted ring around the
+  middle of his body (long radius 26 px = `AvatarData.orbit_radius`, a turn every 60 ticks =
+  `orbit_ticks`), seen at a slant, so each passes in front of him and then behind him:
+  - **Water:** a rippling blue stream with a pale core line and white glints, tilted one way.
+  - **Fire:** a flame trail tilted the other way: dark-red edge, orange body, yellow core, small
+    flickering tongues streaming off its tail.
+  - **Air:** pale white wind streaks with a soft see-through blue-grey edge, on a wider, flatter
+    ring: two thin lines that break into dashes.
+  - **Earth:** six chunky grey-brown rocks floating around him on their own ring, each tumbling
+    and bobbing a little.
+  During the rise they appear one by one (water, fire, air, earth, every 15 ticks): a ribbon grows
+  out from its head; the rocks lift into place. Parts of the rings on the far side are drawn
+  behind him.

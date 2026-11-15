@@ -303,3 +303,28 @@ func test_eye_points_follow_the_drawing_facing_and_size() -> void:
 	for eye in numbers.fly_eyes:
 		mirrored.append(Vector2(-eye.x, eye.y))
 	assert_eq(_avatar.eye_points(), mirrored)
+
+
+func test_the_elements_appear_one_by_one_during_the_rise() -> void:
+	await _place(Vector2(200, 160), Vector2(380, 192), [])
+	_light_all()
+	_steps(1)
+	assert_gt(_avatar._grown(AvatarAbility.Element.WATER), 0.0, "water first")
+	assert_eq(_avatar._grown(AvatarAbility.Element.FIRE), 0.0)
+	assert_eq(_avatar._grown(AvatarAbility.Element.EARTH), 0.0)
+	_steps(RISE)
+	for element: int in AvatarAbility.Element.values():
+		assert_eq(_avatar._grown(element), 1.0, "all four in full during the flight")
+
+
+func test_each_ribbon_is_split_between_behind_and_in_front_of_him() -> void:
+	await _place(Vector2(200, 160), Vector2(380, 192), [])
+	_light_all()
+	_steps(RISE + 10)
+	for element: int in [AvatarAbility.Element.WATER, AvatarAbility.Element.FIRE,
+			AvatarAbility.Element.AIR]:
+		var front := _avatar._trail(element, 1.0, true, 1.0)
+		var back := _avatar._trail(element, 1.0, false, 1.0)
+		assert_eq(front.size() + back.size(), AvatarAbility.TRAIL_SAMPLES, "every sample once")
+		assert_gt(front.size(), 0, "a long ribbon passes in front")
+		assert_gt(back.size(), 0, "and behind him")

@@ -134,7 +134,7 @@ files (see the character branches in `CLAUDE.md`).
   `is_grab_box`, `after_tick`, `on_hit_dealt`; on the Match's step — `advance_held`,
   `after_ledges`, `spawn_entities`, `resolve_contacts`, `collect_hits`, `end_step` (see
   [Tick order](#tick-order)); presentation, only reading — `phase_animation`, `drawing`, `strip`,
-  `held_pose`, `draw`, `sounds`, `make_card_badge`.
+  `held_pose`, `draw_behind`, `draw`, `sounds`, `make_card_badge`.
 - **Entities:** what an ability adds to the match (a hand, a peel, a pyramid) is a
   **`MatchEntity`** (`match/match_entity.gd`), added with `Match.add_entity()`. The Match keeps
   them in one list and calls `advance`, `is_finished`, `interact`, `collect_hits`, and removes
