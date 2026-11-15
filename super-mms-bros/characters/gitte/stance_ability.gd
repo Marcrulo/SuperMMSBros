@@ -73,6 +73,53 @@ func modify_projectile(move_data: MoveData) -> MoveData:
 	return modify_hit(move_data, true)
 
 
+## − : on a normal attack's first active frame, opponents in its cone that its hitbox doesn't
+## already touch get a 0-damage tug straight at her (a shield gets the block push toward her
+## instead). Called before the Match collects hits; take_hit()/block_hit() directly, so it isn't
+## a landed hit (no spark, no hit sound).
+func resolve_contacts(match: Match) -> void:
+	if stance != Stance.MINUS or fighter.state != Fighter.State.ATTACK \
+			or not fighter.move in Fighter.NORMALS or not fighter.is_hitbox_active() \
+			or fighter.current_move().is_active_frame(fighter.state_frame - 1):
+		return
+	var numbers := _numbers()
+	var hitbox := fighter.get_hitbox_rect()
+	var center := fighter.get_center()
+	var aim := hitbox.get_center() - center
+	for victim in match.get_fighters():
+		if victim == fighter or not victim.can_be_hit() \
+				or hitbox.intersects(victim.get_hurtbox_rect()) \
+				or not in_cone(center, aim, victim.get_center(), numbers.pull_cone_deg, numbers.pull_reach):
+			continue
+		var tug := tug_data(victim.get_center(), center)
+		if victim.state == Fighter.State.SHIELD:
+			victim.block_hit(tug[0], tug[1])
+		else:
+			victim.take_hit(tug[0], tug[1], fighter.global_position.x)
+
+
+## True when `target` is at most `reach` from `origin` and within `cone_deg` of the direction `aim`.
+static func in_cone(origin: Vector2, aim: Vector2, target: Vector2, cone_deg: float,
+		reach: float) -> bool:
+	var to_target := target - origin
+	if to_target.length() > reach or aim == Vector2.ZERO:
+		return false
+	return absf(rad_to_deg(aim.angle_to(to_target))) <= cone_deg
+
+
+## The tug from `from` straight toward `to`: [its MoveData (0 damage, pull_speed, no growth), the
+## side it launches toward].
+func tug_data(from: Vector2, to: Vector2) -> Array:
+	var way := to - from
+	var data := MoveData.new()
+	data.damage = 0.0
+	data.base_knockback = _numbers().pull_speed
+	data.knockback_growth = 0.0
+	data.angle_deg = rad_to_deg(atan2(-way.y, absf(way.x)))
+	var side := fighter.facing if way.x == 0.0 else (1 if way.x > 0.0 else -1)
+	return [data, side]
+
+
 ## The stance sign on the portrait's bottom-right corner.
 func make_card_badge(card: PlayerCard) -> Control:
 	var badge := StanceBadge.new()
@@ -81,3 +128,4 @@ func make_card_badge(card: PlayerCard) -> Control:
 	var portrait := card.portrait_rect()
 	badge.position = portrait.end - Vector2(StanceBadge.SIZE, StanceBadge.SIZE) + Vector2(2, 2)
 	return badge
+
