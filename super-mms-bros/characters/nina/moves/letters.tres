@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="LetterData" format=3]
+
+[ext_resource type="Script" path="res://characters/nina/letter_data.gd" id="1_letters"]
+
+[resource]
+script = ExtResource("1_letters")
+text = "EKSISTENTIALISME"
+interval = 6
+walk_scale = 0.5
+back_hand = Vector2(4, -12)
