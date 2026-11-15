@@ -181,5 +181,3 @@ func make_card_badge(card: PlayerCard) -> Control:
 	var portrait := card.portrait_rect()
 	badge.position = portrait.end - Vector2(StanceBadge.SIZE, StanceBadge.SIZE) + Vector2(2, 2)
 	return badge
-
-
