@@ -98,6 +98,8 @@ EXTRAS = {
                               "Kim's side special: a small flamethrower for 40 ticks that hits again every 8 ticks."),
     "kim_burn_preview.png": ("torch + burning", [3] * 87, False,
                              "Real game frames every 3 ticks: Kim torches Pia (2 % every 8 ticks); once the flame stops hitting her she burns for 3 s, 1 % every 30 ticks (6 % in all), no knockback. Doesn't stack: catching fire again restarts the 3 s."),
+    "nina_song_preview.png": ("lullaby (down special)", [2] * 75, False,
+                              "Nina's down special, a real game frame every 2 ticks: a breath in (20 ticks), then she sings for 1 s while notes float out to the song's reach; Casper falls asleep for 2 s (dizzy, with z's), shield or not."),
     "burst.png": ("light burst", [3, 3, 3, 3], False,
                   "Cross smash: drawn on the floor from where the cross hits, from the first active frame."),
     "dust.png": ("flop dust", [3, 3, 3, 3], False,
