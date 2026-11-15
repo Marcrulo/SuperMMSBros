@@ -265,6 +265,8 @@ func _draw() -> void:
 				turn = pose[0]
 				offset = pose[1]
 				break
+	for ability in _fighter.abilities:
+		ability.draw_behind(self, animation, frame)
 	draw_set_transform(offset, turn, Vector2(mirror, 1))
 	# Drawn at the fighter's size (an ability can change it), from the feet.
 	var rect := frame_rect(width, height)

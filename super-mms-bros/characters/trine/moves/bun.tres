@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="BunData" format=3]
+
+[ext_resource type="Script" path="res://characters/trine/bun_data.gd" id="1_bun"]
+
+[resource]
+script = ExtResource("1_bun")
+speed_min = 200.0
+speed_max = 520.0

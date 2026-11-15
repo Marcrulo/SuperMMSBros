@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/pia/moves/banner.tres" id="2_banner"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 98
+active = 0
+recovery = 10
+ability = ExtResource("2_banner")

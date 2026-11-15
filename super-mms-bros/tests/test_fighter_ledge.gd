@@ -7,12 +7,18 @@ const RIGHT_LEDGE := Vector2(384, 192)
 ## Beside the right ledge, a little above it: falling from here grabs it.
 const ABOVE_RIGHT := Vector2(395, 185)
 
+## A character with the default moves (its up special is the jump boost).
+const DEFAULT_MOVES_ID := "slot_08"
+
 var _match: Match
 var _p1: Fighter
 var _stats: FighterStats
+var _saved_character_id: String = ""
 
 
 func before_each() -> void:
+	_saved_character_id = Game.character_id
+	Game.character_id = DEFAULT_MOVES_ID
 	_match = MATCH_SCENE.instantiate()
 	_match.auto_step = false
 	add_child_autofree(_match)
@@ -20,6 +26,10 @@ func before_each() -> void:
 	_stats = _p1.stats
 	_match.set_controller(0, ScriptedController.new())
 	await wait_physics_frames(1)
+
+
+func after_each() -> void:
+	Game.character_id = _saved_character_id
 
 
 ## One tick with P1 playing `input` (P2 stands still).

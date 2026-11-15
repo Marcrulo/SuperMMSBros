@@ -155,6 +155,80 @@ CAKE_ANIMATIONS = {
 }
 
 
+# --- Pia's Leverkusen banner (docs/specs/characters/pia.md#pias-specials) ----------------------
+
+BANNER_RED = ((214, 32, 40), (168, 20, 28))   # cloth, shade
+BANNER_WHITE = (250, 250, 246)
+BANNER_BLACK = (24, 24, 28)
+SCARF_H = 9          # black edge, 7 red rows with the letters, black edge
+SCARF_OVER = 4       # how far the scarf goes past each fist
+FRINGE = 3           # the fringe hanging from each end
+HAND_GAP = 2         # rows between the fist point and the scarf's edge (the fists show)
+# "BAYER", 3x5 letters with 1 px between them.
+BAYER = ["### ### # # ### ## ",
+         "# # # # # # #   # #",
+         "##  ### ### ##  ## ",
+         "# # # #  #  #   # #",
+         "### # #  #  ### # #"]
+
+
+def scarf(front, back, held_high):
+    """Her Bayer Leverkusen fan scarf, stretched between her two fists: red with black edges and
+    "BAYER" in white, its ends black with a fringe hanging down. `held_high`: held above her head,
+    the fists under its bottom edge; else held at her chest, hanging below the fists."""
+    left, right = sorted((round(front[0]), round(back[0])))
+    fy = round(max(front[1], back[1])) if held_high else round(min(front[1], back[1]))
+    x0, x1 = left - SCARF_OVER, right + SCARF_OVER
+    top = fy - SCARF_H - HAND_GAP if held_high else fy + HAND_GAP
+    letters = [row[::-1] for row in BAYER] if body.MIRROR_TEXT else BAYER
+    lx = (x0 + x1 + 1 - len(BAYER[0])) // 2
+    out = {}
+    for x in range(x0, x1 + 1):
+        end = x - x0 < 2 or x1 - x < 2
+        for k in range(SCARF_H):
+            y = top + k
+            row, col = k - 2, x - lx
+            if end or k in (0, SCARF_H - 1):
+                color = BANNER_BLACK
+            elif 0 <= row < len(letters) and 0 <= col < len(letters[0]) and letters[row][col] == "#":
+                color = BANNER_WHITE
+            else:
+                color = BANNER_RED[1] if k == SCARF_H - 2 else BANNER_RED[0]
+            out[(x, y)] = color
+    for x in (x0, x0 + 2, x1 - 2, x1):
+        for k in range(FRINGE):
+            out[(x, top + SCARF_H + k)] = BANNER_RED[0] if k % 2 == 0 else BANNER_BLACK
+    return out
+
+
+# Raising (and lowering): held at her chest. Held high: both arms up in a V, the scarf over her
+# head; the second drawing pumps it higher (arms straighter), eyes shut, beaming.
+BANNER_HALF = dict(fa=1.5, fe=0.3, ba=-1.5, be=-0.3)
+BANNER_UP = dict(fa=2.6, fe=-0.5, ba=-2.6, be=0.5)
+BANNER_PUMP = dict(fa=2.75, fe=-0.35, ba=-2.75, be=0.35)
+BANNER = [pose(banner=0, **BANNER_HALF),
+          pose(banner=1, **BANNER_UP),
+          pose(banner=2, face="shut", head_dy=-1, bob=-1, **BANNER_PUMP),
+          pose(banner=0, **BANNER_HALF)]
+
+
+def banner_strip(c, left=False):
+    """The banner drawings side by side; `left` = the facing-left strip, already mirrored, with
+    the letters kept readable."""
+    p = looks.palette(c)
+    heads = {face: looks.build_head(c, face) for face in ("normal", "shut", "hurt")}
+    body.MIRROR_TEXT = left
+    try:
+        frames = [draw_frame(ps, c, p, heads) for ps in BANNER]
+    finally:
+        body.MIRROR_TEXT = False
+    w, h = frames[0].size
+    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    for i, frame in enumerate(frames):
+        strip.paste(frame.transpose(Image.FLIP_LEFT_RIGHT) if left else frame, (i * w, 0))
+    return strip
+
+
 def draw_flat(ps, c, p, heads):
     """A `flat` pose (her belly flop): the body turned to lie on its belly, the head put back on
     upright."""
@@ -170,8 +244,13 @@ PROPS["cake"] = dict(
     hand=lambda pose, fist, neck, sipping: cake_slice(fist, neck, pose["cake"]))
 
 
+# Her scarf, between her two fists.
+PROPS["banner"] = dict(hand=lambda pose, fist, neck, sipping:
+                       scarf(fist, body.HANDS[0]["back"], pose["banner"] > 0))
+
+
 def applies(c):
-    return c.get("belly_flop") or c.get("cake") or c.get("flag")
+    return c.get("belly_flop") or c.get("cake") or c.get("flag") or c.get("banner")
 
 
 def animations(c):
@@ -188,3 +267,6 @@ def extra_files(c, out, strips):
         dust_image().save(out / "dust.png")
     if c.get("flag"):
         flag_image().save(out / "projectile.png")
+    if c.get("banner"):
+        banner_strip(c).save(out / "fighter_banner.png")
+        banner_strip(c, left=True).save(out / "fighter_banner_left.png")
