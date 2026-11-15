@@ -80,6 +80,11 @@ Full details in `docs/specs/architecture.md`. In short:
 - The user playtests — Claude can't see the game window, so ask the user how things look and feel.
 - Git: branch `main`, remote `origin` = github.com/Marcrulo/SuperMMSBros. Commit only when asked
   or when a plan step says so; don't push unless asked.
+- Claude's memory lives in the repo, in `.claude/memory/` (so it travels between machines; the
+  repo is public, so nothing private goes in it). Claude Code's own memory folder
+  (`~/.claude/projects/<project-path-with-dashes>/memory`) is a symlink to it. On a new machine,
+  if that folder isn't a symlink yet, merge anything in it into `.claude/memory/`, then replace it
+  with the symlink. Commit and push memory changes along with other commits.
 
 ## Character branches (parallel sessions)
 
