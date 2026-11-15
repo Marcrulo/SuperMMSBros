@@ -1,8 +1,8 @@
 extends GutTest
 ## Mads's side special, the over-the-head slam: a command grab (docs/specs/characters/mads.md#mads--grappler).
 ## P1 is Mads; scripted [idle, side special] starts it on step 2, so frame N of it is step N + 1:
-## the grab box is out on frames 10–13 = steps 11–14. A catch on step 11 starts the throw, whose
-## frame k is step 11 + k: the slam on throw frame 24 = step 35, free after frame 40 = step 52.
+## the grab box is out on frames 8–11 = steps 9–12. A catch on step 9 starts the throw, whose
+## frame k is step 9 + k: the slam on throw frame 24 = step 33, free after frame 40 = step 50.
 ## Main platform top y 192 (x 96…384).
 
 const MATCH_SCENE := preload("res://match/match.tscn")
@@ -72,7 +72,7 @@ func _grab() -> GrabData:
 func test_the_slam_matches_the_spec() -> void:
 	var reach := _p1.stats.moveset.side_special
 	assert_true(reach.ability is GrabData, "Mads's side special is a command grab")
-	assert_eq([reach.startup, reach.active, reach.recovery], [9, 4, 24])
+	assert_eq([reach.startup, reach.active, reach.recovery], [7, 4, 20])
 	assert_eq(reach.hitbox_center, Vector2(16, -14))
 	assert_eq(reach.hitbox_size, Vector2(18, 24))
 	assert_eq([_grab().throw_frames, _grab().turn_frame, _grab().slam_frame], [40, 15, 24])
@@ -87,7 +87,7 @@ func test_the_slam_matches_the_spec() -> void:
 func test_only_his_side_special_changes() -> void:
 	var defaults := (load("res://fighter/default_stats.tres") as FighterStats).moveset
 	var moves := _p1.stats.moveset
-	for name in ["jab", "neutral_special", "up_special", "down_air"]:
+	for name in ["jab", "neutral_special", "down_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
 	assert_null(_p2.stats.moveset.side_special.ability, "Casper keeps the projectile")
 
@@ -97,8 +97,8 @@ func test_only_his_side_special_changes() -> void:
 
 func test_he_catches_someone_in_front() -> void:
 	await _place(Vector2(200, 192), Vector2(222, 192), _reach())
-	_steps(10)
-	assert_eq(_p2.state, Fighter.State.IDLE, "not yet: the grab box comes out on frame 10")
+	_steps(8)
+	assert_eq(_p2.state, Fighter.State.IDLE, "not yet: the grab box comes out on frame 8")
 	_steps(1)
 	assert_eq(_p2.state, Fighter.State.HELD)
 	assert_eq(_p2.held_by, _p1)
@@ -108,7 +108,7 @@ func test_he_catches_someone_in_front() -> void:
 
 func test_a_shield_doesnt_stop_it() -> void:
 	await _place(Vector2(200, 192), Vector2(222, 192), _reach(), _shield(60))
-	_steps(11)
+	_steps(9)
 	assert_eq(_p2.state, Fighter.State.HELD)
 
 
@@ -122,7 +122,7 @@ func test_a_miss_plays_out_its_end_lag() -> void:
 	await _place(Vector2(200, 192), Vector2(300, 192), _reach())
 	_steps(14)
 	assert_eq(_p2.state, Fighter.State.IDLE, "out of reach")
-	_steps(23)
+	_steps(18)
 	assert_eq(_p1.move, &"side_special", "still recovering")
 	_steps(2)
 	assert_ne(_p1.state, Fighter.State.ATTACK)
@@ -131,7 +131,7 @@ func test_a_miss_plays_out_its_end_lag() -> void:
 func test_it_works_in_the_air_too() -> void:
 	# Both start at rest in the air and fall alike, so the grab box finds P2 as on the ground.
 	await _place(Vector2(200, 60), Vector2(222, 60), _reach())
-	_steps(11)
+	_steps(9)
 	assert_eq(_p2.state, Fighter.State.HELD)
 	var y := _p1.global_position.y
 	_steps(10)
@@ -145,7 +145,7 @@ func test_it_works_in_the_air_too() -> void:
 
 func test_the_victim_stays_in_his_grip() -> void:
 	await _place(Vector2(200, 192), Vector2(222, 192), _reach())
-	_steps(11 + 12)
+	_steps(9 + 12)
 	assert_almost_eq(_p2.global_position.x, 200.0, 0.5, "halfway: right above him")
 	assert_almost_eq(_p2.global_position.y, 192.0 - 34.0 + 16.0, 0.5, "body's middle at his hands")
 	_steps(3)  # Frame 15: between the 3rd and 4th keyframes.
@@ -155,7 +155,7 @@ func test_the_victim_stays_in_his_grip() -> void:
 
 func test_he_turns_round_with_the_victim_overhead() -> void:
 	await _place(Vector2(200, 192), Vector2(222, 192), _reach())
-	_steps(11 + 14)
+	_steps(9 + 14)
 	assert_eq(_p1.facing, 1)
 	_steps(1)
 	assert_eq(_p1.facing, -1, "turned on frame 15")
@@ -170,7 +170,7 @@ func test_neither_can_be_hit_during_the_throw() -> void:
 
 func test_the_slam_lands_behind_him_and_launches_up_and_away() -> void:
 	await _place(Vector2(200, 192), Vector2(222, 192), _reach())
-	_steps(11 + 23)
+	_steps(9 + 23)
 	assert_eq(_p2.state, Fighter.State.HELD, "not yet")
 	_steps(1)
 	assert_eq(_p2.state, Fighter.State.HITSTUN)
@@ -185,7 +185,7 @@ func test_the_slam_lands_behind_him_and_launches_up_and_away() -> void:
 
 func test_he_is_free_after_the_throw() -> void:
 	await _place(Vector2(200, 192), Vector2(222, 192), _reach())
-	_steps(11 + 40)
+	_steps(9 + 40)
 	assert_eq(_p1.move, &"grab_throw")
 	_steps(1)
 	assert_ne(_p1.state, Fighter.State.ATTACK)
