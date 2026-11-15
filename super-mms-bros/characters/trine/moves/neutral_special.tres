@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/trine/moves/bun.tres" id="2_bun"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 4
+active = 0
+recovery = 13
+hitbox_center = Vector2(14, -16)
+hitbox_size = Vector2(8, 8)
+damage = 4.0
+base_knockback = 60.0
+knockback_growth = 1.4
+angle_deg = 35.0
+direction = 0
+charge_frames = 120
+charge_damage = 12.0
+charge_knockback = 200.0
+projectile_lifetime = 120
+ability = ExtResource("2_bun")

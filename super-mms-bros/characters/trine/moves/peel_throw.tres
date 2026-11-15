@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="PeelThrowData" format=3]
+
+[ext_resource type="Script" path="res://characters/trine/peel_throw_data.gd" id="1_throw"]
+[ext_resource type="Resource" path="res://characters/trine/moves/peel.tres" id="2_peel"]
+
+[resource]
+script = ExtResource("1_throw")
+trap = ExtResource("2_peel")
