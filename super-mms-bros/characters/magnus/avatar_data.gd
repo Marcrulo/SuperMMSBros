@@ -19,8 +19,8 @@ extends AbilityData
 @export var rehit_frames: int
 
 @export_group("Look")
-## The element orbs' ring around the middle of his body: radius (px) and ticks per turn.
-@export var orbit_radius: float = 22.0
+## The elements' rings around the middle of his body: long radius (px) and ticks per turn.
+@export var orbit_radius: float = 26.0
 @export var orbit_ticks: int = 60
 ## Where his eyes are in avatar.png's rise and flight drawings (game px from the feet, facing
 ## right): the game draws a glow over each.
