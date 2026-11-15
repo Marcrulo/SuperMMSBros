@@ -152,6 +152,8 @@ Checked in this order on each tick; the first that applies happens:
 - up special → `HELPLESS` when the fighter stops rising → `IDLE` on landing.
 - any state except `KO` → `HITSTUN`: hit while not shielding, invulnerable or intangible.
 - `HITSTUN` → `IDLE`/`AIR`: when hitstun runs out.
+- any state → `SHIELD_BREAK` (stunned, `Fighter.stun()`): an ability's stun (Mette's green potion,
+  Pia's banner); whatever it was doing ends, and a fighter on a ledge lets go of it (as after a hit).
 - a grounded state (not `LEDGE`, `LEDGE_CLIMB`, `KO`, `TRIPPED`) → `TRIPPED`: touching an enemy's
   banana peel while on the ground and hittable; `TRIPPED` → `IDLE`/`AIR` after the trip's ticks.
   While tripped the fighter slides to a stop, uses the crouching hurtbox, and can be hit as usual.
