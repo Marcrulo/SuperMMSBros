@@ -299,6 +299,109 @@ func test_torch_flame_ends_with_the_move() -> void:
 	assert_eq(_p1.state, Fighter.State.IDLE)
 
 
+# --- Burning --------------------------------------------------------------------------------------
+
+
+func _burns() -> Array[MatchEntity]:
+	return _match.get_entities(Burn)
+
+
+func _torch_data() -> TorchData:
+	return (_p1.stats.moveset.side_special as MoveData).ability as TorchData
+
+
+## Steps until P2 burns (at most `limit` steps); returns how many it took, or -1.
+func _steps_until_burning(limit: int) -> int:
+	for i in limit:
+		_match.step()
+		if not _burns().is_empty():
+			return i + 1
+	return -1
+
+
+func test_burn_numbers() -> void:
+	var torch := _torch_data()
+	assert_eq(torch.burn_ticks, 180, "3 seconds")
+	assert_eq(torch.burn_interval, 30)
+	assert_eq(torch.burn_damage, 1.0)
+
+
+func test_no_burn_while_the_flame_keeps_hitting() -> void:
+	await _place(Vector2(150, 192), Vector2(178, 192), _special("side"))
+	_steps(12)
+	assert_gt(_p2.percent, 0.0, "the flame hit")
+	assert_eq(_burns().size(), 0, "not burning while still in the flame")
+
+
+func test_burn_starts_once_the_flame_stops_hitting() -> void:
+	await _place(Vector2(150, 192), Vector2(178, 192), _special("side"))
+	var took := _steps_until_burning(120)
+	assert_gt(took, 12, "after the flame's hits")
+	assert_lte(took, 62, "by the end of the flame")
+	assert_eq(_burns().size(), 1)
+	assert_eq((_burns()[0] as Burn).victim_index, 1)
+	assert_eq(_burns()[0].owner_index, 0)
+
+
+func test_burn_deals_damage_over_three_seconds_then_goes_out() -> void:
+	await _place(Vector2(150, 192), Vector2(178, 192), _special("side"))
+	assert_gt(_steps_until_burning(120), 0)
+	var before := _p2.percent
+	_steps(29)
+	assert_eq(_p2.percent, before, "nothing before the first 30 ticks")
+	_steps(1)
+	assert_eq(_p2.percent, before + 1.0)
+	_steps(150)
+	assert_eq(_p2.percent, before + 6.0, "1 % every 30 ticks for 180 ticks")
+	assert_eq(_burns().size(), 0, "out after 3 s")
+	_steps(60)
+	assert_eq(_p2.percent, before + 6.0)
+
+
+func test_burn_has_no_knockback() -> void:
+	await _place(Vector2(150, 192), Vector2(178, 192), _special("side"))
+	assert_gt(_steps_until_burning(120), 0)
+	_steps(40)
+	assert_ne(_p2.state, Fighter.State.HITSTUN)
+	assert_true(_p2.is_on_floor())
+
+
+func test_burn_does_not_stack() -> void:
+	await _place(Vector2(150, 192), Vector2(300, 192), [])
+	Burn.ignite(_match, 0, _p2, _torch_data())
+	_steps(100)
+	Burn.ignite(_match, 0, _p2, _torch_data())
+	assert_eq(_burns().size(), 1, "one burn per fighter")
+	_steps(179)
+	assert_eq(_burns().size(), 1, "catching fire again restarted the 3 s")
+	assert_eq(_p2.percent, 3.0 + 5.0, "3 % from the first, then the restarted burn's own")
+	_steps(1)
+	assert_eq(_burns().size(), 0)
+	assert_eq(_p2.percent, 9.0)
+
+
+func test_a_shield_keeps_the_flame_from_burning() -> void:
+	var shielding: Array[FighterInput] = []
+	for i in 120:
+		var input := FighterInput.new()
+		input.shield_held = true
+		input.shield_pressed = i == 0
+		shielding.append(input)
+	await _place(Vector2(150, 192), Vector2(178, 192), _special("side"), shielding)
+	_steps(90)
+	assert_eq(_p2.percent, 0.0)
+	assert_eq(_burns().size(), 0)
+
+
+func test_a_ko_puts_the_burn_out() -> void:
+	await _place(Vector2(150, 192), Vector2(300, 192), [])
+	Burn.ignite(_match, 0, _p2, _torch_data())
+	_steps(2)
+	_p2.global_position = Vector2(2000, 100)
+	_steps(2)
+	assert_eq(_burns().size(), 0)
+
+
 # --- Normal attacks: hammer, axe, screwdriver -----------------------------------------------------
 
 
