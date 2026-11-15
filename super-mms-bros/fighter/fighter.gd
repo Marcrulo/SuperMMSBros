@@ -69,6 +69,12 @@ var throw_facing: int = 1
 var launched: bool = false
 ## This fighter's abilities, in move set order.
 var abilities: Array[FighterAbility] = []
+## Ground modifiers (docs/specs/fighter.md#ground-modifiers): set by something on the floor (an
+## entity) for the fighter's next tick only, then back to 1. ground_accel and ground_friction
+## ×ground_grip (low = slippery), run_speed ×ground_speed, the ground jump ×ground_jump.
+var ground_grip: float = 1.0
+var ground_speed: float = 1.0
+var ground_jump: float = 1.0
 
 ## True from a ground jump until the fighter stops rising or releases jump.
 var _can_short_hop: bool = false
@@ -100,6 +106,12 @@ var _ledge_intangible: bool = false
 var _down_held: bool = false
 ## How long the current trip lasts.
 var _trip_frames: int = 0
+## How long the current stun lasts (SHIELD_BREAK from stun()); 0 = a shield break.
+var _stun_frames: int = 0
+## The ground modifiers taken for this tick.
+var _grip: float = 1.0
+var _ground_speed: float = 1.0
+var _ground_jump: float = 1.0
 
 @onready var _body_shape := $BodyShape as CollisionShape2D
 @onready var _body_offset := _body_shape.position
@@ -536,6 +548,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	_ledge_intangibility_earned = true
 	_ledge_intangible = false
 	_down_held = false
+	_stun_frames = 0
 	held_by = null
 	throwing = null
 	for a in abilities:
@@ -548,6 +561,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 ## takes its time step from the physics engine (which is 1/60 s there).
 func tick(input: FighterInput) -> void:
 	assert(Engine.is_in_physics_frame(), "Fighter.tick() must run inside a physics frame")
+	_take_ground_modifiers()
 	if state == State.KO:
 		return
 	if state == State.HELD:
@@ -627,7 +641,10 @@ func _end_finished_state(input: FighterInput) -> void:
 			if state_frame >= stats.shield_drop_frames:
 				set_state(_free_state(input))
 		State.SHIELD_BREAK:
-			if state_frame >= stats.shield_break_frames:
+			if _stun_frames > 0 and state_frame >= _stun_frames:
+				_stun_frames = 0
+				set_state(_free_state(input))
+			elif _stun_frames == 0 and state_frame >= stats.shield_break_frames:
 				shield_health = stats.shield_reset_health
 				set_state(_free_state(input))
 		State.SPOT_DODGE:
@@ -841,10 +858,35 @@ func _break_shield() -> void:
 	_block_stun = 0
 	state = State.SHIELD_BREAK
 	state_frame = 0
+	_stun_frames = 0
+
+
+## Stunned by an ability (docs/specs/fighter.md#shield): dizzy (SHIELD_BREAK) for `frames` ticks,
+## whatever it was doing ends; its shield is left as it was.
+func stun(frames: int) -> void:
+	state = State.SHIELD_BREAK
+	state_frame = 0
+	_stun_frames = frames
+	_block_stun = 0
+	move = NO_MOVE
+	_charged_punch = null
+	launched = false
+	_fast_falling = false
+	_can_short_hop = false
+
+
+## Takes the ground modifiers for this tick and sets them back to 1.
+func _take_ground_modifiers() -> void:
+	_grip = ground_grip
+	_ground_speed = ground_speed
+	_ground_jump = ground_jump
+	ground_grip = 1.0
+	ground_speed = 1.0
+	ground_jump = 1.0
 
 
 func _jump() -> void:
-	velocity.y = -stats.jump_velocity
+	velocity.y = -stats.jump_velocity * _ground_jump
 	_can_short_hop = true
 	set_state(State.AIR)
 
@@ -941,7 +983,7 @@ func _apply_movement(input: FighterInput) -> void:
 				_steer(0.0, 0.0, 0.0, stats.hitstun_friction)
 				_apply_gravity()
 			else:
-				_steer(0.0, 0.0, 0.0, stats.ground_friction)
+				_steer(0.0, 0.0, 0.0, stats.ground_friction * _grip)
 		State.HELPLESS:
 			_steer(input.move_x, stats.helpless_air_speed, stats.air_accel, stats.air_friction)
 			_apply_gravity()
@@ -956,12 +998,12 @@ func _apply_movement(input: FighterInput) -> void:
 		State.CROUCH, State.SHIELD, State.SHIELD_DROP, State.SHIELD_BREAK, State.SPOT_DODGE, \
 				State.TRIPPED:
 			# No walking: slide to a stop.
-			_steer(0.0, 0.0, 0.0, stats.ground_friction)
+			_steer(0.0, 0.0, 0.0, stats.ground_friction * _grip)
 			if not is_on_floor():
 				_apply_gravity()
 		_:
-			_steer(input.move_x, stats.run_speed * speed_scale(), stats.ground_accel,
-				stats.ground_friction)
+			_steer(input.move_x, stats.run_speed * speed_scale() * _ground_speed,
+				stats.ground_accel * _grip, stats.ground_friction * _grip)
 			if not is_on_floor():
 				_apply_gravity()
 
@@ -977,7 +1019,7 @@ func _move_during_attack(input: FighterInput) -> void:
 		_apply_gravity()
 	elif is_on_floor() and velocity.y >= 0.0:
 		# A move on the ground doesn't steer: slide to a stop.
-		_steer(0.0, 0.0, 0.0, stats.ground_friction)
+		_steer(0.0, 0.0, 0.0, stats.ground_friction * _grip)
 	elif move in NORMALS:
 		_steer(input.move_x, stats.air_speed * speed_scale(), stats.air_accel, stats.air_friction)
 		_fall(input)

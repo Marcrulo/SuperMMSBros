@@ -193,6 +193,18 @@ Checked in this order on each tick; the first that applies happens:
   let go and the next one below catches them again. The main platform is always solid.
 - **Fighters don't collide with each other.**
 
+### Ground modifiers
+
+Something on the floor (an ability's entity, e.g. a puddle) can change how a fighter moves on the
+ground, for its **next tick** only: it sets `ground_grip`, `ground_speed` and `ground_jump` (all 1
+by default). At the start of its tick the fighter takes the values and sets them back to 1, so an
+entity sets them again every tick the fighter stays on it. While set:
+
+- `ground_grip` multiplies `ground_accel` and `ground_friction` on the ground (in every state that
+  steers or slides on the ground; low = slippery);
+- `ground_speed` multiplies the ground top speed (`run_speed`);
+- `ground_jump` multiplies the ground jump's `jump_velocity`.
+
 ## Crouch
 
 Holding down on the ground (when no other action applies). The fighter slides to a stop at
@@ -214,6 +226,9 @@ on the main platform it's a normal jump.
   A blocked projectile disappears.
 - **Shield break:** at 0 health the fighter enters `SHIELD_BREAK`, stunned for
   `shield_break_frames`; afterwards shield health is `shield_reset_health`.
+- **Stun:** an ability can stun a fighter with `stun(frames)`: it enters the same dizzy
+  `SHIELD_BREAK` state for `frames` ticks (whatever it was doing ends), but its shield is left as it
+  was (it isn't reset afterwards).
 - No shield in the air.
 
 ## Dodges
