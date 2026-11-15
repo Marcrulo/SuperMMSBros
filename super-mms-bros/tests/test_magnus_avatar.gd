@@ -261,3 +261,15 @@ func test_his_card_shows_the_element_badge() -> void:
 	_avatar.light(AvatarAbility.Element.AIR)
 	hud.cards[0].refresh()
 	assert_eq(badge.lit, [false, false, true, false])
+
+
+func test_the_avatar_state_draws_his_avatar_strip() -> void:
+	await _place(Vector2(200, 160), Vector2(380, 192), [])
+	var textures := FighterVisuals.textures_for(MAGNUS)
+	assert_true(textures.has("avatar"))
+	assert_eq(_avatar.strip(textures), [], "not outside the Avatar State")
+	_light_all()
+	_steps(1)
+	assert_eq(_avatar.strip(textures), [textures["avatar"], 1, 2, 0], "the rise drawing")
+	_steps(RISE)
+	assert_eq(_avatar.strip(textures), [textures["avatar"], 1, 2, 1], "the flight drawing")

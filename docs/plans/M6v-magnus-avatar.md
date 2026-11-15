@@ -40,15 +40,23 @@ strip and `avatar.png` from `tools/sprites/characters/magnus.py`.
 
 ## Tasks
 
-- [ ] **Task 1: spec** — `docs/specs/characters/magnus.md` (done with the user's OK).
-- [ ] **Task 2: tests first** — `tests/test_magnus.gd` (moves, data, water, fire, air, earth)
+- [x] **Task 1: spec** — `docs/specs/characters/magnus.md` (done with the user's OK).
+- [x] **Task 2: tests first** — `tests/test_magnus.gd` (moves, data, water, fire, air, earth)
   and `tests/test_magnus_avatar.gd` (lighting rules, rise, flight, contact hits, end, KO/reset,
   badge). Run: fail (classes missing).
-- [ ] **Task 3: moves + abilities** — data `.tres`, `WaterGunData/Ability`, `Droplet`,
+- [x] **Task 3: moves + abilities** — data `.tres`, `WaterGunData/Ability`, `Droplet`,
   `FireballData/Ability`, `Fireball`, `AvatarData/Ability`, `ElementBadge`; `character.tres`
   gets `moveset`. Run `--import`, then the Magnus tests until they pass.
-- [ ] **Task 4: sprites** — `tools/sprites/characters/magnus.py`: Naruto `run` (look flag
+- [x] **Task 4: sprites** — `tools/sprites/characters/magnus.py`: Naruto `run` (look flag
   `naruto_run`), `avatar.png` (2 drawings, glowing eyes, flag `avatar`); regenerate slot_14
   only, check every frame, pixel-compare the other ids unchanged; `test_sprites` still passes.
   Rebuild + republish the sprite viewer.
-- [ ] **Task 5: full suite** headless, commit, push; user playtest.
+- [ ] **Task 5: full suite** headless (625 pass), commit, push; user playtest.
+
+## Notes
+
+- Rulings: Air/Earth lighting is detected from the Match's own hits (newly registered victim not
+  shielding) rather than re-implementing those hitboxes; the rehit timer counts from the hit (1v1).
+- `tools/sprite_viewer/rope_strips.py` pointed at Sjippepigen's pre-M6t paths; fixed (shared).
+- Final review: self-review (no reviewer subagent, per how the user wants to work). Deferred: the
+  tiny "air" icon on the card badge reads oddly at 5×5.

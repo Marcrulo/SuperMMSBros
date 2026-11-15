@@ -194,7 +194,7 @@ CHARACTERS = {
     "slot_14": dict(name="Magnus", skin=(240, 166, 130), hair=(96, 60, 34),
                     hair_light=(130, 86, 50), hair_style="fringe", glasses=(20, 20, 28),
                     shirt=(40, 120, 128), pants=JEANS, build="small",
-                    head_trim=([2, 14], [12, 21])),
+                    head_trim=([2, 14], [12, 21]), naruto_run=True, avatar=True),
 }
 
 

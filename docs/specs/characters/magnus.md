@@ -117,8 +117,8 @@ rock, on a ring of radius 22 px around the middle of his body, a full turn every
   him.
 - **Earth smash:** his down special drawings; while the burst is out, brown-grey rocks jut up
   out of the floor on both sides of him (drawn by the game).
-- **Avatar State:** his own `avatar.png` strip (2 drawings): drawing 0 for the rise — upright,
-  arms spread low at his sides, legs together, feet off the floor; drawing 1 for the flight —
-  leaning into the flight, arms back. In both his eyes glow (pale cyan-white, behind his
-  glasses). The four element orbs circle him (drawn by the game), and a faint pale-blue glow
-  sits behind him.
+- **Avatar State:** his own `avatar.png` strip (2 drawings): drawing 0 for the rise — upright
+  and tall, arms spread low at his sides, legs together; drawing 1 for the flight — leaning far
+  into the flight, arms back, legs trailing. In both his eyes glow (the whole eye pale cyan-white,
+  behind his glasses). The four element orbs circle him (drawn by the game), with a faint
+  pale-blue glow around him.
