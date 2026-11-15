@@ -118,7 +118,7 @@ func test_henrik_overhead_swing_hits_above_his_head() -> void:
 
 func test_match_gives_henrik_his_move_set() -> void:
 	Game.character_id = HENRIK
-	Game.p2_character_id = "slot_09"
+	Game.p2_character_id = "slot_08"
 	var match_node: Match = add_child_autofree(MATCH_SCENE.instantiate())
 	assert_eq(match_node.get_fighter(0).stats.moveset, _henrik().fighter_stats().moveset)
 	assert_eq(match_node.get_fighter(1).stats.moveset, _default_moves())

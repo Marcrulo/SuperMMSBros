@@ -16,7 +16,7 @@ var _saved_ids: Array[String] = []
 func before_each() -> void:
 	_saved_ids = [Game.character_id, Game.p2_character_id]
 	Game.character_id = TRINE
-	Game.p2_character_id = "slot_09"
+	Game.p2_character_id = "slot_08"
 	_match = MATCH_SCENE.instantiate()
 	_match.auto_step = false
 	add_child_autofree(_match)
@@ -77,7 +77,7 @@ func test_only_her_down_special_changes() -> void:
 	var moves := _p1.stats.moveset
 	for name in ["jab", "side_tilt", "neutral_special", "side_special", "up_special", "down_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
-	assert_null(_p2.stats.moveset.down_special.ability, "Kim keeps the default down special")
+	assert_null(_p2.stats.moveset.down_special.ability, "Casper keeps the default down special")
 
 
 # --- Healing --------------------------------------------------------------------------------------
