@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/kim/moves/hammer.tres" id="2_hammer"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 10
+active = 0
+recovery = 12
+hitbox_center = Vector2(14, -16)
+hitbox_size = Vector2(10, 10)
+damage = 8.0
+base_knockback = 130.0
+knockback_growth = 0.8
+angle_deg = 40.0
+direction = 0
+projectile_speed = 260.0
+projectile_lifetime = 120
+projectile_angle_deg = 20.0
+projectile_gravity = 600.0
+ability = ExtResource("2_hammer")

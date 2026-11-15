@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ToolSwingData" format=3]
+
+[ext_resource type="Script" path="res://characters/kim/tool_swing_data.gd" id="1_swing"]
+
+[resource]
+script = ExtResource("1_swing")
+tool = &"screwdriver"
+rest_angle = 60.0
+rest_pivot = Vector2(5, -10)
+wind_angle = 8.0
+wind_pivot = Vector2(0, -9)
+hit_from_angle = -4.0
+hit_from_pivot = Vector2(8, -9)
+hit_to_angle = 6.0
+hit_to_pivot = Vector2(14, -7)

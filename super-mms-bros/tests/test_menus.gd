@@ -93,13 +93,13 @@ func test_match_plays_the_chosen_stage() -> void:
 
 
 func test_match_gives_each_player_their_character() -> void:
-	Game.character_id = "slot_08"
-	Game.p2_character_id = "slot_09"
+	Game.character_id = "slot_04"
+	Game.p2_character_id = "slot_08"
 	var match_node: Match = add_child_autofree(MATCH_SCENE.instantiate())
-	assert_eq(match_node.get_fighter(0).character_id, "slot_08")
-	assert_eq(match_node.get_fighter(1).character_id, "slot_09")
-	assert_eq(match_node.get_fighter(0).stats, Game.roster().find("slot_08").stats)
-	assert_eq(match_node.get_fighter(1).stats, Game.roster().find("slot_09").stats)
+	assert_eq(match_node.get_fighter(0).character_id, "slot_04")
+	assert_eq(match_node.get_fighter(1).character_id, "slot_08")
+	assert_eq(match_node.get_fighter(0).stats, Game.roster().find("slot_04").stats)
+	assert_eq(match_node.get_fighter(1).stats, Game.roster().find("slot_08").stats)
 
 
 # --- Character select ------------------------------------------------------------------------------

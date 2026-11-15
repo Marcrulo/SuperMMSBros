@@ -41,10 +41,17 @@ and comes down on it, and the impact hits everyone near her on both sides.
 - **The flop** (`belly_flop`, on landing, from frame 1; the down special's own data):
   0 / 6 / 22 (28) frames — the impact is on the landing tick itself (no startup), then she lies
   flat and gets up. The shockwave hits on both sides: hitbox (0, −8), 80×16 (40 px each side of
-  her feet, up to 16 px high), damage 11, base 200, growth 1.4, angle 70°, AWAY: up and away from
+  her feet, up to 16 px high), damage 11 (plus the dive's bonus, below), base 200, growth 1.4, angle 70°, AWAY: up and away from
   her. It can hit someone the belly already hit. A shield blocks both.
-- **Data:** the special's `MoveData.ability` is a `FlopData` (`flop.tres`: `dive_hit`, `hop_speed`);
-  the dive speed is the special's own `dive_speed`; the `FlopAbility`.
+- **The longer the dive, the harder the flop:** the flop's damage goes up by 1 for every 5 ticks
+  she spent diving, the landing tick included (`dive_ticks_per_damage`; 5 ticks ≈ 33 px at the
+  dive speed), up to +10 (`max_dive_damage`, reached after 50 ticks ≈ 333 px, about a drop from
+  the top of the screen). After the ground hop the dive lasts about 7 ticks, so a flop from the
+  ground does 12; one from the top does 21. Only the flop
+  grows, not the belly's hit; the knockback grows with it through the victim's new damage %.
+- **Data:** the special's `MoveData.ability` is a `FlopData` (`flop.tres`: `dive_hit`, `hop_speed`,
+  `dive_ticks_per_damage`, `max_dive_damage`); the dive speed is the special's own `dive_speed`;
+  the `FlopAbility`.
 - **Look:** see [art guide](#pias-specials): a dust cloud bursts out on both sides on
   impact.
 

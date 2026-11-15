@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="ToolSwingData" format=3]
+
+[ext_resource type="Script" path="res://characters/kim/tool_swing_data.gd" id="1_swing"]
+
+[resource]
+script = ExtResource("1_swing")
+tool = &"hammer"
+rest_angle = 70.0
+rest_pivot = Vector2(5, -14)
+wind_angle = -75.0
+wind_pivot = Vector2(4, -19)
+hit_from_angle = -25.0
+hit_from_pivot = Vector2(7, -18)
+hit_to_angle = 30.0
+hit_to_pivot = Vector2(9, -14)

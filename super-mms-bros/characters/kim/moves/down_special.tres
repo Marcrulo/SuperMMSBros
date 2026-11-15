@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/kim/moves/blower.tres" id="2_blower"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 20
+active = 12
+recovery = 14
+hitbox_center = Vector2(36, -14)
+hitbox_size = Vector2(64, 26)
+damage = 0.0
+base_knockback = 260.0
+knockback_growth = 0.0
+angle_deg = 8.0
+direction = 0
+ability = ExtResource("2_blower")

@@ -17,7 +17,7 @@ var _saved_ids: Array[String] = []
 func before_each() -> void:
 	_saved_ids = [Game.character_id, Game.p2_character_id]
 	Game.character_id = MADS
-	Game.p2_character_id = "slot_09"
+	Game.p2_character_id = "slot_08"
 	_match = MATCH_SCENE.instantiate()
 	_match.auto_step = false
 	add_child_autofree(_match)
@@ -89,7 +89,7 @@ func test_only_his_side_special_changes() -> void:
 	var moves := _p1.stats.moveset
 	for name in ["jab", "neutral_special", "up_special", "down_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
-	assert_null(_p2.stats.moveset.side_special.ability, "Kim keeps the projectile")
+	assert_null(_p2.stats.moveset.side_special.ability, "Casper keeps the projectile")
 
 
 # --- The grab -------------------------------------------------------------------------------------
