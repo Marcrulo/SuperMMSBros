@@ -129,14 +129,16 @@ bite out of its front corner (20–28 and 38–45); 4 happy, eyes shut, slice go
   pale dust (230, 220, 200) shaded (186, 174, 156) rolling out along the floor and up, growing,
   then breaking up and fading. Presentation only.
 
-**Leverkusen banner** (her `up_special` strip, 4 drawings, shown by the move's own timing):
-both arms up, both fists on a dark wooden pole held upright in front of her face, a banner on top
-(about 20×14, wider than her head): a red cloth with the club crest simplified — a white disc
-outlined in black with a black cross on it (the "BAYER" cross, too small for letters), red on
-both sides, a yellow strip along the bottom. 1 raising it, arms halfway, the banner at head height
-(ticks 1–8); 2 and 3 held high, the cloth waving (the bottom edge rippling one way, then the other),
-mouth open cheering — switching every 8 ticks from tick 9 to 98; 4 lowering it, arms halfway again
-(99–108). The ring (drawn by the game): a 1 px red circle, radius 100, at a third opacity, round
+**Leverkusen banner** (its own strip `banner`, 4 drawings, shown by the move's own timing; her
+`up_special` strip stays the shared one, unused): a wooden pole in her front fist, upright, with a
+crossbar at the top and the cloth hanging from it: red with a black band along the top, "B04" (the
+club's short name) in white 3×5 letters and a yellow strip along the bottom (the crest's ribbon).
+1 raising it: arm stretched forward at shoulder height, the cloth (15 wide) flying forward of the
+pole, clear of her face (ticks 1–8); 2 and 3 held high: both arms up, the cloth (21×14) centred on
+the pole above her head, its bottom edge rippling one way, then the other; 3 with eyes shut,
+beaming — switching every 8 ticks from tick 9 to 98; 4 lowering it, as 1 (99–108). Facing left
+the game draws `banner_left` (already mirrored, the letters readable). No white disc with a cross:
+at this size that reads as the wrong flag. The ring (drawn by the game): a 1 px red circle, radius 100, at a third opacity, round
 her center, while the banner is up.
 
 **German flag** (`projectile.png`, 3 drawings of 32×32, drawn at ¾): just the cloth, no pole:

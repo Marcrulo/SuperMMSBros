@@ -6,11 +6,17 @@ extends FighterAbility
 ## ends) every other fighter within `radius` px is stunned until it goes down. When it ends (or is
 ## stopped), whoever it still holds is let go and she can't raise it again for `cooldown_frames`.
 
-## Drawings of her up_special strip: raising, held (wave A), held (wave B), lowering.
+## Her own strip (`fighter_banner.png`; the shared up special timing still runs underneath).
+const STRIP := "banner"
+## Drawings of her banner strip: raising, held (wave A), held (wave B), lowering.
 const RAISING := 0
 const LOWERING := 3
 ## Ticks between the cloth's two waves.
 const WAVE_TICKS := 8
+## Drawings in her banner strip (the shared up special has 3).
+const DRAWINGS := 4
+## The range ring (presentation only).
+const RING_COLOR := Color(0.84, 0.13, 0.16, 0.33)
 
 ## Ticks left before she can raise the banner again.
 var banner_cooldown: int = 0
@@ -136,6 +142,24 @@ func drawing(_animation: String, frame: int) -> int:
 	if fighter.move != &"banner":
 		return frame
 	return banner_frame(fighter.state_frame, _numbers().raise_frames, _move().startup)
+
+
+## Her own 4-drawing strip (facing left, the one with the lettering kept readable).
+func strip(textures: Dictionary) -> Array:
+	if fighter.state != Fighter.State.ATTACK or fighter.move != &"banner" \
+			or not textures.has(STRIP):
+		return []
+	var own := FighterVisuals.strip_for(textures, STRIP, fighter.facing)
+	return [own[0], own[1], DRAWINGS, banner_frame(fighter.state_frame, _numbers().raise_frames,
+		_move().startup)]
+
+
+## The range ring round her center while the banner is up.
+func draw(visuals: FighterVisuals, _animation: String, _frame: int) -> void:
+	if not is_up():
+		return
+	var center := fighter.get_center() - fighter.global_position
+	visuals.draw_arc(center, _numbers().radius, 0.0, TAU, 96, RING_COLOR, 1.0, false)
 
 
 ## Which drawing of the banner strip to show `ticks` ticks into it: raising up to `raise_frames`,

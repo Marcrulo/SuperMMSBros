@@ -155,6 +155,88 @@ CAKE_ANIMATIONS = {
 }
 
 
+# --- Pia's Leverkusen banner (docs/specs/characters/pia.md#pias-specials) ----------------------
+
+POLE = ((120, 82, 46), (84, 56, 30))          # wood, shade
+BANNER_RED = ((214, 32, 40), (168, 20, 28))   # cloth, shade
+BANNER_WHITE = (250, 250, 246)
+BANNER_BLACK = (24, 24, 28)
+BANNER_YELLOW = (250, 204, 40)
+BANNER_W, BANNER_H = 21, 14                   # the cloth (odd: the pole down its middle)
+FORWARD_W = 15                                # the cloth flying forward (raising, lowering)
+POLE_UP = 16                                  # the pole's length above her fist
+# "B04" (the club's short name), 3x5 letters with 1 px between them.
+B04 = ["### ### # #",
+       "# # # # # #",
+       "##  # # ###",
+       "# # # #   #",
+       "### ###   #"]
+
+
+def banner(fist, wave):
+    """Her banner on its pole, upright in her front fist: the pole from just below the fist up to
+    a crossbar, the cloth hanging from it. Red with a black band at the top, "B04" in white and a
+    yellow strip along the bottom. `wave` 0 = raising or lowering: the cloth flies forward of the
+    pole, clear of her face; 1 and 2 = held high, centred on the pole, its bottom edge rippling one
+    way, then the other."""
+    fx, fy = round(fist[0]), round(fist[1])
+    bar_y = fy - POLE_UP
+    out = {}
+    for y in range(bar_y, fy + 3):
+        out[(fx, y)] = POLE[0] if y < fy else POLE[1]
+    width = BANNER_W if wave else FORWARD_W
+    x0 = fx - width // 2 if wave else fx + 1
+    for x in range(min(x0 - 1, fx), x0 + width + 1):
+        out[(x, bar_y)] = POLE[0]
+    lx = x0 + (width - len(B04[0])) // 2
+    ly = bar_y + 4
+    # For the facing-left strip (flipped whole afterwards), the letters are flipped first.
+    letters = [row[::-1] for row in B04] if body.MIRROR_TEXT else B04
+    for i in range(width):
+        x = x0 + i
+        dy = 0 if wave == 0 else round(math.sin(i * 0.7 + (0 if wave == 1 else math.pi)))
+        bottom = bar_y + BANNER_H + dy
+        for y in range(bar_y + 1, bottom + 1):
+            row, col = y - ly, x - lx
+            if y >= bottom - 1:
+                color = BANNER_YELLOW
+            elif y <= bar_y + 2:
+                color = BANNER_BLACK
+            elif 0 <= row < len(B04) and 0 <= col < len(B04[0]) and letters[row][col] == "#":
+                color = BANNER_WHITE
+            else:
+                color = BANNER_RED[1] if i >= width - 2 or i < 1 else BANNER_RED[0]
+            out[(x, y)] = color
+    return out
+
+
+# Both arms up, the back fist on the pole just under the front one.
+BANNER_UP = dict(fa=2.75, fe=0.15, ba=2.55, be=0.35)
+BANNER_HALF = dict(fa=1.5, fe=0.25, ba=1.35, be=0.5)
+# Her own strip `banner` (not a shared animation): raising, held (two waves), lowering.
+BANNER = [pose(banner=0, **BANNER_HALF),
+          pose(banner=1, **BANNER_UP),
+          pose(banner=2, face="shut", head_dy=-1, bob=-1, **BANNER_UP),
+          pose(banner=0, **BANNER_HALF)]
+
+
+def banner_strip(c, left=False):
+    """The banner drawings side by side; `left` = the facing-left strip, already mirrored, with
+    the letters kept readable."""
+    p = looks.palette(c)
+    heads = {face: looks.build_head(c, face) for face in ("normal", "shut", "hurt")}
+    body.MIRROR_TEXT = left
+    try:
+        frames = [draw_frame(ps, c, p, heads) for ps in BANNER]
+    finally:
+        body.MIRROR_TEXT = False
+    w, h = frames[0].size
+    strip = Image.new("RGBA", (w * len(frames), h), (0, 0, 0, 0))
+    for i, frame in enumerate(frames):
+        strip.paste(frame.transpose(Image.FLIP_LEFT_RIGHT) if left else frame, (i * w, 0))
+    return strip
+
+
 def draw_flat(ps, c, p, heads):
     """A `flat` pose (her belly flop): the body turned to lie on its belly, the head put back on
     upright."""
@@ -170,8 +252,12 @@ PROPS["cake"] = dict(
     hand=lambda pose, fist, neck, sipping: cake_slice(fist, neck, pose["cake"]))
 
 
+# Her banner, upright in her front fist.
+PROPS["banner"] = dict(hand=lambda pose, fist, neck, sipping: banner(fist, pose["banner"]))
+
+
 def applies(c):
-    return c.get("belly_flop") or c.get("cake") or c.get("flag")
+    return c.get("belly_flop") or c.get("cake") or c.get("flag") or c.get("banner")
 
 
 def animations(c):
@@ -188,3 +274,6 @@ def extra_files(c, out, strips):
         dust_image().save(out / "dust.png")
     if c.get("flag"):
         flag_image().save(out / "projectile.png")
+    if c.get("banner"):
+        banner_strip(c).save(out / "fighter_banner.png")
+        banner_strip(c, left=True).save(out / "fighter_banner_left.png")

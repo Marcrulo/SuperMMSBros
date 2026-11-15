@@ -269,3 +269,49 @@ func test_banner_drawings_follow_the_move() -> void:
 		99: 3, 108: 3}
 	for ticks: int in expected:
 		assert_eq(BannerAbility.banner_frame(ticks, 8, 98), expected[ticks], "tick %d" % ticks)
+
+
+func test_banner_animation() -> void:
+	assert_eq(FighterVisuals.animation_for(Fighter.State.ATTACK, 0.0, &"banner",
+		FighterVisuals.phase_animations_of(_p1)), "up_special")
+
+
+## Her banner strip: 4 drawings; when it's held high, the red cloth is above her head.
+func test_the_banner_strip() -> void:
+	var strip := (load("res://assets/fighters/%s/fighter_banner.png" % PIA) as Texture2D).get_image()
+	var size := strip.get_height()
+	assert_eq(strip.get_width(), size * 4)
+	var idle := (load("res://assets/fighters/%s/fighter_idle.png" % PIA) as Texture2D).get_image()
+	var head_top := idle.get_region(Rect2i(0, 0, size, size)).get_used_rect().position.y
+	for drawing in [1, 2]:
+		var red := 0
+		var top := size
+		for y in size:
+			for x in size:
+				var c := strip.get_pixel(drawing * size + x, y)
+				if c.a > 0.5 and c.r8 == 214 and c.g8 == 32 and c.b8 == 40:
+					red += 1
+					top = mini(top, y)
+		assert_gt(red, 40, "drawing %d has the red cloth" % (drawing + 1))
+		assert_lt(top, head_top, "drawing %d holds it above her head" % (drawing + 1))
+
+
+## "B04" stays readable facing left: her own facing-left strip, the same size.
+func test_a_facing_left_strip_for_the_lettering() -> void:
+	var textures := FighterVisuals.textures_for(PIA)
+	assert_true(textures.has("banner_left"))
+	assert_eq(textures["banner_left"].get_size(), textures["banner"].get_size())
+
+
+## Drawn with all 4 drawings of her strip (the shared up special timing has 3).
+func test_the_banner_draws_from_her_own_strip() -> void:
+	await _place(Vector2(240, 192), Vector2(380, 192), _banner())
+	_to_frame(20)
+	var textures := FighterVisuals.textures_for(PIA)
+	var own := _banner_ability().strip(textures)
+	assert_eq(own.slice(1), [1, 4, 2])
+	assert_eq(own[0], textures["banner"])
+	_p1.facing = -1
+	own = _banner_ability().strip(textures)
+	assert_eq(own[0], textures["banner_left"])
+	assert_eq(own[1], 1, "already mirrored")
