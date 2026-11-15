@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="WaterGunData" format=3]
+
+[ext_resource type="Script" path="res://characters/magnus/water_gun_data.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+drops = 6
+interval = 4
