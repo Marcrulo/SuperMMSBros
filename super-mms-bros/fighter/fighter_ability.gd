@@ -207,6 +207,12 @@ func held_pose(_victim: Fighter) -> Array:
 	return []
 
 
+## Draws this ability's extras behind the fighter's drawing (its canvas is `visuals`, origin at
+## the feet).
+func draw_behind(_visuals: FighterVisuals, _animation: String, _frame: int) -> void:
+	pass
+
+
 ## Draws this ability's extras over the fighter (its canvas is `visuals`, origin at the feet).
 func draw(_visuals: FighterVisuals, _animation: String, _frame: int) -> void:
 	pass
