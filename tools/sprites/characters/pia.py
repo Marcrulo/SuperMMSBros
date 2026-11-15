@@ -157,14 +157,13 @@ CAKE_ANIMATIONS = {
 
 # --- Pia's Leverkusen banner (docs/specs/characters/pia.md#pias-specials) ----------------------
 
-POLE = ((120, 82, 46), (84, 56, 30))          # wood, shade
 BANNER_RED = ((214, 32, 40), (168, 20, 28))   # cloth, shade
 BANNER_WHITE = (250, 250, 246)
 BANNER_BLACK = (24, 24, 28)
-BANNER_YELLOW = (250, 204, 40)
-BANNER_W, BANNER_H = 27, 17                   # the cloth (odd: the pole down its middle)
-POLE_UP = 20                                  # the pole's length above her fist
-FURLED_H = 12                                 # the rolled-up cloth (raising, lowering)
+SCARF_H = 9          # black edge, 7 red rows with the letters, black edge
+SCARF_OVER = 4       # how far the scarf goes past each fist
+FRINGE = 3           # the fringe hanging from each end
+HAND_GAP = 2         # rows between the fist point and the scarf's edge (the fists show)
 # "BAYER", 3x5 letters with 1 px between them.
 BAYER = ["### ### # # ### ## ",
          "# # # # # # #   # #",
@@ -173,58 +172,43 @@ BAYER = ["### ### # # ### ## ",
          "### # #  #  ### # #"]
 
 
-def banner(fist, wave):
-    """Her banner on its pole, upright in her front fist: the pole from just below the fist up to
-    a crossbar. `wave` 0 = raising or lowering: the cloth still rolled up, hanging beside the pole;
-    1 and 2 = held high, unfurled and centred on the pole: red with a black band along the top,
-    "BAYER" in white and a yellow strip along the bottom, its bottom edge rippling one way, then
-    the other."""
-    fx, fy = round(fist[0]), round(fist[1])
-    bar_y = fy - POLE_UP
-    out = {}
-    for y in range(bar_y, fy + 3):
-        out[(fx, y)] = POLE[0] if y < fy else POLE[1]
-    if wave == 0:
-        for x in range(fx - 2, fx + 4):
-            out[(x, bar_y)] = POLE[0]
-        for y in range(bar_y + 1, bar_y + 1 + FURLED_H):
-            tie = y in (bar_y + 3, bar_y + FURLED_H - 2)
-            out[(fx + 1, y)] = BANNER_YELLOW if tie else BANNER_RED[0]
-            out[(fx + 2, y)] = BANNER_YELLOW if tie else BANNER_RED[1]
-        return out
-    width = BANNER_W
-    x0 = fx - width // 2
-    for x in range(x0 - 1, x0 + width + 1):
-        out[(x, bar_y)] = POLE[0]
-    lx = x0 + (width - len(BAYER[0])) // 2
-    ly = bar_y + 6
-    # For the facing-left strip (flipped whole afterwards), the letters are flipped first.
+def scarf(front, back, held_high):
+    """Her Bayer Leverkusen fan scarf, stretched between her two fists: red with black edges and
+    "BAYER" in white, its ends black with a fringe hanging down. `held_high`: held above her head,
+    the fists under its bottom edge; else held at her chest, hanging below the fists."""
+    left, right = sorted((round(front[0]), round(back[0])))
+    fy = round(max(front[1], back[1])) if held_high else round(min(front[1], back[1]))
+    x0, x1 = left - SCARF_OVER, right + SCARF_OVER
+    top = fy - SCARF_H - HAND_GAP if held_high else fy + HAND_GAP
     letters = [row[::-1] for row in BAYER] if body.MIRROR_TEXT else BAYER
-    for i in range(width):
-        x = x0 + i
-        dy = round(math.sin(i * 0.6 + (0 if wave == 1 else math.pi)))
-        bottom = bar_y + BANNER_H + dy
-        for y in range(bar_y + 1, bottom + 1):
-            row, col = y - ly, x - lx
-            if y >= bottom - 1:
-                color = BANNER_YELLOW
-            elif y <= bar_y + 2:
+    lx = (x0 + x1 + 1 - len(BAYER[0])) // 2
+    out = {}
+    for x in range(x0, x1 + 1):
+        end = x - x0 < 2 or x1 - x < 2
+        for k in range(SCARF_H):
+            y = top + k
+            row, col = k - 2, x - lx
+            if end or k in (0, SCARF_H - 1):
                 color = BANNER_BLACK
             elif 0 <= row < len(letters) and 0 <= col < len(letters[0]) and letters[row][col] == "#":
                 color = BANNER_WHITE
             else:
-                color = BANNER_RED[1] if i >= width - 2 or i < 1 else BANNER_RED[0]
+                color = BANNER_RED[1] if k == SCARF_H - 2 else BANNER_RED[0]
             out[(x, y)] = color
+    for x in (x0, x0 + 2, x1 - 2, x1):
+        for k in range(FRINGE):
+            out[(x, top + SCARF_H + k)] = BANNER_RED[0] if k % 2 == 0 else BANNER_BLACK
     return out
 
 
-# Both arms up, the back fist on the pole just under the front one.
-BANNER_UP = dict(fa=2.75, fe=0.15, ba=2.55, be=0.35)
-BANNER_HALF = dict(fa=1.5, fe=0.25, ba=1.4, be=1.8)
-# Her own strip `banner` (not a shared animation): raising, held (two waves), lowering.
+# Raising (and lowering): held at her chest. Held high: both arms up in a V, the scarf over her
+# head; the second drawing pumps it higher (arms straighter), eyes shut, beaming.
+BANNER_HALF = dict(fa=1.5, fe=0.3, ba=-1.5, be=-0.3)
+BANNER_UP = dict(fa=2.6, fe=-0.5, ba=-2.6, be=0.5)
+BANNER_PUMP = dict(fa=2.75, fe=-0.35, ba=-2.75, be=0.35)
 BANNER = [pose(banner=0, **BANNER_HALF),
           pose(banner=1, **BANNER_UP),
-          pose(banner=2, face="shut", head_dy=-1, bob=-1, **BANNER_UP),
+          pose(banner=2, face="shut", head_dy=-1, bob=-1, **BANNER_PUMP),
           pose(banner=0, **BANNER_HALF)]
 
 
@@ -260,8 +244,9 @@ PROPS["cake"] = dict(
     hand=lambda pose, fist, neck, sipping: cake_slice(fist, neck, pose["cake"]))
 
 
-# Her banner, upright in her front fist.
-PROPS["banner"] = dict(hand=lambda pose, fist, neck, sipping: banner(fist, pose["banner"]))
+# Her scarf, between her two fists.
+PROPS["banner"] = dict(hand=lambda pose, fist, neck, sipping:
+                       scarf(fist, body.HANDS[0]["back"], pose["banner"] > 0))
 
 
 def applies(c):
