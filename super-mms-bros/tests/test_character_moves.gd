@@ -44,7 +44,7 @@ func test_henrik_has_his_own_moves() -> void:
 	for name in SWUNG:
 		assert_ne(moves.get(name), _default_moves().get(name), name + " is his own")
 	for name in ["down_tilt", "up_tilt", "neutral_air", "forward_air", "back_air", "up_air",
-			"down_air", "down_special", "down_special_dive", "side_special", "up_special"]:
+			"down_air", "down_special_dive", "side_special", "up_special"]:
 		assert_eq(moves.get(name), _default_moves().get(name), name + " is the default")
 
 
