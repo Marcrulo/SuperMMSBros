@@ -159,7 +159,7 @@ CHARACTERS = {
                     pants=DARK, hand=True, football=True),
     "slot_06": dict(name="Henrik", skin=FAIR, hair=(96, 60, 24), hair_style="short",
                     beard=(128, 96, 56), beard_style="full", shirt=(48, 80, 124),
-                    inner=WHITE_SHIRT, pants=DARK, weapon="guitar",
+                    inner=WHITE_SHIRT, pants=DARK, weapon="guitar", speakers=True,
                     canvas=(112, 80)),
     "slot_07": dict(name="Stig", skin=FAIR, hair=(84, 56, 34), hair_style="receding",
                     glasses=(20, 20, 28), mouth="soft", shirt=(72, 84, 90), inner=WHITE_SHIRT,
