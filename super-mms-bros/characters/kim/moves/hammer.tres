@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="HammerData" format=3]
+
+[ext_resource type="Script" path="res://characters/kim/hammer_data.gd" id="1_hammer"]
+
+[resource]
+script = ExtResource("1_hammer")
+max_out = 1
+spin_ticks = 24

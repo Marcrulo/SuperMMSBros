@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/kim/moves/torch.tres" id="2_torch"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 8
+active = 40
+recovery = 10
+hitbox_center = Vector2(24, -13)
+hitbox_size = Vector2(34, 14)
+damage = 2.0
+base_knockback = 45.0
+knockback_growth = 0.15
+angle_deg = 25.0
+direction = 0
+ability = ExtResource("2_torch")

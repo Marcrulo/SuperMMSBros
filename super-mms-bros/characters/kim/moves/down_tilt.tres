@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/kim/moves/screwdriver_swing.tres" id="2_swing"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 5
+active = 4
+recovery = 8
+hitbox_center = Vector2(22, -4)
+hitbox_size = Vector2(30, 6)
+damage = 5.0
+base_knockback = 90.0
+knockback_growth = 0.5
+angle_deg = 70.0
+direction = 0
+ability = ExtResource("2_swing")
