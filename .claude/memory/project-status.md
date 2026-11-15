@@ -8,6 +8,8 @@ metadata:
   modified: 2026-11-15T07:30:37.461Z
 ---
 
+**Gitte stances (2026-11-15, late):** on char/gitte (worktree ../SuperMMSBros-gitte, pushed, NOT merged to main): + = red hand glow, knockback ×1.25 on all her hits (was volley ×1.5 dmg); − = blue glow, magnet tug on her normals' first active frame (cone ±30° toward the hitbox, 120 px, 0-dmg 300 px/s launch via take_hit in resolve_contacts; was lifesteal). Glow from generator-written slot_02/hands.json ([front, back] per drawing). Plan docs/plans/M6x-gitte-stances.md; 705 tests. Shared change: sprite viewer EXTRAS + tools/sprite_viewer/gitte_previews.py. Awaiting playtest (tug strength, back-hand glow showing through her body).
+
 **Latest (2026-11-15, evening):** main has Kim's torch burning merged (M6w, plan `docs/plans/M6w-kim-burning.md`: 1 % every 30 ticks for 3 s after the flame stops hitting, doesn't stack); 684 tests pass; awaiting the user's playtest. Gotcha hit that day: a worktree's `assets/music` symlink got committed (the ignore rule had a trailing slash) and checking it out on main deleted the real gitignored music; recovered all 7 tracks losslessly by rebuilding Ogg files from Godot's `.godot/imported/*.oggvorbisstr` packets; the rule is now `/assets/music` (no slash). Before committing in a worktree, check `git status` for symlinks.
 **Mette flask (2026-11-15):** Mette always holds her current flask (front fist per drawing from generator-written `slot_10/hands.json`, like Sjippepigen's); merged to main as 51500b3, 689 tests; awaiting playtest. Worktree ../SuperMMSBros-mette exists.
 
