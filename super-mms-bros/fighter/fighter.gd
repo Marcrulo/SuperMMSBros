@@ -873,6 +873,10 @@ func stun(frames: int) -> void:
 	launched = false
 	_fast_falling = false
 	_can_short_hop = false
+	if ledge != null:
+		# Lets go of a ledge, as after a hit.
+		ledge = null
+		_ledge_regrab_left = stats.ledge_regrab_frames
 
 
 ## Takes the ground modifiers for this tick and sets them back to 1.
