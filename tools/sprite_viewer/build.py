@@ -96,6 +96,8 @@ EXTRAS = {
                                "Kim's down special: winds up for 20 ticks, then the gust (white lines) pushes the other fighter away for no damage."),
     "kim_torch_preview.png": ("torch (side special)", [2] * 30, False,
                               "Kim's side special: a small flamethrower for 40 ticks that hits again every 8 ticks."),
+    "kim_burn_preview.png": ("torch + burning", [3] * 87, False,
+                             "Real game frames every 3 ticks: Kim torches Pia (2 % every 8 ticks); once the flame stops hitting her she burns for 3 s, 1 % every 30 ticks (6 % in all), no knockback. Doesn't stack: catching fire again restarts the 3 s."),
     "burst.png": ("light burst", [3, 3, 3, 3], False,
                   "Cross smash: drawn on the floor from where the cross hits, from the first active frame."),
     "dust.png": ("flop dust", [3, 3, 3, 3], False,

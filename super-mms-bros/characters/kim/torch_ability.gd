@@ -2,7 +2,8 @@ class_name TorchAbility
 extends FighterAbility
 ## Kim's torch (docs/specs/characters/kim.md#kim--handyman): his side special is a small
 ## flamethrower. It's the move's own hitbox for its active frames (no projectile), made to hit
-## the same fighter again every `hit_interval` ticks.
+## the same fighter again every `hit_interval` ticks. Whoever it hits starts burning (a Burn) once
+## the flame has stopped hitting them.
 
 const OUTLINE := Color(0.1, 0.11, 0.17)
 const GRIP := Color(0.2, 0.21, 0.26)
@@ -21,8 +22,22 @@ const TANK_AT := -17.0
 const WAND := 14.0
 
 
+## Per player index: the match tick the flame last landed on them, until they start burning.
+var _scorched: Dictionary = {}
+
+
 func _numbers() -> TorchData:
 	return data as TorchData
+
+
+func reset() -> void:
+	_scorched.clear()
+
+
+## True while the flame is out (the torch's active frames).
+func _flame_out() -> bool:
+	return fighter.state == Fighter.State.ATTACK and fighter.move == slot \
+			and (fighter.stats.moveset.get(slot) as MoveData).is_active_frame(fighter.state_frame)
 
 
 func replaces(move: StringName) -> bool:
@@ -37,6 +52,27 @@ func move_tick(_input: FighterInput) -> bool:
 	if since > 0 and since % _numbers().hit_interval == 0:
 		fighter.clear_hit_victims()
 	return false
+
+
+## Notes who the flame landed on this tick (not a blocked hit: they'd be shielding, not in fresh
+## hitstun).
+func end_step(match_: Match) -> void:
+	if not _flame_out():
+		return
+	for victim in match_.get_fighters():
+		if victim != fighter and fighter.has_hit(victim.player_index) \
+				and victim.state == Fighter.State.HITSTUN and victim.state_frame == 0:
+			_scorched[victim.player_index] = match_.tick
+
+
+## Sets on fire whoever the flame has stopped hitting: the flame is gone, or it missed its next hit
+## on them.
+func spawn_entities(match_: Match) -> void:
+	for index: int in _scorched.keys():
+		if _flame_out() and match_.tick - (_scorched[index] as int) <= _numbers().hit_interval:
+			continue
+		_scorched.erase(index)
+		Burn.ignite(match_, fighter.player_index, match_.get_fighter(index), _numbers())
 
 
 ## A rectangle given in facing-right coordinates, mirrored to his facing side.

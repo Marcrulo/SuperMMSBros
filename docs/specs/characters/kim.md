@@ -58,11 +58,20 @@ hits the same fighter again every 8 ticks (`hit_interval`): damage 2, base 45, g
 angle 25°, FACING — a small hit that keeps them in the flames and walks them forward. It doesn't
 make a projectile.
 
+**Burning:** the torch sets whoever it hits on fire. A victim starts burning once the flame has
+stopped hitting them: when the torch's active frames end (or the move is cut short), or when the
+flame missed its next hit on them (no hit for more than `hit_interval` ticks, so they got out of
+it). A shield blocks the flame and doesn't burn. Burning lasts 180 ticks (3 s, `burn_ticks`): every
+30 ticks (`burn_interval`) they take 1 % (`burn_damage`), so 6 % in all, with no knockback or
+hitstun (skipped while they can't be hit). It **doesn't stack**: a fighter burns only once at a
+time, and catching fire again while burning restarts the 3 s. A KO puts it out. The burn is a
+`Burn` entity (`burn.gd`); the numbers are on `TorchData`.
+
 Files: `characters/kim/moves/` (`moveset.tres`, `jab.tres`, `side_tilt.tres`, `down_tilt.tres`, `hammer_swing.tres`, `axe_swing.tres`, `screwdriver_swing.tres`, `neutral_special.tres`, `hammer.tres`,
 `up_special.tres`, `ladder.tres`, `down_special.tres`, `blower.tres`, `side_special.tres`,
 `torch.tres`); scripts `hammer_ability.gd`, `hammer_data.gd`, `hammer.gd`, `ladder_ability.gd`,
 `ladder_data.gd`, `ladder.gd`, `blower_ability.gd`, `blower_data.gd`, `torch_ability.gd`,
-`torch_data.gd`, `tool_swing_ability.gd`, `tool_swing_data.gd`, `hose.gd` (the drawn hose; each with a `.uid`).
+`torch_data.gd`, `burn.gd`, `tool_swing_ability.gd`, `tool_swing_data.gd`, `hose.gd` (the drawn hose; each with a `.uid`).
 
 ## Look
 
@@ -88,3 +97,6 @@ shared sprite generator isn't touched:
   standing on the floor behind him, or carried on his back while he's in the air; during the
   active frames a flame (orange, yellow core) licks out of the burner along the hitbox,
   flickering.
+- **Burning:** small flickering flames (the torch's orange and yellow) on the burning fighter's
+  body, with a few sparks rising off them, drawn over the fighter; they shrink in the last half
+  second.
