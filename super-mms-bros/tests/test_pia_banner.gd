@@ -315,3 +315,18 @@ func test_the_banner_draws_from_her_own_strip() -> void:
 	own = _banner_ability().strip(textures)
 	assert_eq(own[0], textures["banner_left"])
 	assert_eq(own[1], 1, "already mirrored")
+
+
+## Someone hanging from the ledge in range is stunned and lets go of it (it's free to grab again).
+func test_someone_on_the_ledge_lets_go() -> void:
+	await _place(Vector2(360, 192), Vector2(395, 185), [])
+	for i in 60:
+		_match.step()
+		if _p2.state == Fighter.State.LEDGE:
+			break
+	assert_eq(_p2.state, Fighter.State.LEDGE, "hanging")
+	_steps(_p2.stats.ledge_intangible_frames + 1)
+	_match.set_controller(0, ScriptedController.new([_up_special()]))
+	_steps(12)
+	assert_true(_dizzy(_p2))
+	assert_null(_p2.ledge, "let go of the ledge")
