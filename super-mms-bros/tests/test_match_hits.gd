@@ -13,7 +13,7 @@ var _p2: Fighter
 
 
 ## P1 plays a character with the default move set (Pia, the default P1, has her own specials).
-const DEFAULT_MOVES_ID := "slot_04"
+const DEFAULT_MOVES_ID := "slot_08"
 
 var _saved_character_id: String = ""
 
