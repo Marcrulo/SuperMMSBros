@@ -515,6 +515,51 @@ func test_rising_foam_pops_a_fighter_on_top() -> void:
 # --- HUD ------------------------------------------------------------------------------------------
 
 
+func test_hands_json_has_every_drawing() -> void:
+	for animation: String in FighterVisuals.ANIMATIONS:
+		var drawings: int = FighterVisuals.ANIMATIONS[animation].ticks.size()
+		for i in drawings:
+			assert_ne(PotionAbility.front_hand(METTE, animation, i), PotionAbility.NO_HAND,
+					"%s drawing %d" % [animation, i])
+
+
+func test_flask_sits_in_her_front_hand() -> void:
+	# From slot_10/hands.json (run drawing 2: the fist at (-2.01, -8.15)).
+	assert_almost_eq(PotionAbility.front_hand(METTE, "run", 2), Vector2(-2.01, -8.15),
+			Vector2(0.01, 0.01))
+
+
+func test_she_always_holds_her_flask() -> void:
+	await _place(Vector2(150, 192), Vector2(380, 192))
+	_steps(3)
+	assert_true(_potions().holds_flask(), "standing")
+	_p1.stun(30)
+	_steps(1)
+	assert_true(_potions().holds_flask(), "even dizzy")
+
+
+func test_hand_is_empty_from_the_throw_to_the_end_of_side_special() -> void:
+	await _place(Vector2(150, 192), Vector2(380, 192), _specials(["side"], 40))
+	_steps(10)
+	assert_true(_potions().holds_flask(), "until the throw")
+	_steps(1)
+	assert_false(_potions().holds_flask(), "thrown")
+	_steps(24)
+	assert_ne(_p1.move, &"side_special")
+	assert_true(_potions().holds_flask(), "a new one once the move is over")
+
+
+func test_hand_is_empty_from_the_smash_to_the_end_of_neutral_special() -> void:
+	await _place(Vector2(150, 192), Vector2(380, 192), _specials(["neutral"], 40))
+	_steps(9)
+	assert_true(_potions().holds_flask(), "until the smash")
+	_steps(1)
+	assert_false(_potions().holds_flask(), "smashed")
+	_steps(26)
+	assert_ne(_p1.move, &"neutral_special")
+	assert_true(_potions().holds_flask(), "a new one once the move is over")
+
+
 func test_card_shows_her_potion() -> void:
 	var hud := _match.get_node("HUD") as Hud
 	assert_true(hud.cards[0].get_badge(PotionBadge) != null, "Mette's card has the badge")

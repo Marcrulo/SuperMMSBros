@@ -171,7 +171,7 @@ CHARACTERS = {
                     shirt=(160, 168, 176), short_sleeves=True, pants=JEANS),
     "slot_10": dict(name="Mette", skin=FAIR, hair=(110, 70, 36), hair_light=(146, 98, 54), slim=0.4,
                     hair_style="long", hair_length=13, shirt=(48, 84, 140),
-                    dots=(196, 210, 230), pants=DARK),
+                    dots=(196, 210, 230), pants=DARK, flask=True),
     "slot_11": dict(name="Mads", skin=(204, 148, 108), hair=(66, 50, 38), hair_style="short",
                     glasses=(20, 20, 28), eye=(70, 50, 30),
                     camo=[(88, 96, 52), (60, 70, 38), (110, 88, 56), (40, 44, 30)],
