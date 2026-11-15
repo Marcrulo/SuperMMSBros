@@ -3,10 +3,11 @@
 Pia's own moves and drawings. The shared rules are in [moves](../moves.md)
 and the [art guide](../art-guide.md).
 
-## Pia — cake, belly flop, flag
+## Pia — cake, belly flop, flag, banner
 
-Pia's three own specials: **eating cake** (neutral special), the **belly flop** (down special)
-and **throwing a German flag** (side special). Her up special and normal attacks are the default.
+Pia's four own specials: **eating cake** (neutral special), the **belly flop** (down special),
+**throwing a German flag** (side special) and **holding up a Bayer Leverkusen banner** (up
+special). Her normal attacks are the default.
 
 ### Neutral special — cake
 
@@ -63,8 +64,38 @@ ahead, passes through platforms, gone on a hit, a shield, the blast zone or afte
 with its own picture and numbers: it appears at (16, −16), flies at 260 px/s, hitbox 12×8,
 damage 6, base 100, growth 0.6, angle 30°.
 
+### Up special — Leverkusen banner
+
+She holds up a banner of her football club, Bayer Leverkusen, and everyone near her is stunned
+while she holds it (phase `banner`). It replaces the jump boost, so she has no recovery move: only
+her jumps get her back.
+
+- **On the ground only;** in the air the K press does nothing (and so it never uses up
+  `up_special_available`).
+- 98 / 0 / 10 (108) frames, no hitbox: she raises the banner (frames 1–8, `raise_frames`), holds
+  it up (frames 9–98) and lowers it (99–108). She can't move, turn or act meanwhile (on the ground
+  she slides to a stop).
+- **The stun:** on every tick the banner is up (frames 9–98), every other fighter whose center is
+  within 100 px of hers (`radius`) is stunned — dizzy, through `Fighter.stun()`, as after a shield
+  break — until the banner goes down: someone stunned on frame *f* is free again on frame 99.
+  Someone who comes into range later (walks or falls in) is stunned then, until the same frame.
+  In the air they keep falling. A shield doesn't help (it's a gesture, not an attack); nobody who
+  can't be hit (`Fighter.can_be_hit()`: dodging, invulnerable after a respawn, KO'd, held) and
+  nobody in hitstun is stunned (a fighter in hitstun is, once it ends, if still in range). Someone
+  already dizzy from something else is left alone. On frame 98 itself nobody new is stunned (they'd
+  be free on the next tick anyway). No damage.
+- **A hit stops it** like any move; then everyone it stunned is let go (`stun(1)`: free on the
+  tick after next).
+- **Cooldown:** after a banner she can't raise it again for 180 ticks (3 s, `cooldown_frames`,
+  counted from the tick it ends or is stopped; `BannerAbility.banner_cooldown`, 0 at every spawn).
+  Until then the K press does nothing.
+- **Data:** the special's `MoveData.ability` is a `BannerData` (`banner.tres`: `raise_frames`,
+  `radius`, `cooldown_frames`); the `BannerAbility`.
+- **Look:** see [the banner](#pias-specials); a faint red ring on the ground shows the range while
+  the banner is up (presentation only).
+
 Files: `characters/pia/moves/` (`moveset.tres`, `neutral_special.tres`, `down_special.tres`,
-`belly_dive.tres`, `side_special.tres`).
+`belly_dive.tres`, `side_special.tres`, `up_special.tres`).
 
 ## Look
 
@@ -97,6 +128,16 @@ bite out of its front corner (20–28 and 38–45); 4 happy, eyes shut, slice go
   6 px out from her feet; 3 ticks each from the first active frame, so on impact): puffs of
   pale dust (230, 220, 200) shaded (186, 174, 156) rolling out along the floor and up, growing,
   then breaking up and fading. Presentation only.
+
+**Leverkusen banner** (her `up_special` strip, 4 drawings, shown by the move's own timing):
+both arms up, both fists on a dark wooden pole held upright in front of her face, a banner on top
+(about 20×14, wider than her head): a red cloth with the club crest simplified — a white disc
+outlined in black with a black cross on it (the "BAYER" cross, too small for letters), red on
+both sides, a yellow strip along the bottom. 1 raising it, arms halfway, the banner at head height
+(ticks 1–8); 2 and 3 held high, the cloth waving (the bottom edge rippling one way, then the other),
+mouth open cheering — switching every 8 ticks from tick 9 to 98; 4 lowering it, arms halfway again
+(99–108). The ring (drawn by the game): a 1 px red circle, radius 100, at a third opacity, round
+her center, while the banner is up.
 
 **German flag** (`projectile.png`, 3 drawings of 32×32, drawn at ¾): just the cloth, no pole:
 16×9, black, red and gold stripes (3 px each), rippling as it flies — each column shifted up or
