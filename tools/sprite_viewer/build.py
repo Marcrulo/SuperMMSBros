@@ -70,6 +70,8 @@ EXTRAS = {
                                      "With blue: 4 %, strong knockback that grows fast with %. Every tick."),
     "mette_smash_green_preview.png": ("flask smash, green (B)", [1] * 48, False,
                                       "With green: 4 %, barely moves them, then they're dizzy for 1 s. Every tick."),
+    "gitte_glow_preview.png": ("hand glow (+ red, − blue)", [10] * 101, True,
+                               "Every drawing of every animation in order, with the glow the game draws on both fists: red in + (harder knockback), blue in − (the magnet tug), alternating per animation here. The halo pulses gently. The back fist's glow shows even where that hand is behind her body."),
     "mette_flask_preview.png": ("flask in hand (every drawing)", [10] * 105, True,
                                 "Every drawing of every animation in order (the last four: idle facing left), with the flask the game draws in her front hand. She always holds her current potion; the colours cycle here just to show all three."),
     "mette_switch_preview.png": ("pick a potion (down special)", [1] * 56, False,
