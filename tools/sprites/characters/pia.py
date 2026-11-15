@@ -162,39 +162,47 @@ BANNER_RED = ((214, 32, 40), (168, 20, 28))   # cloth, shade
 BANNER_WHITE = (250, 250, 246)
 BANNER_BLACK = (24, 24, 28)
 BANNER_YELLOW = (250, 204, 40)
-BANNER_W, BANNER_H = 21, 14                   # the cloth (odd: the pole down its middle)
-FORWARD_W = 15                                # the cloth flying forward (raising, lowering)
-POLE_UP = 16                                  # the pole's length above her fist
-# "B04" (the club's short name), 3x5 letters with 1 px between them.
-B04 = ["### ### # #",
-       "# # # # # #",
-       "##  # # ###",
-       "# # # #   #",
-       "### ###   #"]
+BANNER_W, BANNER_H = 27, 17                   # the cloth (odd: the pole down its middle)
+POLE_UP = 20                                  # the pole's length above her fist
+FURLED_H = 12                                 # the rolled-up cloth (raising, lowering)
+# "BAYER", 3x5 letters with 1 px between them.
+BAYER = ["### ### # # ### ## ",
+         "# # # # # # #   # #",
+         "##  ### ### ##  ## ",
+         "# # # #  #  #   # #",
+         "### # #  #  ### # #"]
 
 
 def banner(fist, wave):
     """Her banner on its pole, upright in her front fist: the pole from just below the fist up to
-    a crossbar, the cloth hanging from it. Red with a black band at the top, "B04" in white and a
-    yellow strip along the bottom. `wave` 0 = raising or lowering: the cloth flies forward of the
-    pole, clear of her face; 1 and 2 = held high, centred on the pole, its bottom edge rippling one
-    way, then the other."""
+    a crossbar. `wave` 0 = raising or lowering: the cloth still rolled up, hanging beside the pole;
+    1 and 2 = held high, unfurled and centred on the pole: red with a black band along the top,
+    "BAYER" in white and a yellow strip along the bottom, its bottom edge rippling one way, then
+    the other."""
     fx, fy = round(fist[0]), round(fist[1])
     bar_y = fy - POLE_UP
     out = {}
     for y in range(bar_y, fy + 3):
         out[(fx, y)] = POLE[0] if y < fy else POLE[1]
-    width = BANNER_W if wave else FORWARD_W
-    x0 = fx - width // 2 if wave else fx + 1
-    for x in range(min(x0 - 1, fx), x0 + width + 1):
+    if wave == 0:
+        for x in range(fx - 2, fx + 4):
+            out[(x, bar_y)] = POLE[0]
+        for y in range(bar_y + 1, bar_y + 1 + FURLED_H):
+            tie = y in (bar_y + 3, bar_y + FURLED_H - 2)
+            out[(fx + 1, y)] = BANNER_YELLOW if tie else BANNER_RED[0]
+            out[(fx + 2, y)] = BANNER_YELLOW if tie else BANNER_RED[1]
+        return out
+    width = BANNER_W
+    x0 = fx - width // 2
+    for x in range(x0 - 1, x0 + width + 1):
         out[(x, bar_y)] = POLE[0]
-    lx = x0 + (width - len(B04[0])) // 2
-    ly = bar_y + 4
+    lx = x0 + (width - len(BAYER[0])) // 2
+    ly = bar_y + 6
     # For the facing-left strip (flipped whole afterwards), the letters are flipped first.
-    letters = [row[::-1] for row in B04] if body.MIRROR_TEXT else B04
+    letters = [row[::-1] for row in BAYER] if body.MIRROR_TEXT else BAYER
     for i in range(width):
         x = x0 + i
-        dy = 0 if wave == 0 else round(math.sin(i * 0.7 + (0 if wave == 1 else math.pi)))
+        dy = round(math.sin(i * 0.6 + (0 if wave == 1 else math.pi)))
         bottom = bar_y + BANNER_H + dy
         for y in range(bar_y + 1, bottom + 1):
             row, col = y - ly, x - lx
@@ -202,7 +210,7 @@ def banner(fist, wave):
                 color = BANNER_YELLOW
             elif y <= bar_y + 2:
                 color = BANNER_BLACK
-            elif 0 <= row < len(B04) and 0 <= col < len(B04[0]) and letters[row][col] == "#":
+            elif 0 <= row < len(letters) and 0 <= col < len(letters[0]) and letters[row][col] == "#":
                 color = BANNER_WHITE
             else:
                 color = BANNER_RED[1] if i >= width - 2 or i < 1 else BANNER_RED[0]
@@ -212,7 +220,7 @@ def banner(fist, wave):
 
 # Both arms up, the back fist on the pole just under the front one.
 BANNER_UP = dict(fa=2.75, fe=0.15, ba=2.55, be=0.35)
-BANNER_HALF = dict(fa=1.5, fe=0.25, ba=1.35, be=0.5)
+BANNER_HALF = dict(fa=1.5, fe=0.25, ba=1.4, be=1.8)
 # Her own strip `banner` (not a shared animation): raising, held (two waves), lowering.
 BANNER = [pose(banner=0, **BANNER_HALF),
           pose(banner=1, **BANNER_UP),

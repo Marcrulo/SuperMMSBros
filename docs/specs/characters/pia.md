@@ -131,14 +131,15 @@ bite out of its front corner (20–28 and 38–45); 4 happy, eyes shut, slice go
 
 **Leverkusen banner** (its own strip `banner`, 4 drawings, shown by the move's own timing; her
 `up_special` strip stays the shared one, unused): a wooden pole in her front fist, upright, with a
-crossbar at the top and the cloth hanging from it: red with a black band along the top, "B04" (the
-club's short name) in white 3×5 letters and a yellow strip along the bottom (the crest's ribbon).
-1 raising it: arm stretched forward at shoulder height, the cloth (15 wide) flying forward of the
-pole, clear of her face (ticks 1–8); 2 and 3 held high: both arms up, the cloth (21×14) centred on
-the pole above her head, its bottom edge rippling one way, then the other; 3 with eyes shut,
-beaming — switching every 8 ticks from tick 9 to 98; 4 lowering it, as 1 (99–108). Facing left
-the game draws `banner_left` (already mirrored, the letters readable). No white disc with a cross:
-at this size that reads as the wrong flag. The ring (drawn by the game): a 1 px red circle, radius 100, at a third opacity, round
+crossbar at the top. Unfurled, the cloth (27×17, wider than her head) hangs from the crossbar,
+centred on the pole: red with a black band along the top, "BAYER" in white 3×5 letters and a
+yellow strip along the bottom (the crest's ribbon). 1 raising it: both hands on the pole at
+shoulder height in front of her face, the cloth still rolled up (a red roll tied with yellow,
+hanging beside the pole) (ticks 1–8); 2 and 3 held high: both arms up, the cloth unfurled above
+her head, its bottom edge rippling one way, then the other; 3 with eyes shut, beaming — switching
+every 8 ticks from tick 9 to 98; 4 lowering it, as 1 (99–108). Facing left the game draws
+`banner_left` (already mirrored, the letters readable). No white disc with a cross: at this size
+that reads as the wrong flag. The ring (drawn by the game): a 1 px red circle, radius 100, at a third opacity, round
 her center, while the banner is up.
 
 **German flag** (`projectile.png`, 3 drawings of 32×32, drawn at ¾): just the cloth, no pole:
