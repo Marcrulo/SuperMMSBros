@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="MoveData" format=3]
+
+[ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="Resource" path="res://characters/magnus/moves/water_gun.tres" id="2_water"]
+
+[resource]
+script = ExtResource("1_move")
+startup = 8
+active = 0
+recovery = 12
+hitbox_center = Vector2(16, -14)
+hitbox_size = Vector2(8, 6)
+damage = 1.5
+base_knockback = 70.0
+knockback_growth = 0.25
+angle_deg = 15.0
+direction = 0
+projectile_speed = 300.0
+projectile_lifetime = 28
+ability = ExtResource("2_water")

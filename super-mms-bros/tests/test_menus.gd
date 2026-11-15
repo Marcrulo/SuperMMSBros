@@ -98,8 +98,11 @@ func test_match_gives_each_player_their_character() -> void:
 	var match_node: Match = add_child_autofree(MATCH_SCENE.instantiate())
 	assert_eq(match_node.get_fighter(0).character_id, "slot_14")
 	assert_eq(match_node.get_fighter(1).character_id, "slot_08")
-	assert_eq(match_node.get_fighter(0).stats, Game.roster().find("slot_14").stats)
-	assert_eq(match_node.get_fighter(1).stats, Game.roster().find("slot_08").stats)
+	# Each plays with its character's own move set (its stats' one when it has none of its own).
+	for i in 2:
+		var character := Game.roster().find(["slot_14", "slot_08"][i])
+		var moves := character.moveset if character.moveset != null else character.stats.moveset
+		assert_eq(match_node.get_fighter(i).stats.moveset, moves)
 
 
 # --- Character select ------------------------------------------------------------------------------
