@@ -273,3 +273,33 @@ func test_the_avatar_state_draws_his_avatar_strip() -> void:
 	assert_eq(_avatar.strip(textures), [textures["avatar"], 1, 2, 0], "the rise drawing")
 	_steps(RISE)
 	assert_eq(_avatar.strip(textures), [textures["avatar"], 1, 2, 1], "the flight drawing")
+
+
+func test_the_eye_glow_sits_on_his_glowing_eyes() -> void:
+	var numbers := _avatar.data as AvatarData
+	var image := (FighterVisuals.textures_for(MAGNUS)["avatar"] as Texture2D).get_image()
+	var width := image.get_width() / 2
+	for drawing in 2:
+		var eyes := numbers.rise_eyes if drawing == 0 else numbers.fly_eyes
+		assert_eq(eyes.size(), 2)
+		for eye in eyes:
+			# Game px from the feet (¾ scale) → the drawing's pixel.
+			var px := Vector2i(floori(eye.x / 0.75 + 32.0), floori(eye.y / 0.75 + 64.0))
+			var color := image.get_pixel(drawing * width + px.x, px.y)
+			assert_gt(color.b, 0.95, "drawing %d eye %s is a glowing pixel" % [drawing, eye])
+			assert_gt(color.g, 0.9)
+
+
+func test_eye_points_follow_the_drawing_facing_and_size() -> void:
+	await _place(Vector2(200, 160), Vector2(380, 192), [])
+	var numbers := _avatar.data as AvatarData
+	assert_eq(_avatar.eye_points(), PackedVector2Array(), "none outside the Avatar State")
+	_light_all()
+	_steps(1)
+	assert_eq(_avatar.eye_points(), numbers.rise_eyes)
+	_steps(RISE + 1)
+	_p1.facing = -1
+	var mirrored := PackedVector2Array()
+	for eye in numbers.fly_eyes:
+		mirrored.append(Vector2(-eye.x, eye.y))
+	assert_eq(_avatar.eye_points(), mirrored)

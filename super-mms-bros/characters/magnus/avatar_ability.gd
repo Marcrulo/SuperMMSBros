@@ -21,6 +21,11 @@ const ROCK_LIGHT := Color(0.66, 0.58, 0.48)
 const WIND := Color(1.0, 1.0, 1.0, 0.9)
 const WIND_EDGE := Color(0.1, 0.11, 0.17, 0.5)
 const AURA := Color(0.7, 0.9, 1.0, 0.18)
+## His eye glow: halo and core colors, its pulse (ticks per cycle) and the rise's fade-in (ticks).
+const EYE_HALO := Color(0.6, 0.95, 1.0, 0.55)
+const EYE_CORE := Color(0.92, 1.0, 1.0, 1.0)
+const EYE_PULSE_TICKS := 20
+const EYE_FADE_IN := 15
 ## The middle of his body, relative to the feet.
 const BODY_MIDDLE := Vector2(0, -16)
 
@@ -270,12 +275,40 @@ func _draw_rocks(visuals: FighterVisuals, s: float) -> void:
 			visuals.draw_line(Vector2(x - 1, top + 1), Vector2(x - half * 0.5, -1), ROCK_LIGHT)
 
 
-## A faint glow round him and the four element orbs circling him; during the rise they appear
-## one by one.
+## Where his eyes are now (relative to the feet, at his facing and size), or none outside the
+## Avatar State.
+func eye_points() -> PackedVector2Array:
+	var points := PackedVector2Array()
+	if not in_avatar_state():
+		return points
+	var eyes := _numbers().rise_eyes if fighter.move == &"avatar_rise" else _numbers().fly_eyes
+	for eye in eyes:
+		points.append(Vector2(eye.x * fighter.facing, eye.y) * fighter.size_scale())
+	return points
+
+
+## A glow over each eye: a soft halo and a bright core, pulsing; fading in during the rise.
+func _draw_eye_glow(visuals: FighterVisuals, s: float) -> void:
+	var strength := 1.0
+	if fighter.move == &"avatar_rise":
+		strength = clampf(fighter.state_frame / float(EYE_FADE_IN), 0.0, 1.0)
+	var pulse := 0.5 + 0.5 * sin(TAU * fighter.state_frame / float(EYE_PULSE_TICKS))
+	for eye in eye_points():
+		var halo := EYE_HALO
+		halo.a *= strength * (0.7 + 0.3 * pulse)
+		visuals.draw_circle(eye, (2.5 + 0.8 * pulse) * s, halo)
+		var core := EYE_CORE
+		core.a *= strength
+		visuals.draw_circle(eye, 1.1 * s, core)
+
+
+## A faint glow round him, his glowing eyes, and the four element orbs circling him; during the
+## rise they appear one by one.
 func _draw_orbs(visuals: FighterVisuals, s: float) -> void:
 	var numbers := _numbers()
 	var middle := BODY_MIDDLE * s
 	visuals.draw_circle(middle, 20.0 * s, AURA)
+	_draw_eye_glow(visuals, s)
 	var ticks := fighter.state_frame
 	if fighter.move == &"avatar_fly":
 		ticks += numbers.rise_frames

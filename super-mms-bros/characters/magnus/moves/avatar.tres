@@ -14,3 +14,5 @@ fly_hit = ExtResource("2_hit")
 rehit_frames = 30
 orbit_radius = 22.0
 orbit_ticks = 60
+rise_eyes = PackedVector2Array(-0.15, -26.6, 3.6, -26.6)
+fly_eyes = PackedVector2Array(7.35, -24.4, 11.1, -24.4)

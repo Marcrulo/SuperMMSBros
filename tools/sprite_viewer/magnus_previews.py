@@ -6,6 +6,7 @@ Usage: python3 -I tools/sprite_viewer/magnus_previews.py <project_dir> <out_dir>
   writes <out_dir>/slot_14/{avatar,earth,wind,shots,badge}_preview.png
 """
 import math
+import re
 import sys
 from pathlib import Path
 
@@ -19,6 +20,35 @@ FLAME_CORE = (255, 224, 89)
 ROCK, ROCK_LIGHT = (133, 112, 92), (168, 148, 122)
 AURA = (179, 230, 255, 46)
 ORBIT_R, ORBIT_TICKS, RISE = 22, 60, 60
+EYE_HALO, EYE_CORE = (153, 242, 255), (235, 255, 255)   # as AvatarAbility.EYE_HALO / EYE_CORE
+EYE_PULSE_TICKS, EYE_FADE_IN = 20, 15
+
+
+def eye_points(project):
+    """The rise's and the flight's eye points from his avatar.tres (game px from the feet)."""
+    text = (Path(project) / "characters/magnus/moves/avatar.tres").read_text()
+    points = []
+    for key in ("rise_eyes", "fly_eyes"):
+        v = [float(n) for n in re.search(key + r" = PackedVector2Array\(([^)]*)\)", text).group(1).split(",")]
+        points.append([(v[i], v[i + 1]) for i in range(0, len(v), 2)])
+    return points
+
+
+def eye_glow(f, eyes, frame, rising):
+    """A soft pulsing halo and a bright core over each eye (fading in during the rise)."""
+    strength = min(frame / EYE_FADE_IN, 1.0) if rising else 1.0
+    pulse = 0.5 + 0.5 * math.sin(2 * math.pi * frame / EYE_PULSE_TICKS)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    for x, y in eyes:
+        at = (FEET[0] + x, FEET[1] + y)
+        circle(d, at, 2.5 + 0.8 * pulse, EYE_HALO + (int(140 * strength * (0.7 + 0.3 * pulse)),))
+    f.alpha_composite(layer)
+    layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(layer)
+    for x, y in eyes:
+        circle(d, (FEET[0] + x, FEET[1] + y), 1.1, EYE_CORE + (int(255 * strength),))
+    f.alpha_composite(layer)
 
 
 def strip(frames):
@@ -57,8 +87,8 @@ def orb(d, element, at):
         d.arc((at[0] - 1.5, at[1] - 1.5, at[0] + 1.5, at[1] + 1.5), 0, 270, fill=OUTLINE)
 
 
-def avatar_frames(avatar):
-    """The rise (orbs appearing one by one) then a turn of the flight."""
+def avatar_frames(avatar, eyes):
+    """The rise (orbs appearing one by one, eyes lighting up) then a turn of the flight."""
     frames = []
     for tick in range(2 * ORBIT_TICKS):
         rising = tick < RISE
@@ -66,6 +96,7 @@ def avatar_frames(avatar):
         glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         circle(ImageDraw.Draw(glow), MIDDLE, 20, AURA)
         f.alpha_composite(glow)
+        eye_glow(f, eyes[0] if rising else eyes[1], tick if rising else tick - RISE, rising)
         d = ImageDraw.Draw(f)
         turn = 2 * math.pi * tick / ORBIT_TICKS
         for e in range(4):
@@ -180,7 +211,7 @@ def main(project, out_dir):
     out = Path(out_dir) / "slot_14"
     out.mkdir(parents=True, exist_ok=True)
     load = lambda name: Image.open(sprites / name).convert("RGBA")
-    strip(avatar_frames(load("avatar.png"))).save(out / "avatar_preview.png")
+    strip(avatar_frames(load("avatar.png"), eye_points(project))).save(out / "avatar_preview.png")
     strip(earth_frames(load("fighter_down_special.png"))).save(out / "earth_preview.png")
     strip(wind_frames(load("fighter_up_special.png"))).save(out / "wind_preview.png")
     strip(shots_frames(load("fighter_side_special.png"))).save(out / "shots_preview.png")

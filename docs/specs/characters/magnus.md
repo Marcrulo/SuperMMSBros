@@ -120,5 +120,8 @@ rock, on a ring of radius 22 px around the middle of his body, a full turn every
 - **Avatar State:** his own `avatar.png` strip (2 drawings): drawing 0 for the rise — upright
   and tall, arms spread low at his sides, legs together; drawing 1 for the flight — leaning far
   into the flight, arms back, legs trailing. In both his eyes glow (the whole eye pale cyan-white,
-  behind his glasses). The four element orbs circle him (drawn by the game), with a faint
+  behind his glasses), and the game draws a glow over each eye (`AvatarData.rise_eyes` /
+  `fly_eyes`, game px from his feet, facing right): a soft pale-cyan halo (radius about 3 px)
+  with a bright white-cyan core, pulsing a little (a cycle every 20 ticks); during the rise it
+  fades in over the first 15 ticks. The four element orbs circle him (drawn by the game), with a faint
   pale-blue glow around him.
