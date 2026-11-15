@@ -32,7 +32,7 @@ a stop sign for the smash, and the burst is stop-sign red (see [art guide](#look
 **Side special — over-the-head slam** (`side_special.tres` with `ability` → `GrabData`):
 - **On the ground and in the air.** It turns toward the held side first, like every side special.
   It throws no projectile. In the air he keeps falling while reaching.
-- **Reach:** 9 / 4 / 24 (37) frames; he stays put. Grab box (16, −14), 18×24: about one body
+- **Reach:** 7 / 4 / 20 (31) frames; he stays put. Grab box (16, −14), 18×24: about one body
   length in front.
 - **The throw** (`grab_throw`, 40 frames from the catch): he stands still (in the air he hangs in
   place) and swings the victim over his head, **in his hands the whole way**: the middle of the
@@ -50,6 +50,28 @@ a stop sign for the smash, and the burst is stop-sign red (see [art guide](#look
 - **Look** (see [art guide](#look)): his own throw drawings; the victim is drawn in
   their hurt pose behind him (his hands and head in front), turning over round the middle of their
   body as they go (half a turn by the slam, head first onto the floor).
+
+**Up special — rising uppercut** (`up_special.tres` with `ability` → `UppercutData`): a fighting-game
+rising uppercut instead of the jump boost: a fast, invincible start, a strong hit right at the
+start of the rise and a weak one after.
+- **Startup:** 3 frames (`startup` 3, `active` 0, `recovery` 0), on the ground or in the air,
+  crouched with the fist cocked low. **He can't be hit on frames 1–5** (`invulnerable_frames` 5:
+  the startup and the first 2 frames of the rise).
+- **The rise** (phase `uppercut_rise`, from frame 4): he first turns toward the held side, if any,
+  then rises diagonally forward: 560 px/s up (`rise_speed`), 70 px/s toward his facing side
+  (`forward_speed`), with his own gravity of 1400 px/s² (`rise_gravity`, snappier than the
+  default 600). That's about 24 ticks and 112 px up, as high as the default boost. No steering
+  while rising.
+- **Hits** (a fighter is hit once per uppercut): rise frames 1–4 (`clean_frames` 4) the **clean
+  hit** (`clean_hit`): the fist in front of his body, (12, −22), 16×28, damage 13, base 220,
+  growth 1.4, angle 80°, FACING. From rise frame 5 until the top, the **late hit** (`late_hit`):
+  the fist up in front of his face, (10, −32), 14×16, damage 5, base 110, growth 0.5, angle 75°, FACING.
+- **The end:** once he stops rising he becomes `HELPLESS`, as with the default up special
+  (landing during the rise ends it). Usable once per stay in the air, as the default.
+- **Data:** `MoveData.ability` → `UppercutData` (`invulnerable_frames`, `rise_speed`,
+  `forward_speed`, `rise_gravity`, `clean_frames`, `clean_hit`, `late_hit`; the two hits are
+  `MoveData`s whose `startup`/`active` count rise frames). Files: `characters/mads/moves/`
+  (`up_special.tres`, `uppercut.tres`, `uppercut_clean.tres`, `uppercut_late.tres`).
 
 ## Look
 
@@ -83,3 +105,9 @@ a stop sign for the smash, and the burst is stop-sign red (see [art guide](#look
   `path` (see [moves](#mads--grappler)) is fitted to his front fist in these drawings. The
   victim is drawn in their own `hurt` drawing behind him (`z_index` −1), turned round the middle of
   their body (π × t, head first over him), upright again once thrown.
+- **Mads's uppercut** (his `up_special`, 3 drawings, no weapon; the lollipop stays on his back):
+  1 crouched low, the front fist cocked down by his hip, the back arm forward guarding (the
+  startup); 2 the uppercut: the front arm straight up and forward, the front knee raised high,
+  the back leg hanging straight, the back arm down behind him (rise frames 1–4, the clean hit);
+  3 the same with the front elbow a little bent (the rest of the rise). The fist goes up in front
+  of his face, not behind his big head.

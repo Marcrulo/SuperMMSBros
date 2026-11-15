@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="UppercutData" format=3]
+
+[ext_resource type="Script" path="res://characters/mads/uppercut_data.gd" id="1_data"]
+[ext_resource type="Resource" path="res://characters/mads/moves/uppercut_clean.tres" id="2_clean"]
+[ext_resource type="Resource" path="res://characters/mads/moves/uppercut_late.tres" id="3_late"]
+
+[resource]
+script = ExtResource("1_data")
+invulnerable_frames = 5
+rise_speed = 560.0
+forward_speed = 70.0
+rise_gravity = 1400.0
+clean_frames = 4
+clean_hit = ExtResource("2_clean")
+late_hit = ExtResource("3_late")

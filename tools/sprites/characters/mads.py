@@ -24,6 +24,17 @@ REACH = pose(lean=3, fa=1.5, fe=0.2, reach=1.2, ba=1.35, be=0.25, ft=0.55, fk=0.
 SLAM_ANIMATIONS = {
     "side_special": [REACH, REACH, REACH, pose(lean=1, fa=0.9, fe=0.6, ba=0.6, be=0.5)],
 }
+# Mads's rising uppercut (up special, 3 drawings): crouched low with the front fist cocked by his
+# hip, the back arm forward guarding; the uppercut, front arm straight up, front knee high, back
+# leg hanging; the same with the front elbow a little bent.
+UPPERCUT_ANIMATIONS = {
+    "up_special": [
+        pose(crouch=4, lean=1, ft=1.1, fk=2.0, bt=0.5, bk=1.6, fa=-0.35, fe=1.7, ba=1.2, be=1.0),
+        pose(lean=2, head_dy=-1, fa=2.45, fe=0.0, reach=1.4, ba=-0.6, be=0.4,
+             ft=1.75, fk=2.1, bt=-0.15, bk=0.15),
+        pose(lean=1, fa=2.35, fe=0.5, reach=0.8, ba=-0.5, be=0.5, ft=1.4, fk=1.8, bt=-0.1, bk=0.2),
+    ],
+}
 GRAB_THROW = [
     pose(lean=1, fa=1.55, fe=0.1, reach=0.8, ba=1.45, be=0.15, ft=0.4, fk=0.3, bt=-0.5, bk=0.2),
     pose(lean=0, fa=2.25, fe=0.1, ba=2.1, be=0.1, ft=0.3, fk=0.2, bt=-0.4, bk=0.2),
@@ -136,6 +147,7 @@ def animations(c):
         own.update(STOP_SMASH_ANIMATIONS)
     if c.get("grappler"):
         own.update(SLAM_ANIMATIONS)
+        own.update(UPPERCUT_ANIMATIONS)
     return own
 
 
