@@ -35,7 +35,7 @@ def strip(project, length, frenzy=False, charge=False):
     charge drawings, the ropes lighting up and the meter above her head filling (as
     FighterVisuals._draw_frenzy_charge: dim before 20 ticks, bright after, flashing when full).
     Returns (strip, drawings)."""
-    r = tres_values(Path(project) / "fighter/moves/sjippepigen/ropes.tres")
+    r = tres_values(Path(project) / "characters/sjippepigen/moves/ropes.tres")
     (rx, ry), period = r[length]
     if frenzy:
         period //= 2
@@ -46,7 +46,7 @@ def strip(project, length, frenzy=False, charge=False):
     cx, cy = r["center"]
     hands_of = json.loads((Path(project) / "assets/fighters/slot_12/hands.json").read_text())[anim]
     colors = COLORS
-    m = re.search(r"rope_colors = PackedColorArray\(([^)]*)\)", (Path(project) / "fighter/characters/slot_12.tres").read_text())
+    m = re.search(r"rope_colors = PackedColorArray\(([^)]*)\)", (Path(project) / "characters/sjippepigen/character.tres").read_text())
     if m:
         v = [float(x) for x in m.group(1).split(",")]
         colors = [tuple(round(c * 255) for c in v[k:k + 3]) for k in range(0, len(v), 4)]
@@ -116,7 +116,7 @@ def meter_strip(project):
     """A mock of her player card's frenzy meter (ui/frenzy_bar.gd): the card (96×30, dark, a border
     in the player color, her head on the portrait) with the 62×4 bar at (30, 25) filling up over 48
     drawings, then 16 drawings full and flashing (8 on, 8 off). Not the real card's text."""
-    m = re.search(r"rope_colors = PackedColorArray\(([^)]*)\)", (Path(project) / "fighter/characters/slot_12.tres").read_text())
+    m = re.search(r"rope_colors = PackedColorArray\(([^)]*)\)", (Path(project) / "characters/sjippepigen/character.tres").read_text())
     v = [float(x) for x in m.group(1).split(",")]
     green = tuple(round(c * 255) for c in v[:3])
     lit = tuple(round(c + (255 - c) * 0.6) for c in green)
