@@ -1,5 +1,5 @@
 - [Who builds what](hands-on-building.md) — Claude builds everything (no subagents); user decides big questions, playtests, judges visuals; work in ~one-milestone chunks with short updates
-- [Project status](project-status.md) — main at 51500b3 (Mette's flask, unplaytested); Gitte's new + / − stances merged (2865dbe), unplaytested, 14 char/<name> branches, worktree per branch; 689 tests
+- [Project status](project-status.md) — main at 06440ec (Pia's Bayer scarf Up+B merged, unplaytested); Mads uppercut uncommitted on char/mads; Gitte stances, Mette flask unplaytested; 14 char/<name> branches, worktree per branch; 747 tests
 - [Check every frame](check-every-frame.md) — sweep all animations for stray poses before showing sprite changes
 - [Update sprite artifact](update-sprite-artifact.md) — after any sprite or game-drawn visual change, rebuild (incl. rope previews) + republish the Sprites artifact unasked; show visuals there
 - [Always push commits](always-push-commits.md) — push committed changes to origin without asking; commit still only when asked
