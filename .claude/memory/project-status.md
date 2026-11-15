@@ -9,6 +9,8 @@ metadata:
 ---
 
 **Latest (2026-11-15, evening):** main has Kim's torch burning merged (M6w, plan `docs/plans/M6w-kim-burning.md`: 1 % every 30 ticks for 3 s after the flame stops hitting, doesn't stack); 684 tests pass; awaiting the user's playtest. Gotcha hit that day: a worktree's `assets/music` symlink got committed (the ignore rule had a trailing slash) and checking it out on main deleted the real gitignored music; recovered all 7 tracks losslessly by rebuilding Ogg files from Godot's `.godot/imported/*.oggvorbisstr` packets; the rule is now `/assets/music` (no slash). Before committing in a worktree, check `git status` for symlinks.
+**Mette flask (2026-11-15):** Mette always holds her current flask (front fist per drawing from generator-written `slot_10/hands.json`, like Sjippepigen's); merged to main as 51500b3, 689 tests; awaiting playtest. Worktree ../SuperMMSBros-mette exists.
+
 **Latest (2026-11-15):** main at e5b9ae3 — Mette's potions (M6v, plan `docs/plans/M6v-mette-potions.md`) merged from char/mette and pushed; 649 tests pass. Earlier: Nina's Letter Volley (M6u). On GitHub: main, char/kim, char/nina, char/mette, char/magnus (Magnus not merged yet). Note: the Magnus session also called its milestone M6v.
 
 **State at handoff (2026-11-07):** the v1 design was reworked with the user after M2 and is written into the specs (they are the source of truth: `docs/vision.md`, `docs/roadmap.md`, `docs/specs/*.md` incl. new `moves.md`). M3–M6 are built with tests on branch **`v1-rework`** (159 GUT tests pass headless; plans with execution notes in `docs/plans/M3…M6`). The user had just started playtesting M3–M6; **no feedback received yet** — ask for it first.
