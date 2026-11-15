@@ -5,3 +5,6 @@
 [resource]
 script = ExtResource("1_torch")
 hit_interval = 8
+burn_ticks = 180
+burn_interval = 30
+burn_damage = 1.0
