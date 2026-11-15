@@ -47,7 +47,7 @@ EXTRAS = {
     "rope_preview_frenzy.png": ("ropes (frenzy)", [1] * 15, True,
                                 "Preview at game scale: her charged neutral special: for 2 seconds the ropes spin twice as fast, lit up; their hits deal no damage but knock back hard."),
     "avatar_preview.png": ("Avatar State", [1] * 120, True,
-                           "Preview at game scale: Magnus's Avatar State. 1 s frozen (the rise) while the four elements appear, eyes glowing, then the flight (orbs circling, one turn a second)."),
+                           "Real game frames: Magnus's Avatar State. 1 s frozen (the rise) while water, fire, air and earth appear one by one, eyes glowing, then the flight with the elements swirling round him."),
     "earth_preview.png": ("earth smash", [1] * 28, False,
                           "Preview at game scale: his down special; rocks jut out of the floor on both sides during the burst."),
     "wind_preview.png": ("wind burst", [1] * 20, False,
