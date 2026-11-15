@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="PotionData" format=3]
+
+[ext_resource type="Script" path="res://characters/mette/potion_data.gd" id="1_potions"]
+[ext_resource type="Resource" path="res://characters/mette/moves/steam_hit.tres" id="2_steam"]
+[ext_resource type="Resource" path="res://characters/mette/moves/explosion_hit.tres" id="3_blast"]
+[ext_resource type="Resource" path="res://characters/mette/moves/smash_red.tres" id="4_red"]
+[ext_resource type="Resource" path="res://characters/mette/moves/smash_blue.tres" id="5_blue"]
+[ext_resource type="Resource" path="res://characters/mette/moves/smash_green.tres" id="6_green"]
+
+[resource]
+script = ExtResource("1_potions")
+flask_spawn = Vector2(12, -18)
+flask_speed = 230.0
+flask_angle_deg = 40.0
+flask_gravity = 700.0
+flask_size = Vector2(8, 8)
+flask_lifetime = 120
+splash_reach = 48.0
+smash_red = ExtResource("4_red")
+smash_blue = ExtResource("5_blue")
+smash_green = ExtResource("6_green")
+smash_stun = 60
+puddle_width = 40.0
+puddle_height = 6.0
+puddle_lifetime = 480
+max_puddles = 2
+acid_damage = 1.0
+acid_interval = 15
+ice_grip = 0.1
+glue_speed = 0.4
+glue_jump = 0.7
+steam_size = Vector2(24, 96)
+steam_frames = 40
+steam_hit = ExtResource("2_steam")
+blast_size = Vector2(64, 48)
+blast_frames = 6
+blast_hit = ExtResource("3_blast")
+foam_width = 32.0
+foam_height = 56.0
+foam_rise = 12
+foam_stand = 300
+foam_sink = 20
+foam_pop_speed = 320.0
