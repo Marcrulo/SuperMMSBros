@@ -4,7 +4,8 @@ extends FighterAbility
 ## #avatar-state). Each special lights its element when one of its hits lands; with all four lit,
 ## the next tick he's free he rises (phase `avatar_rise`: frozen, unhittable), then flies freely
 ## (phase `avatar_fly`: no gravity, contact hits, can't leave the blast zone), then the elements
-## go dark. Also draws his element effects (wind arcs, rocks, orbs) and makes the card badge.
+## go dark. Also draws his element effects (wind arcs, rocks, the elements swirling round him in
+## the Avatar State) and makes the card badge.
 
 enum Element { WATER, FIRE, AIR, EARTH }
 
@@ -245,7 +246,7 @@ func draw(visuals: FighterVisuals, _animation: String, _frame: int) -> void:
 			if moves.down_special.is_active_frame(fighter.state_frame):
 				_draw_rocks(visuals, s)
 		&"avatar_rise", &"avatar_fly":
-			_draw_orbs(visuals, s)
+			_draw_front(visuals, s)
 
 
 ## Pale wind arcs swirling round him.
@@ -302,41 +303,177 @@ func _draw_eye_glow(visuals: FighterVisuals, s: float) -> void:
 		visuals.draw_circle(eye, 1.1 * s, core)
 
 
-## A faint glow round him, his glowing eyes, and the four element orbs circling him; during the
-## rise they appear one by one.
-func _draw_orbs(visuals: FighterVisuals, s: float) -> void:
-	var numbers := _numbers()
-	var middle := BODY_MIDDLE * s
-	visuals.draw_circle(middle, 20.0 * s, AURA)
+## The elements' rings: [long radius (× orbit_radius), short radius (px), tilt (radians), turns
+## per orbit_ticks, starting angle], in Element order.
+const RINGS: Array[Array] = [[1.0, 8.0, -0.45, 1.0, 0.0], [1.0, 8.0, 0.5, 1.0, PI],
+		[1.25, 6.0, 0.12, 1.4, PI / 2.0], [0.95, 10.0, -0.08, 0.5, 0.0]]
+## A ribbon's trail: how far round its ring it reaches (radians) and its samples.
+const TRAIL := PI * 1.3
+const TRAIL_SAMPLES := 30
+## Ticks between the elements appearing during the rise, and how long each takes to grow in.
+const APPEAR_TICKS := 15
+const GROW_TICKS := 12
+const ROCKS := 6
+const WATER_CORE := Color(0.72, 0.92, 1.0)
+const WATER_EDGE := Color(0.08, 0.2, 0.45)
+const FIRE_EDGE := Color(0.45, 0.08, 0.05)
+const FIRE_BODY := Color(0.95, 0.38, 0.1)
+const AIR := Color(1.0, 1.0, 1.0, 0.9)
+const AIR_EDGE := Color(0.45, 0.6, 0.78, 0.55)
+const ROCK_DARK := Color(0.3, 0.25, 0.21)
+
+
+## Behind him: the faint glow and the far side of the elements' rings.
+func draw_behind(visuals: FighterVisuals, _animation: String, _frame: int) -> void:
+	if not in_avatar_state():
+		return
+	var s := fighter.size_scale()
+	visuals.draw_circle(BODY_MIDDLE * s, 20.0 * s, AURA)
+	_draw_elements(visuals, s, false)
+
+
+## In front of him: his glowing eyes and the near side of the elements' rings.
+func _draw_front(visuals: FighterVisuals, s: float) -> void:
 	_draw_eye_glow(visuals, s)
-	var ticks := fighter.state_frame
+	_draw_elements(visuals, s, true)
+
+
+## Ticks since the Avatar State began.
+func _avatar_ticks() -> int:
 	if fighter.move == &"avatar_fly":
-		ticks += numbers.rise_frames
-	var turn := TAU * ticks / float(numbers.orbit_ticks)
-	for element: int in Element.values():
-		if fighter.move == &"avatar_rise" \
-				and fighter.state_frame < element * numbers.rise_frames / 4:
+		return fighter.state_frame + _numbers().rise_frames
+	return fighter.state_frame
+
+
+## How far an element has appeared (0…1): during the rise one after another, then all of it.
+func _grown(element: int) -> float:
+	return clampf(float(_avatar_ticks() - element * APPEAR_TICKS) / GROW_TICKS, 0.0, 1.0)
+
+
+## A point on an element's ring at angle `phi` (relative to the feet, at size `s`).
+func _ring_point(element: int, phi: float, s: float) -> Vector2:
+	var ring: Array = RINGS[element]
+	var p := Vector2(cos(phi) * _numbers().orbit_radius * ring[0], sin(phi) * ring[1])
+	return (BODY_MIDDLE + p.rotated(ring[2])) * s
+
+
+## Where an element's head is on its ring now (radians).
+func _head_angle(element: int) -> float:
+	var ring: Array = RINGS[element]
+	return ring[4] + TAU * ring[3] * _avatar_ticks() / float(_numbers().orbit_ticks)
+
+
+## The near (front) or far (behind) side of all four elements.
+func _draw_elements(visuals: FighterVisuals, s: float, front: bool) -> void:
+	for element: int in [Element.AIR, Element.EARTH, Element.WATER, Element.FIRE]:
+		var grown := _grown(element)
+		if grown <= 0.0:
 			continue
-		var angle := turn + element * TAU / 4.0
-		var at := middle + Vector2(cos(angle), sin(angle)) * numbers.orbit_radius * s
-		_draw_orb(visuals, element, at)
+		if element == Element.EARTH:
+			_draw_rocks_ring(visuals, s, front, grown)
+		else:
+			_draw_ribbon(visuals, element, s, front, grown)
 
 
-static func _draw_orb(canvas: CanvasItem, element: int, at: Vector2) -> void:
-	canvas.draw_circle(at, 3.5, OUTLINE)
+## A ribbon's samples, head first: [[point, angle, 0…1 along the trail], …], on one side only.
+func _trail(element: int, s: float, front: bool, grown: float) -> Array:
+	var head := _head_angle(element)
+	var samples := []
+	for i in TRAIL_SAMPLES:
+		var k := i / float(TRAIL_SAMPLES - 1)
+		var phi := head - k * TRAIL * grown
+		if (sin(phi) > 0.0) == front:
+			samples.append([_ring_point(element, phi, s), phi, k])
+	return samples
+
+
+func _draw_ribbon(visuals: FighterVisuals, element: int, s: float, front: bool,
+		grown: float) -> void:
+	var t := _avatar_ticks()
+	var samples := _trail(element, s, front, grown)
 	match element:
 		Element.WATER:
-			canvas.draw_circle(at, 2.5, COLORS[element])
-			canvas.draw_rect(Rect2(at + Vector2(-1, -2), Vector2(1, 1)), Color.WHITE)
+			for pass_i in 3:
+				for sample: Array in samples:
+					var k: float = sample[2]
+					var ripple := 1.0 + 0.3 * sin(sample[1] * 6.0 - t * 0.5)
+					var width := 2.4 * pow(1.0 - k, 0.7) * ripple * grown * s
+					var at: Vector2 = sample[0]
+					match pass_i:
+						0: visuals.draw_circle(at, width + 0.8 * s, WATER_EDGE)
+						1: visuals.draw_circle(at, width, COLORS[Element.WATER])
+						2: visuals.draw_circle(at + Vector2(0, -0.4 * s), width * 0.35, WATER_CORE)
+			for i in samples.size():
+				if (i + t / 2) % 7 == 0:
+					visuals.draw_rect(Rect2(samples[i][0] + Vector2(-0.5, -1.5) * s,
+						Vector2(1, 1) * s), Color.WHITE)
 		Element.FIRE:
-			canvas.draw_circle(at, 2.5, COLORS[element])
-			canvas.draw_circle(at + Vector2(0, 0.5), 1.2, FLAME_CORE)
+			for i in samples.size():
+				# Flickering tongues streaming off the tail, outward from the ring.
+				var k: float = samples[i][2]
+				if k < 0.15 or i % 3 != (t / 3) % 3:
+					continue
+				var at: Vector2 = samples[i][0]
+				var out := (at - BODY_MIDDLE * s).normalized()
+				var flick := 2.0 + 2.0 * absf(sin(i * 1.7 + t * 0.9))
+				var tip := at + out * flick * (1.2 - k) * s
+				var side := out.orthogonal() * 1.2 * s
+				visuals.draw_colored_polygon(PackedVector2Array([at - side, tip, at + side]),
+					FIRE_BODY)
+			for pass_i in 3:
+				for sample: Array in samples:
+					var k: float = sample[2]
+					var flicker := 1.0 + 0.2 * sin(sample[1] * 9.0 + t * 1.3)
+					var width := 2.7 * pow(1.0 - k, 0.6) * flicker * grown * s
+					var at: Vector2 = sample[0]
+					match pass_i:
+						0: visuals.draw_circle(at, width + 0.8 * s, FIRE_EDGE)
+						1: visuals.draw_circle(at, width, FIRE_BODY)
+						2:
+							if k < 0.7:
+								visuals.draw_circle(at, width * 0.5, FLAME_CORE)
 		Element.AIR:
-			canvas.draw_circle(at, 2.5, COLORS[element])
-			canvas.draw_arc(at, 1.5, 0.0, PI * 1.5, 6, OUTLINE, 1.0)
-		Element.EARTH:
-			canvas.draw_rect(Rect2(at - Vector2(2.5, 2.5), Vector2(5, 5)), COLORS[element])
-			canvas.draw_rect(Rect2(at - Vector2(2.5, 2.5), Vector2(5, 1)), ROCK_LIGHT)
+			# Two thin see-through streaks breaking into dashes.
+			for i in samples.size() - 1:
+				if (i + t / 2) % 5 == 0:
+					continue
+				var k: float = samples[i][2]
+				var fade := (1.0 - k) * grown
+				var color := AIR
+				color.a *= fade
+				var edge := AIR_EDGE
+				edge.a *= fade
+				for lane: float in [-1.5, 1.5]:
+					var shift := Vector2(0, lane) * s
+					var a: Vector2 = samples[i][0] + shift
+					var b: Vector2 = samples[i + 1][0] + shift
+					visuals.draw_line(a, b, edge, 2.6 * s)
+					visuals.draw_line(a, b, color, 1.0 * s)
+
+
+## Chunky rocks floating round him on their own ring, tumbling and bobbing; they lift into place.
+func _draw_rocks_ring(visuals: FighterVisuals, s: float, front: bool, grown: float) -> void:
+	var t := _avatar_ticks()
+	var head := _head_angle(Element.EARTH)
+	for j in ROCKS:
+		var phi := head + j * TAU / ROCKS
+		if (sin(phi) > 0.0) != front:
+			continue
+		var bob := sin(t * 0.1 + j * 1.3) * 1.5 + (1.0 - grown) * 12.0
+		var at := _ring_point(Element.EARTH, phi, s) + Vector2(0, bob) * s
+		var size := (2.2 + (j % 3) * 0.8) * s
+		var spin := t * 0.08 * (1.0 if j % 2 == 0 else -1.0) + j
+		var points := PackedVector2Array()
+		for v in 5:
+			var r := size * (0.8 + 0.4 * absf(sin(j * 3.1 + v * 2.3)))
+			points.append(at + Vector2(r, 0).rotated(spin + v * TAU / 5.0))
+		var edge := PackedVector2Array()
+		for p in points:
+			edge.append(at + (p - at) * (1.0 + 0.9 * s / size))
+		visuals.draw_colored_polygon(edge, OUTLINE)
+		visuals.draw_colored_polygon(points, ROCK)
+		visuals.draw_colored_polygon(PackedVector2Array([points[0], points[1], at]), ROCK_LIGHT)
+		visuals.draw_colored_polygon(PackedVector2Array([points[3], points[4], at]), ROCK_DARK)
 
 
 func sounds() -> Dictionary:

@@ -13,3 +13,4 @@ playable = true
 portrait = ExtResource("2_portrait")
 stats = ExtResource("3_stats")
 moveset = ExtResource("4_moves")
+charge_glow = Vector2(-12, -27)

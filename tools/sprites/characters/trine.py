@@ -134,9 +134,112 @@ PROPS["mug"] = dict(
     hand=lambda pose, fist, neck, sipping: sip_mug(neck) if sipping else mug(fist, pose["mug"]))
 
 
+# --- Bun pitch and banana peel throw (docs/specs/characters/trine.md#look) ----------------------
+
+BUN = ((196, 128, 58), (148, 88, 38), (234, 178, 98))   # golden brown: base, shade, light
+BUN_FLOUR = (240, 222, 186)                             # the pale floury bottom edge
+# A Danish bolle in her hand, as letters (L light, B base, S shade, F floury bottom), 6x5, its
+# middle on the fist.
+HAND_BUN = [".LLB..",
+            "LLBBB.",
+            "LBBBBS",
+            "BBBBSS",
+            ".FFFF."]
+
+
+def hand_bun(fist):
+    colors = {"L": BUN[2], "B": BUN[0], "S": BUN[1], "F": BUN_FLOUR}
+    x0, y0 = round(fist[0]) - 3, round(fist[1]) - 3
+    return {(x0 + x, y0 + y): colors[ch] for y, row in enumerate(HAND_BUN)
+            for x, ch in enumerate(row) if ch != "."}
+
+
+def bun_image():
+    """The flying bun, 3 drawings of 10x10 each turned 120° further (it spins): a round bun with
+    its light top and floury bottom going round."""
+    out = Image.new("RGBA", (30, 10), (0, 0, 0, 0))
+    for i in range(3):
+        a = math.radians(-90 + 120 * i)          # where its top (the light side) points
+        ux, uy = math.cos(a), math.sin(a)
+        f = Frame()
+        px = {}
+        for y in range(10):
+            for x in range(10):
+                dx, dy = x + 0.5 - 5, y + 0.5 - 5
+                if dx * dx + dy * dy * 1.1 > 3.9 ** 2:
+                    continue
+                up = dx * ux + dy * uy              # toward its top
+                side = -dx * uy + dy * ux
+                if up < -2.4:
+                    px[(x, y)] = BUN_FLOUR
+                elif up > 1.3 and side < 1.2:
+                    px[(x, y)] = BUN[2]
+                elif side > 1.8 or up < -1.4:
+                    px[(x, y)] = BUN[1]
+                else:
+                    px[(x, y)] = BUN[0]
+        f.part(px)
+        frame = Image.new("RGBA", (10, 10), (0, 0, 0, 0))
+        for (x, y), color in f.px.items():
+            if 0 <= x < 10 and 0 <= y < 10:
+                frame.putpixel((x, y), color + (255,))
+        out.paste(frame, (i * 10, 0))
+    return out
+
+
+PEEL = ((246, 214, 60), (206, 160, 30))
+PEEL_TIP = (110, 74, 34)
+
+
+def hand_peel(fist):
+    """A banana peel dangling from the fist: the brown stub in her grip, three flaps hanging down."""
+    fx, fy = round(fist[0]), round(fist[1])
+    out = {(fx, fy - 2): PEEL_TIP}
+    for dx, length in ((-2, 4), (0, 5), (2, 4)):
+        for k in range(length):
+            x = fx + dx + (0 if k < 2 else (1 if dx > 0 else -1 if dx < 0 else 0))
+            out[(x, fy + 1 + k)] = PEEL[1] if dx > 0 or k == length - 1 else PEEL[0]
+    out[(fx - 1, fy + 1)] = PEEL[0]
+    out[(fx + 1, fy + 1)] = PEEL[0]
+    return out
+
+
+# Her bun pitch: the windup is a pitcher's set stance (side-on, leaning back, front knee lifted,
+# the bun cocked back behind her head, the back arm reaching forward), then the throw.
+WINDUP = dict(lean=-2, crouch=1, bt=-0.15, bk=0.25, ba=1.2, be=0.4)
+PITCH_ANIMATIONS = {
+    "neutral_special_charge": [pose(bun=1, ft=1.6, fk=2.3, fa=-2.5, fe=-1.0, **WINDUP),
+                               pose(bun=1, ft=1.8, fk=2.5, fa=-2.6, fe=-1.1, **WINDUP)],
+    "neutral_special": [pose(bun=1, lean=-1, ft=0.5, fk=0.6, bt=-0.2, bk=0.2, fa=-2.4, fe=-0.8,
+                             ba=0.9, be=0.4),
+                        pose(lean=3, crouch=1, fa=1.9, fe=0.1, reach=1.6, ba=-0.9, be=0.5,
+                             ft=0.6, fk=0.3, bt=-0.6, bk=0.4),
+                        pose(lean=2, crouch=1, fa=1.1, fe=0.2, reach=0.8, ba=-0.6, be=0.5,
+                             ft=0.45, fk=0.25, bt=-0.45, bk=0.3),
+                        pose(fa=0.6, fe=0.6, ft=0.15, bt=-0.15)],
+    # Her peel toss: underhand, the peel dangling from her fist until it goes.
+    "side_special": [pose(held_peel=1, lean=-1, fa=-0.6, fe=0.2, ba=0.5, ft=0.25, bt=-0.25),
+                     pose(held_peel=1, lean=-2, crouch=1, fa=-1.0, fe=0.1, ba=0.7, ft=0.35,
+                          fk=0.3, bt=-0.35, bk=0.3),
+                     pose(lean=2, fa=1.75, fe=0.3, reach=1.0, ba=-0.6, ft=0.4, bt=-0.4),
+                     pose(fa=0.8, fe=0.5)],
+}
+
+# The bun in her front hand (drawn over it).
+PROPS["bun"] = dict(hand=lambda pose, fist, neck, sipping: hand_bun(fist))
+# A banana peel dangling from her front fist.
+PROPS["held_peel"] = dict(hand=lambda pose, fist, neck, sipping: hand_peel(fist))
+
+
 def applies(c):
     return c.get("ipad")
 
 
 def animations(c):
-    return dict(IPAD_ANIMATIONS)
+    return {**IPAD_ANIMATIONS, **PITCH_ANIMATIONS}
+
+
+def extra_files(c, out, strips):
+    from sprites.characters.fidusen import peel_image   # the trap peel is Fidusen's drawing
+    peel_image().save(out / "peel.png")
+    bun_image().save(out / "projectile.png")

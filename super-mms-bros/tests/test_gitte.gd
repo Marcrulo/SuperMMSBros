@@ -83,8 +83,8 @@ func test_gitte_has_her_own_specials() -> void:
 	for name in ["jab", "side_tilt", "neutral_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
 	var s := _stances()
-	assert_eq([s.projectile_damage, s.lifesteal, s.small_scale, s.small_speed, s.large_scale,
-		s.large_special], [1.5, 0.5, 0.75, 1.25, 1.25, 1.3])
+	assert_eq([s.knockback, s.pull_cone_deg, s.pull_reach, s.pull_speed, s.small_scale,
+		s.small_speed, s.large_scale, s.large_special], [1.25, 30.0, 120.0, 300.0, 0.75, 1.25, 1.25, 1.3])
 	var volley := moves.side_special
 	assert_eq([volley.projectile_count, volley.projectile_spread_deg, volley.damage], [3, 12.0, 4.0])
 	var cut := moves.neutral_special
@@ -134,7 +134,7 @@ func test_stance_resets_on_spawn() -> void:
 	assert_eq(_stance().stance, StanceAbility.Stance.PLUS)
 
 
-# --- Plus: projectiles ----------------------------------------------------------------------------
+# --- The volley; plus: knockback -----------------------------------------------------------------
 
 
 func test_volley_throws_three_in_a_fan() -> void:
@@ -154,44 +154,168 @@ func test_no_new_volley_while_one_is_out() -> void:
 	assert_eq(_match.get_projectiles().size(), 3)
 
 
-func _volley_damage(stance: StanceAbility.Stance) -> float:
+## Steps until P2 is first hit; returns [P2's %, its launch speed].
+func _first_hit(max_steps: int) -> Array:
+	for i in max_steps:
+		_match.step()
+		if _p2.percent > 0.0:
+			return [_p2.percent, _p2.velocity.length()]
+	return [0.0, 0.0]
+
+
+func _volley_hit(stance: StanceAbility.Stance) -> Array:
 	# Only the straight one reaches P2 this far away. (A fresh start: no scissors still flying.)
 	_match.reset()
 	await _place(Vector2(150, 192), Vector2(330, 192), _moves("volley"), stance)
-	_steps(60)
-	return _p2.percent
+	return _first_hit(60)
 
 
-func test_plus_projectiles_do_more_damage() -> void:
-	assert_eq(await _volley_damage(StanceAbility.Stance.MINUS), 4.0)
-	assert_eq(await _volley_damage(StanceAbility.Stance.PLUS), 6.0)
-
-
-# --- Minus: lifesteal -----------------------------------------------------------------------------
-
-
-func _jab_heal(stance: StanceAbility.Stance) -> float:
+func _jab_hit(stance: StanceAbility.Stance) -> Array:
 	await _place(Vector2(150, 192), Vector2(165, 192), _moves("jab"), stance)
+	return _first_hit(10)
+
+
+func test_plus_knocks_harder() -> void:
+	var plus: Array = await _jab_hit(StanceAbility.Stance.PLUS)
+	var minus: Array = await _jab_hit(StanceAbility.Stance.MINUS)
+	assert_gt(minus[1], 0.0, "the jab hit")
+	assert_almost_eq(plus[1], minus[1] * 1.25, 0.01)
+
+
+func test_plus_keeps_damage() -> void:
+	assert_eq((await _jab_hit(StanceAbility.Stance.PLUS))[0], 3.0)
+
+
+func test_plus_volley_knocks_harder() -> void:
+	var plus: Array = await _volley_hit(StanceAbility.Stance.PLUS)
+	var minus: Array = await _volley_hit(StanceAbility.Stance.MINUS)
+	assert_eq([plus[0], minus[0]], [4.0, 4.0], "same damage")
+	assert_almost_eq(plus[1], minus[1] * 1.25, 0.01)
+
+
+# --- Minus: no healing ----------------------------------------------------------------------------
+
+
+func test_minus_doesnt_heal() -> void:
+	await _place(Vector2(150, 192), Vector2(165, 192), _moves("jab"), StanceAbility.Stance.MINUS)
 	_p1.percent = 20.0
 	_steps(10)
 	assert_eq(_p2.percent, 3.0, "the jab hit")
-	return _p1.percent
-
-
-func test_minus_heals_on_normal_hits() -> void:
-	assert_eq(await _jab_heal(StanceAbility.Stance.MINUS), 18.5)
-
-
-func test_other_stances_dont_heal() -> void:
-	assert_eq(await _jab_heal(StanceAbility.Stance.PLUS), 20.0)
-
-
-func test_minus_doesnt_heal_on_specials() -> void:
-	await _place(Vector2(150, 192), Vector2(175, 192), _moves("cut"), StanceAbility.Stance.MINUS)
-	_p1.percent = 20.0
-	_steps(20)
-	assert_gt(_p2.percent, 7.9, "the cut hit")
 	assert_eq(_p1.percent, 20.0)
+
+
+# --- Minus: the tug ------------------------------------------------------------------------------
+
+
+## A jab in minus, P2 at `p2_at`, stepped to just after its first active frame (frame 5 = step 6).
+func _tug_jab(p2_at: Vector2, stance := StanceAbility.Stance.MINUS) -> void:
+	await _place(Vector2(150, 192), p2_at, _moves("jab"), stance)
+	_steps(6)
+
+
+func _assert_not_tugged() -> void:
+	assert_ne(_p2.state, Fighter.State.HITSTUN, "not tugged")
+	assert_eq(_p2.velocity.x, 0.0, "not moved sideways")
+
+
+func test_in_cone() -> void:
+	var o := Vector2.ZERO
+	var aim := Vector2(1, 0)
+	assert_true(StanceAbility.in_cone(o, aim, Vector2(100, 0), 30.0, 120.0))
+	assert_true(StanceAbility.in_cone(o, aim, Vector2(100, 50), 30.0, 120.0))
+	assert_false(StanceAbility.in_cone(o, aim, Vector2(100, 70), 30.0, 120.0))
+	assert_false(StanceAbility.in_cone(o, aim, Vector2(-100, 0), 30.0, 120.0))
+	assert_false(StanceAbility.in_cone(o, aim, Vector2(130, 0), 30.0, 120.0))
+
+
+func test_minus_tugs_in_front() -> void:
+	await _tug_jab(Vector2(230, 192))
+	assert_eq(_p2.state, Fighter.State.HITSTUN)
+	assert_lt(_p2.velocity.x, 0.0, "toward her")
+	assert_eq(_p2.percent, 0.0, "no damage")
+
+
+func test_tug_points_at_her_center() -> void:
+	# P2 in the air, up and in front: pulled down and back, straight at her.
+	await _tug_jab(Vector2(230, 152))
+	assert_eq(_p2.state, Fighter.State.HITSTUN)
+	var to_her := (_p1.get_center() - _p2.get_center()).normalized()
+	assert_gt(_p2.velocity.normalized().dot(to_her), 0.98)
+	assert_gt(_p2.velocity.y, 0.0)
+
+
+func test_tug_speed() -> void:
+	await _tug_jab(Vector2(230, 192))
+	assert_almost_eq(_p2.velocity.length(), 300.0, 1.0)
+	await _place(Vector2(150, 192), Vector2(230, 192), _moves("jab"), StanceAbility.Stance.MINUS)
+	_p2.percent = 150.0
+	_steps(6)
+	assert_almost_eq(_p2.velocity.length(), 300.0, 1.0, "doesn't grow with %")
+
+
+func test_minus_doesnt_tug_behind() -> void:
+	await _tug_jab(Vector2(70, 192))
+	_assert_not_tugged()
+
+
+func test_minus_doesnt_tug_too_far() -> void:
+	await _tug_jab(Vector2(280, 192))
+	_assert_not_tugged()
+
+
+func test_minus_jab_up_close_hits_normally() -> void:
+	await _tug_jab(Vector2(165, 192))
+	assert_eq(_p2.percent, 3.0)
+	assert_gt(_p2.velocity.x, 0.0, "the jab's launch, away from her")
+
+
+func test_tug_happens_once() -> void:
+	await _tug_jab(Vector2(230, 192))
+	var frame := _p2.state_frame
+	_steps(2)
+	assert_eq(_p2.state, Fighter.State.HITSTUN)
+	assert_eq(_p2.state_frame, frame + 2, "hitstun not restarted")
+
+
+func test_shield_gets_nudged() -> void:
+	var shield: Array[FighterInput] = []
+	for i in 40:
+		var input := FighterInput.new()
+		input.shield_held = true
+		input.shield_pressed = i == 0
+		shield.append(input)
+	await _place(Vector2(150, 192), Vector2(230, 192), _moves("jab"), StanceAbility.Stance.MINUS)
+	_match.set_controller(1, ScriptedController.new(shield))
+	_steps(5)
+	var health := _p2.shield_health
+	_steps(1)
+	assert_eq(_p2.state, Fighter.State.SHIELD)
+	assert_lt(_p2.velocity.x, 0.0, "pushed toward her")
+	assert_almost_eq(_p2.shield_health, health, 0.5, "no shield damage")
+
+
+func test_intangible_isnt_tugged() -> void:
+	await _place(Vector2(150, 192), Vector2(230, 192), _moves("jab"), StanceAbility.Stance.MINUS)
+	_p2.invulnerable_frames = 60
+	_steps(6)
+	_assert_not_tugged()
+
+
+func test_specials_dont_tug() -> void:
+	await _place(Vector2(150, 192), Vector2(230, 192), _moves("cut"), StanceAbility.Stance.MINUS)
+	_steps(20)
+	_assert_not_tugged()
+
+
+func test_other_stances_dont_tug() -> void:
+	await _tug_jab(Vector2(230, 192), StanceAbility.Stance.PLUS)
+	_assert_not_tugged()
+
+
+func test_minus_doesnt_tug_herself() -> void:
+	await _tug_jab(Vector2(70, 192))
+	assert_eq(_p1.state, Fighter.State.ATTACK, "still jabbing")
+	assert_eq(_p1.velocity.x, 0.0)
 
 
 # --- Divide: small and fast -----------------------------------------------------------------------
@@ -263,6 +387,37 @@ func test_card_shows_her_stance() -> void:
 	_stance().stance = StanceAbility.Stance.DIVIDE
 	hud.cards[0].refresh()
 	assert_eq((hud.cards[0].get_badge(StanceBadge) as StanceBadge).stance, StanceAbility.Stance.DIVIDE)
+
+
+# --- Hand glow ------------------------------------------------------------------------------------
+
+
+func test_hands_json_covers_her_drawings() -> void:
+	var hands: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(
+		FighterVisuals.SPRITES_DIR + GITTE + "/hands.json"))
+	for name in ["idle", "jab", "run", "forward_air", "down_special", "neutral_special", "up_special"]:
+		var drawings: Array = hands.get(name, [])
+		assert_eq(drawings.size(), (FighterVisuals.ANIMATIONS[name].ticks as Array).size(), name)
+		for drawing in drawings:
+			assert_eq((drawing as Array).size(), 2, name + ": front and back")
+			assert_eq((drawing[0] as Array).size(), 2, name + ": x, y")
+
+
+func test_glow_colors() -> void:
+	_stance().stance = StanceAbility.Stance.PLUS
+	var plus := _stance().glow_color()
+	assert_true(plus.r > 0.8 and plus.b < 0.4, "red")
+	_stance().stance = StanceAbility.Stance.MINUS
+	var minus := _stance().glow_color()
+	assert_true(minus.b > 0.8 and minus.r < 0.4, "blue")
+	for stance in [StanceAbility.Stance.DIVIDE, StanceAbility.Stance.MULTIPLY]:
+		_stance().stance = stance
+		assert_eq(_stance().glow_color().a, 0.0, "no glow")
+
+
+func test_hands_lookup() -> void:
+	assert_eq(StanceAbility.hands(GITTE, "idle", 0).size(), 2)
+	assert_eq(StanceAbility.hands(GITTE, "nope", 0), [] as Array[Vector2])
 
 
 # --- Art ------------------------------------------------------------------------------------------

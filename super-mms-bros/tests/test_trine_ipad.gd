@@ -72,10 +72,10 @@ func test_the_ipad_break_matches_the_spec() -> void:
 	assert_almost_eq(_ipad().heal, 1.0, 0.001)
 
 
-func test_only_her_down_special_changes() -> void:
+func test_her_normal_attacks_stay_default() -> void:
 	var defaults := (load("res://fighter/default_stats.tres") as FighterStats).moveset
 	var moves := _p1.stats.moveset
-	for name in ["jab", "side_tilt", "neutral_special", "side_special", "up_special", "down_air"]:
+	for name in ["jab", "side_tilt", "up_special", "down_air"]:
 		assert_eq(moves.get(name), defaults.get(name), name)
 	assert_null(_p2.stats.moveset.down_special.ability, "Casper keeps the default down special")
 

@@ -199,8 +199,29 @@ def animations(c):
     return dict(PYRAMID_ANIMATIONS) if c.get("pyramid") else {}
 
 
+def hands_json(c):
+    """Every drawing's fists, in game px from the feet (facing right, size 1):
+    {animation: [drawing: [[front x, y], [back x, y]]]}; the game lights them in stances + and −
+    (StanceAbility's drawing). Uses the same poses as the strips (her own ones first)."""
+    p = looks.palette(c)
+    heads = {face: looks.build_head(c, face) for face in ("normal", "shut", "hurt")}
+    own = dict(WEAPONS["scissors"]["animations"])
+    own.update(animations(c))
+    w, h = c.get("canvas", (FRAME, FRAME))
+    ox, oy = (w - FRAME) // 2, h - FRAME
+    game = lambda pt: [round((pt[0] + 0.5 + ox - w / 2) * 0.75, 2), round((pt[1] + 0.5 + oy - h) * 0.75, 2)]
+    out = {}
+    for name, poses in ANIMATIONS.items():
+        out[name] = []
+        for ps in own.get(name, poses):
+            draw_frame(ps, c, p, heads)
+            out[name].append([game(HANDS[0]["front"]), game(HANDS[0]["back"])])
+    return out
+
+
 def extra_files(c, out, strips):
     if c.get("weapon") == "scissors":
         mini_scissors_image().save(out / "projectile.png")
+        (out / "hands.json").write_text(json.dumps(hands_json(c)))
     if c.get("pyramid"):
         pyramid_image().save(out / "pyramid.png")
