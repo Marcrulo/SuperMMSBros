@@ -27,13 +27,28 @@ stance: `+` → `−` → `÷` → `×` → `+`. She starts every match and ever
 
 | Stance | Effect |
 |---|---|
-| `+` plus | Her projectiles (the volley) do ×1.5 damage (fixed when thrown). |
-| `−` minus | Her normal attacks (jab, tilts, aerials; not B moves) heal her: her % drops by 50 % of the damage each hit deals (not below 0; blocked hits don't heal). |
+| `+` plus | Red hands. Every hit she lands knocks back harder: base knockback and growth ×1.25 — normals, specials, the volley and the pyramid tip. Damage is unchanged. |
+| `−` minus | Blue hands, and she's a magnet: on the first active frame of each of her normal attacks (jab, tilts, aerials; not B moves), opponents in the attack's cone get one tug toward her (below). |
 | `÷` divide | Small: size ×0.75 — sprite, body, hurtbox, move hitboxes (center and size), ledge grab box and hang offset all scale from her feet. Faster: run speed and air speed ×1.25. |
 | `×` multiply | Large: size ×1.25 (the same things scale). Her specials (neutral, side, up) do ×1.3 damage and ×1.3 base knockback. |
 
-The numbers live in `StanceData` (`projectile_damage` 1.5, `lifesteal` 0.5, `small_scale` 0.75,
-`small_speed` 1.25, `large_scale` 1.25, `large_special` 1.3).
+**The tug (`−`).** Checked once per normal attack, on its first active frame, before hits are
+collected (the `resolve_contacts` hook):
+
+- **The cone** points from her center to the attack's hitbox center (so a side tilt pulls from in
+  front, an up tilt from above, a down aerial from below), ±30° (`pull_cone_deg`). An opponent is
+  in it when the direction from her center to theirs is within the cone and the distance between
+  the centers is at most 120 px (`pull_reach`).
+- An opponent the attack's hitbox already touches isn't tugged (the hit lands as usual), nor one
+  that can't be hit (dodging, invulnerable, held, KO'd).
+- **The tug** is a 0-damage hit that launches them straight at her center at 300 px/s
+  (`pull_speed`, no growth with %), so the usual hitstun (300 × `hitstun_per_knockback`) keeps
+  them from acting while they fly in. It isn't a landed hit: no hit spark, no hit sound.
+- A **shielding** opponent instead gets the usual block push toward her (0 damage: the shield loses
+  nothing).
+
+The numbers live in `StanceData` (`knockback` 1.25, `pull_cone_deg` 30, `pull_reach` 120,
+`pull_speed` 300, `small_scale` 0.75, `small_speed` 1.25, `large_scale` 1.25, `large_special` 1.3).
 
 **Up special — pyramid** (`up_special.tres` with `ability` → `PyramidData`): a sandstone pyramid
 rises out of the ground under her and lifts her up. It needs ground: a strong move on the stage, a
@@ -82,6 +97,12 @@ Files: `characters/gitte/moves/` (`moveset.tres`, `neutral_special.tres`, `side_
   then flung out wide. Her volley's picture (`projectile.png`): a small pair of scissors, 3
   drawings of 16×16 turned 120° further each.
 - **Stances ÷ and ×** draw her frames at ×0.75 / ×1.25 of the usual ¾ size, feet at the origin.
+- **Stances + and −** light her hands: a small soft glow (a few px across, a bright core in a
+  fainter halo, gently pulsing) at each fist, red (`+`) or blue (`−`), drawn over her in every
+  drawing where the fist's spot is known. The spots come from `slot_02/hands.json`, written by her
+  sprite generator: `{animation: [drawing: [[front x, y], [back x, y]]]}` in game px from the feet,
+  facing right, at size 1 (the game mirrors and scales them). Only drawing: the game plays the
+  same without it.
 
 ### Gitte's pyramid
 
