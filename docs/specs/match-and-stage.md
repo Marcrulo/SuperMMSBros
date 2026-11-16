@@ -63,10 +63,27 @@ later (one training game = one reset).
 
 ## Pause
 
-- The `pause` action (Esc / gamepad Start) during `COUNTDOWN` or `PLAYING` pauses the game with
-  `get_tree().paused = true` and shows the pause menu: **Resume**, **Restart**, **Quit**.
-- `pause` again or **Resume** unpauses. **Restart** unpauses and calls `reset()`. **Quit** exits.
-- The Match is pausable (it stops ticking). The pause menu uses `PROCESS_MODE_WHEN_PAUSED`.
+- The `pause` action (Esc / gamepad Start) during the match pauses the game with
+  `get_tree().paused = true` and shows the pause menu (`ui/pause_menu.tscn`, a `CanvasLayer` over
+  the HUD): the game dimmed behind a dark see-through overlay, **PAUSED**, two choices,
+  **CONTINUE** and **QUIT** (CONTINUE highlighted when it opens), and along the bottom of the
+  panel two small mouse icon buttons, **music** and **sound effects**.
+- Up / down (`ui_up` / `ui_down`: W/S, arrows) move the highlight, no wrapping; `ui_accept` (J,
+  Space, Enter) chooses. The highlighted choice is drawn in white on a red bar (#b13e53), the
+  other in grey. Moving plays `menu_move`, choosing `menu_confirm`.
+- **CONTINUE**, `pause` again or `ui_cancel` (Esc, L) unpauses and hides the menu.
+- **QUIT** unpauses and goes back to the **character select** (`Game.go_to()`), ending the match.
+- The **music** / **sound effects** buttons (mouse click) mute or unmute the `Music` / `SFX`
+  audio bus (`Game.music_muted`, `Game.sfx_muted`): all music, or all sound effects (fight and
+  menu sounds). They show pixel icons, 18×12 (`assets/ui/`, made by `tools/gen_ui_icons.py`):
+  a white speaker with a music note (`icon_music`) / with a comic "bang" burst, white spikes round
+  a yellow middle (`icon_sfx`); muted, a grey speaker with a small red cross (`icon_*_off`) on a
+  darker button. Hovering shows a tooltip ("Music", "Sound effects"). The menu stays open. They take no keyboard focus, so the keys keep driving CONTINUE / QUIT. The choice
+  is saved in `user://settings.cfg` and loaded when the game starts.
+- The Match is pausable (it stops ticking, and its music pauses). The pause menu uses
+  `PROCESS_MODE_ALWAYS`, so it hears `pause` both when the game runs and while it's paused; the
+  Game autoload's menu sounds use it too, so they play while paused.
+- Restart (start the same match over) comes with the rest of M7.
 
 ## Result screen
 

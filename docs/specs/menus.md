@@ -14,7 +14,9 @@ Character select ──choose──▶ Stage select ──choose──▶ Match
 - The game starts on the character select (`ui/character_select.tscn` is the main scene).
 - With `--stage=<id>` on the command line, the menus are skipped and the match starts at once on
   that stage, P1 playing the default character (`slot_01`, Pia) and P2 the second (`slot_02`,
-  Gitte), for quick testing; headless runs in M8 use this too.
+  Gitte), for quick testing; headless runs in M8 use this too. `--char=<name>` (e.g.
+  `--char=casper`) sets P1's character instead, with or without `--stage` (see
+  [architecture](architecture.md#command-line-options)).
 - The choices live in the `Game` autoload (`game/game.gd`, always loaded): `character_id`,
   `p2_character_id` and `stage_id`. The Match reads them when it starts (the `--stage` option wins over `stage_id`).
   `Game` also changes between the screens.

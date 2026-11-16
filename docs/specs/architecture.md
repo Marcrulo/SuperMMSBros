@@ -68,7 +68,8 @@ the Match and assigned one per fighter.
 | `StageData` / `PlatformStyle` | `Resource` | A stage's name, background, haze, light and platform style (see [match & stage](match-and-stage.md#stages)). |
 | `PlatformLook` | `Node2D` (child of Stage) | Draws the platforms in perspective from the style. Presentation only. |
 | `MatchCamera` | `Camera2D` | Frames the fighters and zooms. Presentation only. |
-| `Hud` | `CanvasLayer` | Stock icons, countdown, off-screen arrows, pause menu, result screen. |
+| `Hud` | `CanvasLayer` | Stock icons, countdown, off-screen arrows, result screen. |
+| `PauseMenu` | `CanvasLayer` (child of Match) | Esc pauses the tree and shows CONTINUE / QUIT (see [match & stage](match-and-stage.md#pause)). Runs while paused (`PROCESS_MODE_ALWAYS`); changes no gameplay state. |
 
 ## Tick order
 
@@ -188,6 +189,7 @@ Read from `OS.get_cmdline_user_args()` (arguments after `--`):
 | Option | Default | Meaning |
 |---|---|---|
 | `--stage=<id>` | `mms` | Stage to play (`mms`, `fc`, `slot_sunset`, `cafe_station`, `lindevej`, `cafe_slotsbio`) |
+| `--char=<name>` | `slot_01` (Pia) | P1's character: a playable character's first name in lower case (`casper`, `mads`, …) or its id (`slot_08`). Skipping the menus, P1 plays it; on the character select it starts highlighted. An unknown name prints a warning and is ignored |
 | `--hitboxes` | off | Start with the hitbox debug view on (F1 toggles it) |
 | `--p1=human\|cpu` | `human` | Controller for P1 |
 | `--p2=human\|cpu` | `cpu` | Controller for P2 |
@@ -202,6 +204,7 @@ quits with exit code 0 (or 1 for `TIMEOUT`).
 Examples:
 ```bash
 godot --path super-mms-bros                                   # you vs CPU
+godot --path super-mms-bros -- --stage=fc --char=casper       # straight into a match as Casper
 godot --path super-mms-bros -- --p1=cpu                       # watch CPU vs CPU
 godot --headless --path super-mms-bros -- --p1=cpu --autoquit --speed=10 --max-ticks=36000
 ```

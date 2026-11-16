@@ -438,3 +438,31 @@ func test_every_portrait_is_221_by_279() -> void:
 func test_portraits_are_imported_with_mipmaps() -> void:
 	for character in Game.roster().characters:
 		assert_true(character.portrait.get_image().has_mipmaps(), character.id)
+
+
+# --- --char=<name> (docs/specs/architecture.md#command-line-options) --------------------------------
+
+
+func test_char_option_by_first_name() -> void:
+	assert_eq(Game.character_from_args(PackedStringArray(["--stage=fc", "--char=casper"])), "slot_08")
+	assert_eq(Game.character_from_args(PackedStringArray(["--char=michael"])), "slot_05",
+		"first name of Michael Bech")
+	assert_eq(Game.character_from_args(PackedStringArray(["--char=Mads"])), "slot_11",
+		"case doesn't matter")
+
+
+func test_char_option_by_id() -> void:
+	assert_eq(Game.character_from_args(PackedStringArray(["--char=slot_08"])), "slot_08")
+
+
+func test_char_option_unknown_or_missing() -> void:
+	assert_eq(Game.character_from_args(PackedStringArray(["--char=nobody"])), "")
+	assert_eq(Game.character_from_args(PackedStringArray(["--stage=fc"])), "")
+
+
+func test_char_option_sets_p1() -> void:
+	Game.apply_character_option(PackedStringArray(["--char=casper"]))
+	assert_eq(Game.character_id, "slot_08")
+	assert_eq(Game.character().display_name, "Casper")
+	Game.apply_character_option(PackedStringArray(["--char=nobody"]))
+	assert_eq(Game.character_id, "slot_08", "an unknown name changes nothing")

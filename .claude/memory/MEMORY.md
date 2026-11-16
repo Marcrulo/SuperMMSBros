@@ -1,6 +1,7 @@
 - [Who builds what](hands-on-building.md) — Claude builds everything (no subagents); user decides big questions, playtests, judges visuals; work in ~one-milestone chunks with short updates
-- [Project status](project-status.md) — main at c8eee48, all char branches merged + pushed, no worktrees left; unplaytested: Mads uppercut, Nina lullaby, Henrik speakers, Pia scarf, Gitte stances, Mette flask; 791 tests
+- [Project status](project-status.md) — main pushed 2026-11-16: pause menu + mute icons, --char, Side+B turn window, double-jump fast-fall cancel; 826 tests; unplaytested char moves: Mads, Nina, Henrik, Pia, Gitte, Mette
 - [Check every frame](check-every-frame.md) — sweep all animations for stray poses before showing sprite changes
 - [Update sprite artifact](update-sprite-artifact.md) — after any sprite or game-drawn visual change, rebuild (incl. rope previews) + republish the Sprites artifact unasked; show visuals there
 - [Always push commits](always-push-commits.md) — push committed changes to origin without asking; commit still only when asked
 - [Merge worktrees fully](merge-worktrees-fully.md) — merging worktrees includes committing their uncommitted work; then --import + test in the MAIN checkout
+- [Feel focus: Casper](feel-focus-casper.md) — current focus: movement/attack feel, tested as Casper via --char=casper

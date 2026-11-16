@@ -33,6 +33,7 @@ placeholder sprites. See `docs/vision.md`.
 ```bash
 godot --path super-mms-bros                          # run the game (character select → stage select → match)
 godot --path super-mms-bros -- --stage=fc            # skip the menus, straight into a match on that stage
+godot --path super-mms-bros -- --stage=fc --char=casper --hitboxes   # ...as Casper with hitboxes (for movement/attack feel)
 godot --path super-mms-bros --editor                 # open the editor
 godot --headless --path super-mms-bros --import      # import new/changed assets and new class_name scripts (needed before headless runs)
 godot --path super-mms-bros -- --p1=cpu              # CPU vs CPU (from M8)

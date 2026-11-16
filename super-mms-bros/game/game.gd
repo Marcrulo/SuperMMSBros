@@ -15,6 +15,8 @@ const QUIT_DELAY := 0.1
 const SFX_DIR := "res://assets/sfx/"
 const SOUNDS: Array[String] = ["menu_move", "menu_confirm", "menu_back", "menu_locked"]
 const MENU_TRACK := "menu"
+## Where the mute choices are saved (docs/specs/match-and-stage.md#pause).
+const SETTINGS_PATH := "user://settings.cfg"
 ## Menu action ← the game actions whose keys and buttons it also accepts.
 const MENU_KEYS := {
 	"ui_left": ["move_left"], "ui_right": ["move_right"], "ui_up": ["up"], "ui_down": ["down"],
@@ -33,6 +35,17 @@ var change_scenes: bool = true
 var requested_scene: String = ""
 ## The last sound effect played (for tests).
 var last_sfx: String = ""
+## Where save_settings()/load_settings() keep the mute choices (tests use their own file).
+var settings_path: String = SETTINGS_PATH
+## All music (the Music bus) or all sound effects (the SFX bus) muted.
+var music_muted: bool = false:
+	set(value):
+		music_muted = value
+		_mute_bus(&"Music", value)
+var sfx_muted: bool = false:
+	set(value):
+		sfx_muted = value
+		_mute_bus(&"SFX", value)
 
 ## Here, not in a screen, so the menu music carries on across screens and a sound effect finishes
 ## after its screen is gone.
@@ -60,8 +73,12 @@ func _ready() -> void:
 		if ResourceLoader.exists(path):
 			player.stream = load(path)
 		player.bus = &"SFX"
+		# The pause menu plays them while the game is paused.
+		player.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(player)
 		_sfx[sound] = player
+	apply_character_option(OS.get_cmdline_user_args())
+	load_settings()
 	for menu_action: String in MENU_KEYS:
 		for game_action: String in MENU_KEYS[menu_action]:
 			for event in InputMap.action_get_events(game_action):
@@ -98,6 +115,50 @@ static func should_skip_menus(args: PackedStringArray) -> bool:
 		if arg.begins_with("--stage="):
 			return true
 	return false
+
+
+## `--char=<name>` (docs/specs/architecture.md#command-line-options): P1 plays that character.
+func apply_character_option(args: PackedStringArray) -> void:
+	var id := character_from_args(args)
+	if id != "":
+		character_id = id
+
+
+## The id of the playable character `--char=` names (its first name in any case, or its id), or ""
+## for none or an unknown name.
+func character_from_args(args: PackedStringArray) -> String:
+	for arg in args:
+		if not arg.begins_with("--char="):
+			continue
+		var wanted := arg.trim_prefix("--char=").to_lower()
+		for candidate in roster().characters:
+			var first_name := candidate.display_name.get_slice(" ", 0).to_lower()
+			if candidate.playable and (wanted == first_name or wanted == candidate.id):
+				return candidate.id
+		push_warning("--char=%s: no playable character by that name" % wanted)
+	return ""
+
+
+## Saves the mute choices.
+func save_settings() -> void:
+	var config := ConfigFile.new()
+	config.set_value("audio", "music_muted", music_muted)
+	config.set_value("audio", "sfx_muted", sfx_muted)
+	config.save(settings_path)
+
+
+## Loads the mute choices (both off when nothing was saved yet).
+func load_settings() -> void:
+	var config := ConfigFile.new()
+	config.load(settings_path)
+	music_muted = config.get_value("audio", "music_muted", false)
+	sfx_muted = config.get_value("audio", "sfx_muted", false)
+
+
+func _mute_bus(bus: StringName, muted: bool) -> void:
+	var index := AudioServer.get_bus_index(bus)
+	if index >= 0:
+		AudioServer.set_bus_mute(index, muted)
 
 
 func roster() -> Roster:
