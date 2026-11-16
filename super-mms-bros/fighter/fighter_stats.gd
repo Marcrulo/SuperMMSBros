@@ -97,4 +97,6 @@ extends Resource
 @export var ledge_regrab_frames: int
 
 @export_group("Moves")
+## Side special frames (from 1) during which a held side still turns the fighter.
+@export var side_special_turn_frames: int
 @export var moveset: MoveSet

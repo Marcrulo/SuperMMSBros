@@ -124,3 +124,19 @@ func test_keyboard_controller_reads_shield_up_and_side_presses() -> void:
 	Input.action_press("move_right")
 	await get_tree().physics_frame
 	assert_eq(controller.get_input(null).side_pressed, 1)
+
+
+func test_keyboard_both_sides_held_the_last_pressed_wins() -> void:
+	var controller := KeyboardController.new()
+	await get_tree().physics_frame
+	Input.action_press("move_right")
+	await get_tree().physics_frame
+	assert_eq(controller.get_input(null).move_x, 1.0)
+	Input.action_press("move_left")  # Still holding right.
+	await get_tree().physics_frame
+	assert_eq(controller.get_input(null).move_x, -1.0, "left pressed last wins")
+	await get_tree().physics_frame
+	assert_eq(controller.get_input(null).move_x, -1.0, "and keeps winning while both are held")
+	Input.action_release("move_left")
+	await get_tree().physics_frame
+	assert_eq(controller.get_input(null).move_x, 1.0, "back to right once left is let go")

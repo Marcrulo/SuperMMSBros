@@ -157,3 +157,59 @@ func test_shield_blocks_a_jab_in_the_match() -> void:
 
 func after_each() -> void:
 	Game.character_id = _saved_character_id
+
+
+# --- Turning doesn't slow the side special (docs/specs/moves.md#picking-a-move) --------------------
+
+
+## [idle, B holding `press_x`, then holding `then_x`]: P1 starts facing right, on the ground or
+## dropped from high up (in the air the whole time).
+func _fire_turning(press_x: float, then_x: float) -> Array[FighterInput]:
+	var special := FighterInput.new()
+	special.special_pressed = true
+	special.special_held = true
+	special.move_x = press_x
+	var inputs: Array[FighterInput] = [FighterInput.new(), special]
+	for i in 20:
+		var held := FighterInput.new()
+		held.move_x = then_x
+		inputs.append(held)
+	return inputs
+
+
+## The step the projectile appears on, and which way it flies.
+func _first_projectile(p1_at: Vector2, inputs: Array[FighterInput]) -> Array:
+	await _place(p1_at, Vector2(p1_at.x + 200.0, 192), inputs)
+	for step in range(1, 30):
+		_match.step()
+		if not _match.get_projectiles().is_empty():
+			return [step, _match.get_projectiles()[0].direction]
+	return [-1, 0]
+
+
+const GROUND := Vector2(240, 192)
+const AIR := Vector2(240, 40)
+
+
+func test_forward_fires_on_frame_10() -> void:
+	assert_eq(await _first_projectile(GROUND, _fire_turning(1.0, 1.0)), [11, 1])
+
+
+func test_turned_at_the_press_fires_just_as_fast() -> void:
+	assert_eq(await _first_projectile(GROUND, _fire_turning(-1.0, -1.0)), [11, -1])
+
+
+func test_turned_in_the_window_fires_just_as_fast() -> void:
+	assert_eq(await _first_projectile(GROUND, _fire_turning(1.0, -1.0)), [11, -1])
+
+
+func test_in_the_air_forward_fires_on_frame_10() -> void:
+	assert_eq(await _first_projectile(AIR, _fire_turning(1.0, 1.0)), [11, 1])
+
+
+func test_in_the_air_turned_at_the_press_fires_just_as_fast() -> void:
+	assert_eq(await _first_projectile(AIR, _fire_turning(-1.0, -1.0)), [11, -1])
+
+
+func test_in_the_air_turned_in_the_window_fires_just_as_fast() -> void:
+	assert_eq(await _first_projectile(AIR, _fire_turning(1.0, -1.0)), [11, -1])

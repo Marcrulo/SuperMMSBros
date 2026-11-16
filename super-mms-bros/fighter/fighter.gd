@@ -826,6 +826,9 @@ func _hold_ledge() -> void:
 
 ## Charge release, the up special's launch, and the abilities' own moves and phases.
 func _special_phases(input: FighterInput) -> void:
+	# The side special's turn window: B pressed a tick before the direction still fires that way.
+	if move == &"side_special" and state_frame < stats.side_special_turn_frames:
+		_turn_toward(input.move_x)
 	match move:
 		&"neutral_special_charge":
 			var charge_frames := stats.moveset.neutral_special.charge_frames
@@ -1040,11 +1043,17 @@ func _steer(move_x: float, top_speed: float, accel: float, friction: float) -> v
 		velocity.x = move_toward(velocity.x, 0.0, friction * DELTA)
 
 
-## Falling in AIR and during air attacks: holding down once falling starts a fast fall (not on the
-## tick of a drop-through), which then holds the fall at fast_fall_speed; otherwise normal gravity.
+## Falling in AIR and during air attacks: holding down once falling, or pressing down while rising
+## from a double jump, starts a fast fall (not on the tick of a drop-through), which then holds the
+## fall at fast_fall_speed; otherwise normal gravity.
 func _fall(input: FighterInput) -> void:
 	var dropping_now := _drop_through_frames_left == stats.drop_through_frames
 	if not _fast_falling and input.down_held and velocity.y >= 0.0 and not dropping_now:
+		_fast_falling = true
+	# Down pressed while rising from a double jump (an air jump used, nothing since has given it
+	# back) cancels the rise.
+	var double_jump_rising := velocity.y < 0.0 and jumps_left < stats.max_air_jumps
+	if not _fast_falling and input.down_pressed and double_jump_rising and not dropping_now:
 		_fast_falling = true
 	if _fast_falling:
 		velocity.y = stats.fast_fall_speed

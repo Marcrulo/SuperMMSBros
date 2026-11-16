@@ -24,7 +24,9 @@ The move is decided on the tick the button goes down, from the direction held on
 Up wins over down, and both win over sideways. A side move on the ground turns the fighter toward
 the held direction first; in the air the fighter keeps facing where it faced (so holding back
 gives the back air) — except the side special, which turns toward the held direction in the air
-too, so it always fires where you hold.
+too, so it always fires where you hold. **Turn window:** on the side special's frames 2–`side_special_turn_frames` (4, in
+`FighterStats`) the fighter still turns toward a held side, so pressing B a tick before the
+direction key still fires the way you hold.
 
 Recovery (the frames after the hit when the fighter can't act) is kept short on every move, so
 the fighter is free again soon after the strike.

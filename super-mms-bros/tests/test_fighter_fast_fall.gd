@@ -140,3 +140,54 @@ func test_no_fast_fall_while_helpless() -> void:
 	_fighter.state = Fighter.State.HELPLESS
 	_run(_make_input(true), 1)
 	assert_lt(_fighter.velocity.y, _stats.fast_fall_speed)
+
+
+# --- Cancelling a double jump's rise ---------------------------------------------------------------
+
+
+## Falling high up, then a double jump; returns once it has risen for `ticks` ticks.
+func _double_jump_and_rise(ticks: int) -> void:
+	await _start_falling()
+	_run(_make_input(false, true), 1)
+	_run(_make_input(), ticks)
+	assert_lt(_fighter.velocity.y, 0.0, "still rising from the double jump")
+
+
+func _press_down() -> FighterInput:
+	var input := _make_input(true)
+	input.down_pressed = true
+	return input
+
+
+func test_pressing_down_cancels_a_double_jumps_rise() -> void:
+	await _double_jump_and_rise(5)
+	_run(_press_down(), 1)
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "falling fast at once")
+	_run(_make_input(), 3)
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "and stays a fast fall")
+
+
+func test_down_held_since_before_the_double_jump_doesnt_cancel_it() -> void:
+	await _start_falling()
+	var jump_holding_down := _make_input(true, true)
+	_run(jump_holding_down, 1)
+	_run(_make_input(true), 3)
+	assert_lt(_fighter.velocity.y, 0.0, "the double jump still rises")
+
+
+func test_pressing_down_doesnt_cancel_a_first_jumps_rise() -> void:
+	_fighter.spawn_at(Vector2(110, FLOOR_Y), 1)
+	await wait_physics_frames(1)
+	_fighter.tick(_make_input())
+	_run(_make_input(false, true), 1)
+	_run(_make_input(), 3)
+	_run(_press_down(), 1)
+	assert_lt(_fighter.velocity.y, 0.0, "a first jump still rises")
+
+
+func test_cancelling_works_during_an_air_attack_too() -> void:
+	await _double_jump_and_rise(3)
+	_run(_make_input(false, false, true), 1)
+	assert_eq(_fighter.state, Fighter.State.ATTACK)
+	_run(_press_down(), 1)
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed)

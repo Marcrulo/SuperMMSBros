@@ -156,6 +156,27 @@ func test_side_special_in_the_air_turns_toward_the_held_side() -> void:
 	assert_eq(_fighter.facing, -1, "turned around in the air")
 
 
+func test_side_special_turn_window_in_the_air() -> void:
+	# B a tick before the direction (still holding toward the facing side): it turns on frame 2.
+	await _start(MIDDLE, 1)
+	_jump_up(5)
+	assert_eq(_stats.side_special_turn_frames, 4)
+	_run(_special(1.0), 1)
+	assert_eq(_fighter.move, &"side_special")
+	assert_eq(_fighter.facing, 1)
+	_run(_special(-1.0, false, false, false), 1)
+	assert_eq(_fighter.facing, -1, "frame 2: turned toward the held side")
+
+
+func test_side_special_turn_window_ends_after_frame_4() -> void:
+	await _start(MIDDLE, 1)
+	_jump_up(5)
+	_run(_special(1.0), 1)
+	_run(_special(1.0, false, false, false), 3)  # Frames 2–4.
+	_run(_special(-1.0, false, false, false), 1)  # Frame 5.
+	assert_eq(_fighter.facing, 1, "too late to turn")
+
+
 func test_other_air_moves_still_keep_the_facing() -> void:
 	await _start(MIDDLE, 1)
 	_jump_up(5)

@@ -64,6 +64,7 @@ in px/s², durations in ticks (60 per second).
 | `ledge_climb_frames` | 20 | Length of the get-up (can't be hit) |
 | `ledge_climb_inset` | 12 | Where the get-up ends: this far onto the stage from the corner |
 | `ledge_regrab_frames` | 30 | Ticks after leaving a ledge before any ledge can be grabbed again |
+| `side_special_turn_frames` | 4 | Side special frames during which a held side still turns the fighter (see [moves](moves.md#picking-a-move)) |
 | `moveset` | `MoveSet` | The eight moves (see [moves](moves.md)) |
 
 Hitbox *sizes* of moves live in the `MoveData` resources; the body and hurtbox sizes live in the
@@ -179,7 +180,9 @@ Checked in this order on each tick; the first that applies happens:
 - **Fast fall:** in `AIR` or during an air attack (not a special), holding down while falling
   (vertical speed ≥ 0) starts a fast fall: vertical speed becomes `fast_fall_speed` and stays
   there (gravity and `max_fall_speed` don't apply). Holding down while still rising does nothing
-  until the fighter starts to fall. It doesn't start on the tick the fighter drops through a
+  until the fighter starts to fall — except after a double jump: **pressing** down (a new press,
+  not one held since before) while still rising from the double jump cancels the rise and starts
+  the fast fall at once. A first jump's rise can't be cancelled this way. It doesn't start on the tick the fighter drops through a
   platform (still holding down, it starts the tick after), so a drop-through tap on its own lands
   on the next platform below. A fast fall lasts until landing, a double jump, being hit, an
   up special, or a respawn — releasing down doesn't end it.

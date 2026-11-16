@@ -31,7 +31,7 @@ physics frame, so `is_action_just_pressed` works per tick):
 
 | Field | Source |
 |---|---|
-| `move_x` | `Input.get_axis("move_left", "move_right")` |
+| `move_x` | `Input.get_axis("move_left", "move_right")`; while **both** sides are held, the one pressed last wins (−1 or 1, not 0), so rolling from one key to the other never drops to "no direction" |
 | `jump_pressed` / `jump_held` | `is_action_just_pressed("jump")` / `is_action_pressed("jump")` |
 | `up_held` | `is_action_pressed("up")` |
 | `down_pressed` / `down_held` | `is_action_just_pressed("down")` / `is_action_pressed("down")` |
@@ -41,7 +41,7 @@ physics frame, so `is_action_just_pressed` works per tick):
 | `up_pressed` | `is_action_just_pressed("up")` |
 | `side_pressed` | `is_action_just_pressed("move_right")` → 1, else `is_action_just_pressed("move_left")` → −1, else 0 |
 
-`pause` is handled by the HUD/pause menu, not by the controller.
+`pause` is handled by the pause menu (see [match & stage](match-and-stage.md#pause)), not by the controller.
 
 ## Display settings
 

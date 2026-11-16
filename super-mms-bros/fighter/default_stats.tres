@@ -23,6 +23,7 @@ drop_double_tap_frames = 12
 hitstun_per_knockback = 0.06
 min_hitstun = 6
 hitstun_friction = 300.0
+side_special_turn_frames = 4
 moveset = ExtResource("2_moves")
 shield_max = 100.0
 shield_drain = 0.25
