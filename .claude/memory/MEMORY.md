@@ -3,4 +3,4 @@
 - [Check every frame](check-every-frame.md) — sweep all animations for stray poses before showing sprite changes
 - [Update sprite artifact](update-sprite-artifact.md) — after any sprite or game-drawn visual change, rebuild (incl. rope previews) + republish the Sprites artifact unasked; show visuals there
 - [Always push commits](always-push-commits.md) — push committed changes to origin without asking; commit still only when asked
-- [Merge worktrees fully](merge-worktrees-fully.md) — merging worktrees includes committing their uncommitted work; don't stop to ask
+- [Merge worktrees fully](merge-worktrees-fully.md) — merging worktrees includes committing their uncommitted work; then --import + test in the MAIN checkout

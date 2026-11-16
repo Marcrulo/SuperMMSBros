@@ -9,4 +9,6 @@ When the user asks to make sure worktrees/branches are merged to main (and then 
 
 **Why:** on 2026-11-15 I found Nina's uncommitted lullaby and asked what to do; the user answered "That is why i ask you to merge it first!"
 
+**After merging into main:** run `godot --headless --path super-mms-bros --import` in the MAIN checkout (only if the editor is closed there) and the full suite there too — each worktree has its own `.godot/` cache, so new `class_name` scripts merged in are unknown to main's cache and the moves break when the user runs main (happened 2026-11-16: Mads's uppercut and Nina's lullaby "didn't work").
+
 **How to apply:** only stop if the merge truly can't be done safely (conflicts you can't resolve, failing tests) — then report that instead of asking up front. See [[project-status]].
