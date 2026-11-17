@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="MoveData" format=3]
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="AudioStream" uid="uid://cc46n4tqllfbp" path="res://characters/gitte/sounds/volley.wav" id="s_volley"]
 
 [resource]
 script = ExtResource("1_move")
@@ -18,3 +19,6 @@ projectile_speed = 260.0
 projectile_lifetime = 90
 projectile_count = 3
 projectile_spread_deg = 12.0
+sounds = Dictionary[StringName, AudioStream]({
+&"zap": ExtResource("s_volley")
+})

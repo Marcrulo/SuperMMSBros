@@ -64,7 +64,7 @@ func speed_scale() -> float:
 	return _numbers().small_speed if stance == Stance.DIVIDE else 1.0
 
 
-## + makes every hit knock back harder; × makes specials hit harder.
+## + makes every hit knock back harder; × makes specials hit harder; − hits sound reversed.
 func modify_hit(move_data: MoveData, special: bool) -> MoveData:
 	var numbers := _numbers()
 	if stance == Stance.PLUS:
@@ -76,6 +76,10 @@ func modify_hit(move_data: MoveData, special: bool) -> MoveData:
 		var copy := move_data.duplicate() as MoveData
 		copy.damage = move_data.damage * numbers.large_special
 		copy.base_knockback = move_data.base_knockback * numbers.large_special
+		return copy
+	if stance == Stance.MINUS and numbers.minus_hit_sound != null:
+		var copy := move_data.duplicate() as MoveData
+		copy.hit_sound = numbers.minus_hit_sound
 		return copy
 	return move_data
 

@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="StanceData" format=3]
 
 [ext_resource type="Script" path="res://characters/gitte/stance_data.gd" id="1_stance"]
+[ext_resource type="AudioStream" uid="uid://igmefm0g61qk" path="res://characters/gitte/sounds/reverse_hit.wav" id="s_reverse_hit"]
 
 [resource]
 script = ExtResource("1_stance")
@@ -12,3 +13,4 @@ small_scale = 0.75
 small_speed = 1.25
 large_scale = 1.25
 large_special = 1.3
+minus_hit_sound = ExtResource("s_reverse_hit")

@@ -15,6 +15,9 @@ extends AbilityData
 ## × : size ×large_scale, specials' damage and base knockback ×large_special.
 @export var large_scale: float
 @export var large_special: float
+## What her hits sound like in the − stance (docs/specs/sound.md#character-sounds); none = the
+## usual hit sounds.
+@export var minus_hit_sound: AudioStream
 
 
 func create_ability() -> FighterAbility:

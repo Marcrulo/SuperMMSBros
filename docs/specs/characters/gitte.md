@@ -83,6 +83,16 @@ poor recovery off it.
 Files: `characters/gitte/moves/` (`moveset.tres`, `neutral_special.tres`, `side_special.tres`,
 `down_special.tres`, `stances.tres`, `up_special.tres`, `pyramid.tres`, `pyramid_tip_hit.tres`).
 
+### Sounds
+
+Her own sounds ([character sounds](../sound.md#character-sounds)), in `characters/gitte/sounds/`:
+
+- **`−` stance:** every hit she lands in it sounds reversed: the medium hit played backwards
+  (`reverse_hit.wav`; `StanceData.minus_hit_sound`, put on the hit as its `hit_sound` by
+  `modify_hit()`).
+- **Scissor volley:** a metallic whoosh instead of the `zap` (`volley.wav`, `sounds` on
+  `side_special.tres`).
+
 ## Look
 
 ### Weapon and own drawings
