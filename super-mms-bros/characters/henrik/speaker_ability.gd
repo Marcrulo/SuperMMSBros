@@ -68,3 +68,11 @@ func drawing(_animation: String, frame: int) -> int:
 	if _numbers().is_blasting(age):
 		return 3
 	return 1 if (age / STRUM_TICKS) % 2 == 0 else 2
+
+
+## His strum as the jam starts (docs/specs/sound.md#character-sounds).
+func sounds() -> Dictionary:
+	var sound := _numbers().sound
+	if sound == null:
+		return {}
+	return {"start": {JAM: &"henrik_strum"}, "streams": {&"henrik_strum": sound}}
