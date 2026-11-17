@@ -96,6 +96,16 @@ the air, or helpless) he goes into the Avatar State (`AvatarAbility`, on the mov
 
 The four elements swirl around him during rise and flight (the look is below).
 
+### Sounds
+
+His own sounds ([character sounds](../sound.md#character-sounds)), in `characters/magnus/sounds/`:
+
+- **Fireball:** a fire whoosh as it appears (`fire.wav`; `FireballData.sound`, through
+  `Match.owner_sound`).
+- **Avatar State:** the rise hums with the `charge` loop (it stops when the rise ends); the flight
+  starts with `boost` and then loops a wind whistle for as long as it lasts (`wind.wav`;
+  `AvatarData.fly_sound`, a [loop](../sound.md#loops) on the `avatar_fly` phase).
+
 ### Files
 
 `characters/magnus/moves/` (`moveset.tres`, `neutral_special.tres`, `water_gun.tres`,

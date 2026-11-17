@@ -328,3 +328,25 @@ func test_each_ribbon_is_split_between_behind_and_in_front_of_him() -> void:
 		assert_eq(front.size() + back.size(), AvatarAbility.TRAIL_SAMPLES, "every sample once")
 		assert_gt(front.size(), 0, "a long ribbon passes in front")
 		assert_gt(back.size(), 0, "and behind him")
+
+
+# --- Sounds (docs/specs/characters/magnus.md#sounds) ---------------------------------------------
+
+
+func test_the_rise_hums_then_the_flight_whistles_with_wind() -> void:
+	await _place(Vector2(200, 160), Vector2(330, 192), [])
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	var wind := load("res://characters/magnus/sounds/wind.wav")
+	var winds := [0]
+	sounds.played.connect(func(_sound: StringName) -> void:
+		if sounds.last_stream == wind:
+			winds[0] += 1)
+	_light_all()
+	_steps(10)
+	assert_true(sounds.is_charging(), "the rise hums")
+	_steps(RISE)
+	assert_eq(_p1.move, &"avatar_fly")
+	assert_false(sounds.is_charging(), "the hum stops with the rise")
+	assert_eq(winds[0], 1, "the wind starts with the flight")
+	_steps(FLY)
+	assert_eq(winds[0], 1, "one loop for the whole flight")
