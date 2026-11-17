@@ -159,3 +159,19 @@ func test_the_light_is_drawn_mid_smash() -> void:
 	_p1.facing = -1
 	await wait_frames(2)
 	assert_eq(_p1.move, &"down_special")
+
+
+# --- Sound ----------------------------------------------------------------------------------------
+
+
+func test_the_burst_of_light_sings() -> void:
+	var choir := load("res://characters/stig/sounds/choir.wav") as AudioStream
+	assert_eq(_p1.stats.moveset.down_special.sounds.get(&"burst"), choir)
+	await _place(Vector2(200, 192), Vector2(380, 192), _smash())
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	var streams: Array[AudioStream] = []
+	sounds.played.connect(func(sound: StringName) -> void:
+		if sound == &"burst":
+			streams.append(sounds.last_stream))
+	_steps(14)
+	assert_eq(streams, [choir] as Array[AudioStream], "the choir, once, when the light comes out")
