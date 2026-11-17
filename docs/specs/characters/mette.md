@@ -85,6 +85,18 @@ Files: `characters/mette/` (`potion_data.gd`, `potion_ability.gd`, `flask.gd`, `
 `reaction.gd`, `potion_badge.gd`, `potion_look.gd`), `characters/mette/moves/` (`moveset.tres`,
 `neutral_special.tres`, `smash_red.tres`, `smash_blue.tres`, `smash_green.tres`, `down_special.tres`, `side_special.tres`, `potions.tres`, `steam_hit.tres`, `explosion_hit.tres`).
 
+### Sounds
+
+Her own sounds ([character sounds](../sound.md#character-sounds)), in `characters/mette/sounds/`,
+set on `PotionData` (`potions.tres`, group *Sounds*) and played through `Match.owner_sound`:
+
+- **Flask smash:** glass breaking when it hits out (`glass.wav`, also `active_sound` on
+  `neutral_special.tres`).
+- **Thrown flask:** a whoosh when it leaves her hand (`throw.wav`); glass breaking when it shatters
+  (`glass.wav`); and, when its potion splashes onto the floor, the colour's splash: blue a watery
+  splash (`splash_blue.wav`), green a sticky squelch (`splash_green.wav`), red acid bubbling
+  (`splash_red.wav`, cut to 1.2 s). No splash sound when it splashes away (no floor close enough).
+
 ## Look
 
 Drawn by the game itself (pixel style, outlined), not by the sprite generator, for now; her body

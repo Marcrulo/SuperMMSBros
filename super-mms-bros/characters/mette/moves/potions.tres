@@ -6,6 +6,11 @@
 [ext_resource type="Resource" path="res://characters/mette/moves/smash_red.tres" id="4_red"]
 [ext_resource type="Resource" path="res://characters/mette/moves/smash_blue.tres" id="5_blue"]
 [ext_resource type="Resource" path="res://characters/mette/moves/smash_green.tres" id="6_green"]
+[ext_resource type="AudioStream" uid="uid://bdojvjtvhqlg" path="res://characters/mette/sounds/glass.wav" id="s_glass"]
+[ext_resource type="AudioStream" uid="uid://inpnvctpautu" path="res://characters/mette/sounds/throw.wav" id="s_throw"]
+[ext_resource type="AudioStream" uid="uid://c8gyd4cmr7bio" path="res://characters/mette/sounds/splash_red.wav" id="s_splash_red"]
+[ext_resource type="AudioStream" uid="uid://sktxjswotchq" path="res://characters/mette/sounds/splash_blue.wav" id="s_splash_blue"]
+[ext_resource type="AudioStream" uid="uid://qec4nur4nnqg" path="res://characters/mette/sounds/splash_green.wav" id="s_splash_green"]
 
 [resource]
 script = ExtResource("1_potions")
@@ -41,3 +46,8 @@ foam_rise = 12
 foam_stand = 300
 foam_sink = 20
 foam_pop_speed = 320.0
+glass_sound = ExtResource("s_glass")
+throw_sound = ExtResource("s_throw")
+splash_red = ExtResource("s_splash_red")
+splash_blue = ExtResource("s_splash_blue")
+splash_green = ExtResource("s_splash_green")

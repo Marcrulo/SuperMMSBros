@@ -29,6 +29,12 @@ var _stunned: Array[int] = []
 static var _hands: Dictionary[String, Dictionary] = {}
 
 
+## Her own sounds' names (FighterAbility.sounds() "streams"; played through Match.owner_sound).
+const GLASS := &"mette_glass"
+const THROW := &"mette_throw"
+const SPLASHES: Array[StringName] = [&"mette_splash_red", &"mette_splash_blue", &"mette_splash_green"]
+
+
 func _numbers() -> PotionData:
 	return data as PotionData
 
@@ -103,6 +109,7 @@ func spawn_entities(match_: Match) -> void:
 	flask.setup(fighter.player_index, at, velocity, potion, numbers,
 			fighter.projectile_data(move_data))
 	flask_out = true
+	match_.owner_sound.emit(fighter.player_index, THROW)
 
 
 ## Her flask in flight; a green smash that just landed (not blocked) stuns.
@@ -201,3 +208,15 @@ func make_card_badge(card: PlayerCard) -> Control:
 	var portrait := card.portrait_rect()
 	badge.position = portrait.end - Vector2(PotionBadge.SIZE, PotionBadge.SIZE) + Vector2(2, 2)
 	return badge
+
+
+## Her own sound files, by name (docs/specs/sound.md#character-sounds).
+func sounds() -> Dictionary:
+	var numbers := _numbers()
+	var streams := {}
+	for named: Array in [[GLASS, numbers.glass_sound], [THROW, numbers.throw_sound],
+			[SPLASHES[Potion.RED], numbers.splash_red], [SPLASHES[Potion.BLUE], numbers.splash_blue],
+			[SPLASHES[Potion.GREEN], numbers.splash_green]]:
+		if named[1] != null:
+			streams[named[0]] = named[1]
+	return {"streams": streams}

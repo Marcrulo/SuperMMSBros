@@ -1,0 +1,19 @@
+Mette's own sounds (tools/gen_character_sfx.py mette,
+list in tools/sfx/characters/mette.py).
+Changes: cut where noted, silence trimmed, loudness normalized, 44.1 kHz WAV.
+
+glass.wav
+  "bottle break.wav" by DeezSoundzTho, https://freesound.org/people/DeezSoundzTho/sounds/407431/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+throw.wav
+  "Whoosh_1.wav" by lzmraul, https://freesound.org/people/lzmraul/sounds/389458/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+splash_blue.wav
+  "Small Water Splash" by qubodup, https://freesound.org/people/qubodup/sounds/737233/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+splash_green.wav
+  "Slime 28.wav" by Archos, https://freesound.org/people/Archos/sounds/433839/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+splash_red.wav
+  "Acid Bubbling.wav" by spookymodem, https://freesound.org/people/spookymodem/sounds/202094/, cut to 1.2 s with a fade-out
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/

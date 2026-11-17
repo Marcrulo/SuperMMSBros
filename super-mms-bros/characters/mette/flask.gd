@@ -81,8 +81,10 @@ func _shatter(match_: Match) -> void:
 	if shattered:
 		return
 	shattered = true
+	match_.owner_sound.emit(owner_index, PotionAbility.GLASS)
 	var floor_y := match_.get_stage().floor_below(global_position, true)
 	if floor_y - global_position.y <= data.splash_reach:
+		match_.owner_sound.emit(owner_index, PotionAbility.SPLASHES[potion])
 		Puddle.splash(match_, owner_index, Vector2(global_position.x, floor_y), potion, data)
 
 

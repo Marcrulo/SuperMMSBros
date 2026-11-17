@@ -567,3 +567,38 @@ func test_card_shows_her_potion() -> void:
 	_potions().potion = GREEN
 	hud.cards[0].refresh()
 	assert_eq((hud.cards[0].get_badge(PotionBadge) as PotionBadge).potion, GREEN)
+
+
+# --- Sounds (docs/specs/characters/mette.md#sounds) ----------------------------------------------
+
+
+func _heard() -> Array[String]:
+	var heard: Array[String] = []
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	sounds.played.connect(func(_sound: StringName) -> void:
+		if sounds.last_stream != null and sounds.last_stream.resource_path.contains("/mette/"):
+			heard.append(sounds.last_stream.resource_path.get_file().get_basename()))
+	return heard
+
+
+func test_the_smash_breaks_glass() -> void:
+	await _place(Vector2(150, 192), Vector2(380, 192), _specials(["neutral"]))
+	var heard := _heard()
+	_steps(20)
+	assert_eq(heard, ["glass"] as Array[String], "on its first active frame")
+
+
+func test_a_thrown_flask_whooshes_breaks_and_splashes_its_colour() -> void:
+	for potion: PotionAbility.Potion in [RED, BLUE, GREEN]:
+		await _place(Vector2(150, 192), Vector2(380, 192), _specials(["side"], 60))
+		_potions().potion = potion
+		var heard := _heard()
+		_steps(60)
+		var colour: String = ["red", "blue", "green"][potion]
+		assert_eq(heard, ["throw", "glass", "splash_" + colour] as Array[String], colour)
+		_match.free()
+		_match = MATCH_SCENE.instantiate()
+		_match.auto_step = false
+		add_child_autofree(_match)
+		_p1 = _match.get_fighter(0)
+		_p2 = _match.get_fighter(1)
