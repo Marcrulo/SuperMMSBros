@@ -1,5 +1,5 @@
 - [Who builds what](hands-on-building.md) — Claude builds everything (no subagents); user decides big questions, playtests, judges visuals; work in ~one-milestone chunks with short updates
-- [Project status](project-status.md) — main pushed 2026-11-17: pause RESTART + mute fixes, sprinting, camera top cut-off, sloped stage underside, fast-fall wait; 868 tests
+- [Project status](project-status.md) — 2026-11-17: character sounds (M6y) on 7 char branches, unmerged; round-2 picks pending
 - [Check every frame](check-every-frame.md) — sweep all animations for stray poses before showing sprite changes
 - [Update sprite artifact](update-sprite-artifact.md) — after any sprite or game-drawn visual change, rebuild (incl. rope previews) + republish the Sprites artifact unasked; show visuals there
 - [Always push commits](always-push-commits.md) — push committed changes to origin without asking; commit still only when asked
