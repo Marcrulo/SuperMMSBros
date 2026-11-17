@@ -73,6 +73,17 @@ Files: `characters/kim/moves/` (`moveset.tres`, `jab.tres`, `side_tilt.tres`, `d
 `ladder_data.gd`, `ladder.gd`, `blower_ability.gd`, `blower_data.gd`, `torch_ability.gd`,
 `torch_data.gd`, `burn.gd`, `tool_swing_ability.gd`, `tool_swing_data.gd`, `hose.gd` (the drawn hose; each with a `.uid`).
 
+### Sounds
+
+His own sounds ([character sounds](../sound.md#character-sounds)), in `characters/kim/sounds/`:
+
+- **Hammer:** a hit by the thrown hammer sounds like metal (`pipe.wav`, `hit_sound` on
+  `neutral_special.tres`, the throw's data).
+- **Torch:** a flamethrower roar when the flame comes out (`flame.wav`, `active_sound` on
+  `side_special.tres`).
+- **Axe:** a chop when the axe comes down (`chop.wav`, `active_sound` on `side_tilt.tres`; the
+  swing sound still plays at its start).
+
 ## Look
 
 Kim keeps his generated body (`assets/fighters/slot_09/`). His tools are drawn by the game in the

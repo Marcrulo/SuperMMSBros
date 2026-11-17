@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
 [ext_resource type="Resource" path="res://characters/kim/moves/hammer.tres" id="2_hammer"]
+[ext_resource type="AudioStream" uid="uid://y5hxiymqaity" path="res://characters/kim/sounds/pipe.wav" id="s_pipe"]
 
 [resource]
 script = ExtResource("1_move")
@@ -20,3 +21,4 @@ projectile_lifetime = 120
 projectile_angle_deg = 20.0
 projectile_gravity = 600.0
 ability = ExtResource("2_hammer")
+hit_sound = ExtResource("s_pipe")

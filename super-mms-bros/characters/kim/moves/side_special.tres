@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
 [ext_resource type="Resource" path="res://characters/kim/moves/torch.tres" id="2_torch"]
+[ext_resource type="AudioStream" uid="uid://djjpidwdgotid" path="res://characters/kim/sounds/flame.wav" id="s_flame"]
 
 [resource]
 script = ExtResource("1_move")
@@ -16,3 +17,4 @@ knockback_growth = 0.15
 angle_deg = 25.0
 direction = 0
 ability = ExtResource("2_torch")
+active_sound = ExtResource("s_flame")
