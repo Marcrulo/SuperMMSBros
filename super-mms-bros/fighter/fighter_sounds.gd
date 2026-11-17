@@ -240,10 +240,10 @@ func _volume(sound: StringName, stream: AudioStream) -> float:
 
 
 func _play_flat(sound: StringName) -> void:
-	last_played = sound
-	played.emit(sound)
 	var stream: AudioStream = sound_set.streams.get(sound)
+	last_played = sound
 	last_stream = stream
+	played.emit(sound)
 	if stream == null:
 		return
 	_flat_player.stream = stream
@@ -277,10 +277,10 @@ func _set_loop(sound: StringName) -> void:
 	_loop_player.stop()
 	if sound == &"":
 		return
-	last_played = sound
-	played.emit(sound)
 	var stream := stream_for(sound, _move_data, _abilities, sound_set)
+	last_played = sound
 	last_stream = stream
+	played.emit(sound)
 	if stream == null:
 		return
 	if not _looped.has(stream):
