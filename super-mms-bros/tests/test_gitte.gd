@@ -431,3 +431,39 @@ func test_volley_picture() -> void:
 ## Her stance ability.
 func _stance() -> StanceAbility:
 	return _p1.ability(StanceAbility) as StanceAbility
+
+
+# --- Sounds (docs/specs/characters/gitte.md#sounds) ----------------------------------------------
+
+
+func _heard(fighter: Fighter) -> Array[AudioStream]:
+	var heard: Array[AudioStream] = []
+	var sounds := fighter.get_node("Sounds") as FighterSounds
+	sounds.played.connect(func(_sound: StringName) -> void: heard.append(sounds.last_stream))
+	return heard
+
+
+func _jab_heard(stance: StanceAbility.Stance) -> Array[AudioStream]:
+	await _place(Vector2(150, 192), Vector2(165, 192), _moves("jab"), stance)
+	var heard := _heard(_p2)
+	_steps(10)
+	assert_eq(_p2.state, Fighter.State.HITSTUN, "hit")
+	return heard
+
+
+func test_her_minus_hits_sound_reversed() -> void:
+	var heard: Array[AudioStream] = await _jab_heard(StanceAbility.Stance.MINUS)
+	assert_has(heard, load("res://characters/gitte/sounds/reverse_hit.wav"))
+
+
+func test_her_other_hits_sound_as_usual() -> void:
+	var heard: Array[AudioStream] = await _jab_heard(StanceAbility.Stance.PLUS)
+	assert_does_not_have(heard, load("res://characters/gitte/sounds/reverse_hit.wav"))
+
+
+func test_the_volley_whooshes() -> void:
+	await _place(Vector2(150, 192), Vector2(380, 192), _moves("volley"))
+	var heard := _heard(_p1)
+	_steps(15)
+	assert_eq(heard.count(load("res://characters/gitte/sounds/volley.wav")), 1)
+	assert_does_not_have(heard, _p1.get_node("Sounds").sound_set.streams[&"zap"], "instead of the zap")

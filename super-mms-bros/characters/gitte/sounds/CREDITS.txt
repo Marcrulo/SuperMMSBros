@@ -1,0 +1,10 @@
+Gitte's own sounds (tools/gen_character_sfx.py gitte,
+list in tools/sfx/characters/gitte.py).
+Changes: cut where noted, silence trimmed, loudness normalized, 44.1 kHz WAV.
+
+reverse_hit.wav
+  "hit29.mp3.flac (from "37 hits/punches")" by qubodup, https://opengameart.org/content/37-hitspunches, reversed
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+volley.wav
+  "Metallic Whoosh.wav" by MissCellany, https://freesound.org/people/MissCellany/sounds/240640/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
