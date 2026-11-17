@@ -1,6 +1,7 @@
 extends GutTest
-## The pause menu (docs/specs/match-and-stage.md#pause): Esc pauses the match and shows CONTINUE
-## and QUIT; CONTINUE (or Esc again) unpauses, QUIT goes back to the character select.
+## The pause menu (docs/specs/match-and-stage.md#pause): Esc pauses the match and shows CONTINUE,
+## RESTART and QUIT; CONTINUE (or Esc again) unpauses, RESTART starts the same match over, QUIT goes
+## back to the character select.
 ## Every test unpauses in after_each: a paused tree would also stop the test runner.
 
 const MATCH_SCENE := preload("res://match/match.tscn")
@@ -79,9 +80,10 @@ func test_cancel_continues() -> void:
 
 func test_the_choices() -> void:
 	var labels := _menu.get_choice_labels()
-	assert_eq(labels.size(), 2)
+	assert_eq(labels.size(), 3)
 	assert_eq(labels[0].text, "CONTINUE")
-	assert_eq(labels[1].text, "QUIT")
+	assert_eq(labels[1].text, "RESTART")
+	assert_eq(labels[2].text, "QUIT")
 
 
 # --- Choosing --------------------------------------------
@@ -96,11 +98,29 @@ func test_continue_unpauses() -> void:
 	assert_eq(Game.last_sfx, "menu_confirm")
 
 
-func test_quit_goes_back_to_the_character_select() -> void:
+func test_restart_starts_the_same_match_over() -> void:
+	Game.character_id = "slot_03"
+	Game.stage_id = "fc"
 	_press("pause")
 	_press("ui_down")
 	assert_eq(_menu.selected, 1)
 	assert_eq(Game.last_sfx, "menu_move")
+	_press("ui_accept")
+	assert_false(_menu.is_open())
+	assert_false(get_tree().paused, "unpaused, so the new match runs")
+	assert_eq(Game.requested_scene, Game.MATCH_PATH, "the match scene, loaded again")
+	assert_eq(Game.character_id, "slot_03", "same character")
+	assert_eq(Game.stage_id, "fc", "same stage")
+	assert_eq(Game.last_sfx, "menu_confirm")
+	Game.character_id = Game.DEFAULT_CHARACTER
+	Game.stage_id = ""
+
+
+func test_quit_goes_back_to_the_character_select() -> void:
+	_press("pause")
+	_press("ui_down")
+	_press("ui_down")
+	assert_eq(_menu.selected, 2)
 	_press("ui_accept")
 	assert_false(get_tree().paused, "unpaused, so the next screen runs")
 	assert_eq(Game.requested_scene, Game.CHARACTER_SELECT_PATH)
@@ -110,9 +130,9 @@ func test_the_highlight_doesnt_wrap() -> void:
 	_press("pause")
 	_press("ui_up")
 	assert_eq(_menu.selected, 0)
-	for i in 3:
+	for i in 4:
 		_press("ui_down")
-	assert_eq(_menu.selected, 1)
+	assert_eq(_menu.selected, 2)
 
 
 func test_opening_again_starts_on_continue() -> void:
@@ -178,6 +198,16 @@ func test_clicking_sfx_mutes_the_sfx_bus() -> void:
 	assert_true(_bus_muted("SFX"))
 	assert_false(_bus_muted("Music"), "music untouched")
 	assert_eq(_menu.sfx_button().icon, load("res://assets/ui/icon_sfx_off.png"))
+
+
+func test_clicking_the_mute_buttons_makes_no_sound() -> void:
+	_press("pause")
+	Game.last_sfx = ""
+	_menu.music_button().pressed.emit()
+	_menu.sfx_button().pressed.emit()
+	_menu.music_button().pressed.emit()
+	_menu.sfx_button().pressed.emit()
+	assert_eq(Game.last_sfx, "", "no menu sound on mute / unmute")
 
 
 func test_buttons_show_the_saved_state_when_opened() -> void:

@@ -1,9 +1,9 @@
 """Generates the pause menu's mute button icons (docs/specs/match-and-stage.md#pause).
 
 Pixel art, 18x12, on a transparent background (the button draws its own box):
-  icon_music.png / icon_music_off.png  - a speaker with a music note / with a red cross
-  icon_sfx.png   / icon_sfx_off.png    - a speaker with a spiky "bang" burst / with a red cross
-Muted, the speaker turns grey.
+  icon_music.png - a speaker with a music note
+  icon_sfx.png   - a speaker with a spiky "bang" burst
+  icon_*_off.png - muted: the same icon dimmed, with a red cross on top
 Usage: python3 -I tools/gen_ui_icons.py super-mms-bros/assets/ui [--preview]
 """
 import sys
@@ -13,7 +13,6 @@ from PIL import Image
 
 W, H = 18, 12
 LIGHT = (244, 244, 244, 255)     # the game's text white
-DIM = (148, 176, 194, 255)       # the menus' grey
 BANG = (255, 205, 117, 255)      # the burst's middle (the viewer's accent yellow)
 RED = (240, 82, 79, 255)         # the HUD's high-damage red
 
@@ -49,18 +48,19 @@ NOTE = [
 
 CROSS = [
     "..................",
-    "..................",
-    "..................",
-    "........#...#.....",
-    ".........#.#......",
-    "..........#.......",
-    ".........#.#......",
-    "........#...#.....",
-    "..................",
-    "..................",
-    "..................",
+    "....##......##....",
+    ".....##....##.....",
+    "......##..##......",
+    ".......####.......",
+    "........##........",
+    ".......####.......",
+    "......##..##......",
+    ".....##....##.....",
+    "....##......##....",
+    "...##........##...",
     "..................",
 ]
+DIMMING = 0.4  # muted icons keep this much of each colour's brightness
 
 
 # A comic "bang" (like a cartoon hit burst): uneven spikes in white round a yellow middle (o).
@@ -98,14 +98,22 @@ def icon(*layers):
     return image
 
 
+def dimmed(*layers):
+    out = {}
+    for layer in layers:
+        for xy, (r, g, b, a) in layer.items():
+            out[xy] = (round(r * DIMMING), round(g * DIMMING), round(b * DIMMING), a)
+    return out
+
+
 def main():
     out = Path(sys.argv[1])
     out.mkdir(parents=True, exist_ok=True)
     icons = {
         "icon_music": icon(grid(SPEAKER, LIGHT), grid(NOTE, LIGHT)),
-        "icon_music_off": icon(grid(SPEAKER, DIM), grid(CROSS, RED)),
+        "icon_music_off": icon(dimmed(grid(SPEAKER, LIGHT), grid(NOTE, LIGHT)), grid(CROSS, RED)),
         "icon_sfx": icon(grid(SPEAKER, LIGHT), burst()),
-        "icon_sfx_off": icon(grid(SPEAKER, DIM), grid(CROSS, RED)),
+        "icon_sfx_off": icon(dimmed(grid(SPEAKER, LIGHT), burst()), grid(CROSS, RED)),
     }
     for name, image in icons.items():
         image.save(out / f"{name}.png")

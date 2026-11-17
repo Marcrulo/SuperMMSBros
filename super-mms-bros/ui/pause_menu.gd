@@ -1,11 +1,11 @@
 class_name PauseMenu
 extends CanvasLayer
 ## The pause menu (docs/specs/match-and-stage.md#pause): `pause` (Esc) stops the scene tree and
-## shows CONTINUE / QUIT over the dimmed game, with small music / sound effects mute icon buttons
+## shows CONTINUE / RESTART / QUIT over the dimmed game, with small music / sound effects mute icon buttons
 ## for the mouse. It runs with PROCESS_MODE_ALWAYS (set
 ## in the scene), so it hears keys while everything else is paused. It changes no gameplay state.
 
-enum Choice { CONTINUE, QUIT }
+enum Choice { CONTINUE, RESTART, QUIT }
 
 const HIGHLIGHT := Color("#b13e53")
 const TEXT := Color("#f4f4f4")
@@ -24,7 +24,7 @@ const SFX_OFF_ICON := preload("res://assets/ui/icon_sfx_off.png")
 ## The highlighted choice (a Choice).
 var selected: int = Choice.CONTINUE
 
-@onready var _labels: Array[Label] = [$Continue as Label, $Quit as Label]
+@onready var _labels: Array[Label] = [$Continue as Label, $Restart as Label, $Quit as Label]
 @onready var _bar := $Bar as ColorRect
 @onready var _music := $MusicButton as Button
 @onready var _sfx := $SfxButton as Button
@@ -89,6 +89,13 @@ func resume() -> void:
 	get_tree().paused = false
 
 
+## Starts the same match over: the match scene is loaded again, so everything in it starts fresh
+## (the Game autoload keeps the chosen characters and stage). Unpaused, so the new match runs.
+func restart() -> void:
+	resume()
+	Game.go_to(Game.MATCH_PATH)
+
+
 ## Ends the match: back to the character select (unpaused, so that screen runs).
 func quit() -> void:
 	resume()
@@ -97,23 +104,24 @@ func quit() -> void:
 
 func _choose() -> void:
 	Game.play_sfx("menu_confirm")
-	if selected == Choice.CONTINUE:
-		resume()
-	else:
-		quit()
+	match selected:
+		Choice.CONTINUE:
+			resume()
+		Choice.RESTART:
+			restart()
+		_:
+			quit()
 
 
 func _toggle_music() -> void:
 	Game.music_muted = not Game.music_muted
 	Game.save_settings()
-	Game.play_sfx("menu_confirm")
 	_show_mute_buttons()
 
 
 func _toggle_sfx() -> void:
 	Game.sfx_muted = not Game.sfx_muted
 	Game.save_settings()
-	Game.play_sfx("menu_confirm")  # After unmuting, so turning sound on is heard.
 	_show_mute_buttons()
 
 
@@ -153,7 +161,7 @@ func _select(index: int) -> void:
 	_show_selection()
 
 
-## The highlighted choice in white on the red bar, the other in grey.
+## The highlighted choice in white on the red bar, the others in grey.
 func _show_selection() -> void:
 	for i in _labels.size():
 		_labels[i].add_theme_color_override("font_color", TEXT if i == selected else DIM_TEXT)
