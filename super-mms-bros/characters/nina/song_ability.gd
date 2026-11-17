@@ -174,3 +174,11 @@ func _draw_note(visuals: FighterVisuals, n: int, age: int, center: Vector2, reac
 		visuals.draw_rect(Rect2(at + rect.position - Vector2.ONE, rect.size + Vector2(2, 2)), outline)
 	for rect in NOTE_RECTS:
 		visuals.draw_rect(Rect2(at + rect.position, rect.size), color)
+
+
+## Her own sound as the song phase starts (docs/specs/sound.md#character-sounds).
+func sounds() -> Dictionary:
+	var sound := _numbers().sound
+	if sound == null:
+		return {}
+	return {"start": {&"song": &"nina_sing"}, "streams": {&"nina_sing": sound}}

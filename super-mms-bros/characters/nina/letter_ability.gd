@@ -127,3 +127,11 @@ func drawing(_animation: String, frame: int) -> int:
 	if now < move_data.startup:
 		return 1
 	return 2 if now <= last else 3
+
+
+## Her own sound as the letters phase starts (docs/specs/sound.md#character-sounds).
+func sounds() -> Dictionary:
+	var sound := _numbers().sound
+	if sound == null:
+		return {}
+	return {"start": {&"letters": &"nina_scream"}, "streams": {&"nina_scream": sound}}

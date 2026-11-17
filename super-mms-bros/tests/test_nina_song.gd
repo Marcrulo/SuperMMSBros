@@ -225,3 +225,12 @@ func test_a_sleeper_gets_a_sleep_mark_that_goes_when_it_wakes() -> void:
 	_p2.global_position.x = 380.0
 	_steps(125)
 	assert_eq(_match.get_entities(SleepMark, 0).size(), 0)
+
+
+func test_sing_sound() -> void:
+	await _place(Vector2(200, 192), Vector2(380, 192), _sing())
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	var heard: Array[AudioStream] = []
+	sounds.played.connect(func(_sound: StringName) -> void: heard.append(sounds.last_stream))
+	_steps(30)
+	assert_eq(heard.count(load("res://characters/nina/sounds/sing.wav")), 1, "she sings as the song starts")

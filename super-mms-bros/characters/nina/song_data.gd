@@ -11,6 +11,8 @@ extends AbilityData
 @export var sleep_ticks: int
 ## In the air she sinks at most this fast while singing (px/s).
 @export var hover_fall_speed: float
+## Her singing as the song starts (docs/specs/sound.md#character-sounds); none = silent.
+@export var sound: AudioStream
 
 
 func create_ability() -> FighterAbility:
