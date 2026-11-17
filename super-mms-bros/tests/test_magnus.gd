@@ -171,3 +171,12 @@ func test_earth_smash_hits_on_both_sides() -> void:
 	_steps(12)  # Frame 11: the burst.
 	assert_eq(_p2.percent, 11.0)
 	assert_lt(_p2.velocity.x, 0.0)
+
+
+func test_the_fireball_roars_as_it_appears() -> void:
+	await _place(Vector2(200, 192), Vector2(380, 192), _special(1.0))
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	var heard: Array[AudioStream] = []
+	sounds.played.connect(func(_sound: StringName) -> void: heard.append(sounds.last_stream))
+	_steps(15)
+	assert_eq(heard.count(load("res://characters/magnus/sounds/fire.wav")), 1)

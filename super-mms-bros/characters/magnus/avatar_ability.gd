@@ -477,7 +477,12 @@ func _draw_rocks_ring(visuals: FighterVisuals, s: float, front: bool, grown: flo
 
 
 func sounds() -> Dictionary:
-	return {"start": {&"avatar_rise": &"charge", &"avatar_fly": &"boost"}}
+	var out := {"start": {&"avatar_rise": &"charge", &"avatar_fly": &"boost"}}
+	var wind := _numbers().fly_sound
+	if wind != null:
+		out["loop"] = {&"avatar_fly": &"magnus_wind"}
+		out["streams"] = {&"magnus_wind": wind}
+	return out
 
 
 func make_card_badge(_card: PlayerCard) -> Control:

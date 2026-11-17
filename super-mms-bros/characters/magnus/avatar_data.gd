@@ -17,6 +17,8 @@ extends AbilityData
 ## fighter again (ticks).
 @export var fly_hit: MoveData
 @export var rehit_frames: int
+## Loops through the flight (docs/specs/sound.md#loops); none = silent.
+@export var fly_sound: AudioStream
 
 @export_group("Look")
 ## The elements' rings around the middle of his body: long radius (px) and ticks per turn.

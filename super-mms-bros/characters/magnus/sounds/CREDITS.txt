@@ -1,0 +1,10 @@
+Magnus's own sounds (tools/gen_character_sfx.py magnus,
+list in tools/sfx/characters/magnus.py).
+Changes: cut where noted, silence trimmed, loudness normalized, 44.1 kHz WAV.
+
+fire.wav
+  "Fire.wav" by danielpodlovics, https://freesound.org/people/danielpodlovics/sounds/530355/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+wind.wav
+  "Wind whistle.mp3" by Rvgerxini, https://freesound.org/people/Rvgerxini/sounds/509732/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/

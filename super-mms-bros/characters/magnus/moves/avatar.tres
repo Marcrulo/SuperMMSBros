@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://characters/magnus/avatar_data.gd" id="1_data"]
 [ext_resource type="Resource" path="res://characters/magnus/moves/fly_hit.tres" id="2_hit"]
+[ext_resource type="AudioStream" uid="uid://dgv41p02ehuba" path="res://characters/magnus/sounds/wind.wav" id="s_wind"]
 
 [resource]
 script = ExtResource("1_data")
@@ -16,3 +17,4 @@ orbit_radius = 26.0
 orbit_ticks = 60
 rise_eyes = PackedVector2Array(-0.15, -26.6, 3.6, -26.6)
 fly_eyes = PackedVector2Array(7.35, -24.4, 11.1, -24.4)
+fly_sound = ExtResource("s_wind")

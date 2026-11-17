@@ -1,7 +1,9 @@
 [gd_resource type="Resource" script_class="FireballData" format=3]
 
 [ext_resource type="Script" path="res://characters/magnus/fireball_data.gd" id="1_data"]
+[ext_resource type="AudioStream" uid="uid://cib8f1duks1e4" path="res://characters/magnus/sounds/fire.wav" id="s_fire"]
 
 [resource]
 script = ExtResource("1_data")
 flicker_ticks = 6
+sound = ExtResource("s_fire")

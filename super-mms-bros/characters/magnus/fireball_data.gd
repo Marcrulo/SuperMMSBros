@@ -5,6 +5,8 @@ extends AbilityData
 
 ## Ticks for one flicker cycle of the drawn flame (presentation only).
 @export var flicker_ticks: int = 6
+## The fireball appearing (docs/specs/sound.md#character-sounds); none = silent.
+@export var sound: AudioStream
 
 
 func create_ability() -> FighterAbility:

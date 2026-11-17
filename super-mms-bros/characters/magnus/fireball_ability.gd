@@ -4,6 +4,9 @@ extends FighterAbility
 ## special (the default move: turning first, frames from its MoveData) throws a Fireball entity
 ## instead of the default projectile, one at a time.
 
+## His fireball's sound, by name (sounds()).
+const FIRE := &"magnus_fire"
+
 ## His last fireball (it may be gone already: see _has_fireball()).
 var _fireball_out: Fireball = null
 
@@ -44,9 +47,16 @@ func spawn_entities(match_: Match) -> void:
 	ball.setup(fighter.player_index, fighter.facing, at, fighter.projectile_data(move_data),
 			(data as FireballData).flicker_ticks, _landed)
 	_fireball_out = ball
+	match_.owner_sound.emit(fighter.player_index, FIRE)
 
 
 func _landed(_victim: Fighter) -> void:
 	var avatar := fighter.ability(AvatarAbility) as AvatarAbility
 	if avatar != null:
 		avatar.light(AvatarAbility.Element.FIRE)
+
+
+## The fireball's sound file (docs/specs/sound.md#character-sounds).
+func sounds() -> Dictionary:
+	var sound := (data as FireballData).sound
+	return {"streams": {FIRE: sound}} if sound != null else {}
