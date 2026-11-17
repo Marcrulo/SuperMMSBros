@@ -35,6 +35,8 @@ ground ahead, launching whoever it hits **nearly straight sideways**.
   on the way (`down_special_dive` with no active frames), then smashes on landing (from frame 1).
 - **The light:** a picture drawn in front of him from the impact point on the active frames and a
   little after (see [art guide](#look)); presentation only.
+- **Sound:** the burst of light is a choir instead of the default `burst` (`sounds` on
+  `down_special.tres` → `characters/stig/sounds/choir.wav`; [character sounds](../sound.md#character-sounds)).
 
 Files: `characters/stig/moves/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`,
 `neutral_special.tres`, `down_special.tres`, `down_special_dive.tres`).
