@@ -50,6 +50,12 @@ Files: `characters/henrik/moves/` (`moveset.tres` + `jab.tres`, `side_tilt.tres`
 `neutral_special.tres`, `down_special.tres`, `speakers.tres`, `speaker_blast.tres`);
 `characters/henrik/speaker_data.gd`, `speaker_ability.gd`, `speaker.gd`.
 
+### Sounds
+
+His own sound ([character sounds](../sound.md#character-sounds)), in `characters/henrik/sounds/`:
+an acoustic C chord as the speaker jam starts (`strum.wav`, cut to 1.4 s; `SpeakerData.sound`,
+played as the `speaker_jam` phase starts). The beats keep the `burst` sound.
+
 ## Look
 
 ### Weapon and own drawings

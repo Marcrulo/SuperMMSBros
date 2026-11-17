@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://characters/henrik/speaker_data.gd" id="1_speakers"]
 [ext_resource type="Resource" path="res://characters/henrik/moves/speaker_blast.tres" id="2_blast"]
+[ext_resource type="AudioStream" uid="uid://b0ok5ou26fta8" path="res://characters/henrik/sounds/strum.wav" id="s_strum"]
 
 [resource]
 script = ExtResource("1_speakers")
@@ -13,3 +14,4 @@ beat_every = 18
 blast_frames = 4
 sink_frames = 8
 blast = ExtResource("2_blast")
+sound = ExtResource("s_strum")

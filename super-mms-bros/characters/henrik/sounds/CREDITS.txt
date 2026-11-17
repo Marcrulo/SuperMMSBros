@@ -1,0 +1,7 @@
+Henrik's own sounds (tools/gen_character_sfx.py henrik,
+list in tools/sfx/characters/henrik.py).
+Changes: cut where noted, silence trimmed, loudness normalized, 44.1 kHz WAV.
+
+strum.wav
+  "AcousticGuitar-C-Chord.wav" by spitefuloctopus, https://freesound.org/people/spitefuloctopus/sounds/315706/, cut to 1.4 s with a fade-out
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/

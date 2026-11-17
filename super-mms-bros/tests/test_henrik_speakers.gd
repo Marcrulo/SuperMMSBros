@@ -278,3 +278,15 @@ func test_playing_drawings() -> void:
 func test_drawing_leaves_other_moves_alone() -> void:
 	await _place()
 	assert_eq(_ability().drawing("jab", 3), 3)
+
+
+func test_he_strums_once_as_the_jam_starts() -> void:
+	await _place()
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	var strums: Array[StringName] = []
+	var strum := load("res://characters/henrik/sounds/strum.wav")
+	sounds.played.connect(func(_sound: StringName) -> void:
+		if sounds.last_stream == strum:
+			strums.append(_p1.move))
+	_steps(90)
+	assert_eq(strums, [SpeakerAbility.JAM] as Array[StringName], "once, as the jam starts")

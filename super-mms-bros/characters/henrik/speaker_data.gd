@@ -16,6 +16,8 @@ extends AbilityData
 @export var sink_frames: int
 ## A speaker's blast: its hitbox from the speaker's foot (facing outward) and its hit.
 @export var blast: MoveData
+## His strum as the jam starts (docs/specs/sound.md#character-sounds); none = silent.
+@export var sound: AudioStream
 
 
 ## True if jam tick `age` is a beat.
