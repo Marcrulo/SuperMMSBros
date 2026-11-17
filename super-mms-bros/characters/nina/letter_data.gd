@@ -11,6 +11,8 @@ extends AbilityData
 @export var walk_scale: float
 ## Her back hand, relative to the feet, facing right (the front hand is the move's hitbox_center).
 @export var back_hand: Vector2
+## Her scream as the volley starts (docs/specs/sound.md#character-sounds); none = silent.
+@export var sound: AudioStream
 
 
 func create_ability() -> FighterAbility:

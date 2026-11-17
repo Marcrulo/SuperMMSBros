@@ -73,6 +73,15 @@ sings, and everyone near her falls asleep.
 Files: `characters/nina/moves/down_special.tres`; `characters/nina/song_data.gd`,
 `song_ability.gd`, `sleep_mark.gd`.
 
+## Sounds
+
+Her own sounds ([character sounds](../sound.md#character-sounds)), in `characters/nina/sounds/`:
+
+- **Letter volley:** she screams as it starts (`scream.wav`, cut to about the volley's length;
+  `LetterData.sound`, played as the `letters` phase starts).
+- **Lullaby:** she sings as it starts (`sing.wav`, cut to the song's length; `SongData.sound`, as
+  the `song` phase starts).
+
 ## Look
 
 - **Pose:** her default side special strip (4 drawings): drawing 0 then 1 while winding up, 2

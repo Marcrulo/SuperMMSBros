@@ -404,3 +404,12 @@ func test_letters_already_out_keep_flying_after_a_cancel() -> void:
 	var x0 := letter.global_position.x
 	_steps(3)
 	assert_almost_eq(letter.global_position.x - x0, 12.0, 0.1)
+
+
+func test_scream_sound() -> void:
+	await _place(Vector2(200, 192), Vector2(380, 192), _volley())
+	var sounds := _p1.get_node("Sounds") as FighterSounds
+	var heard: Array[AudioStream] = []
+	sounds.played.connect(func(_sound: StringName) -> void: heard.append(sounds.last_stream))
+	_steps(30)
+	assert_eq(heard.count(load("res://characters/nina/sounds/scream.wav")), 1, "the volley starts with her scream")
