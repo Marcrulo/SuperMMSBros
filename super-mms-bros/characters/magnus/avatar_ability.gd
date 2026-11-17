@@ -10,8 +10,8 @@ extends FighterAbility
 enum Element { WATER, FIRE, AIR, EARTH }
 
 ## The states he's free to act in (the Avatar State can start).
-const FREE: Array[Fighter.State] = [Fighter.State.IDLE, Fighter.State.RUN, Fighter.State.CROUCH,
-		Fighter.State.AIR, Fighter.State.HELPLESS]
+const FREE: Array[Fighter.State] = [Fighter.State.IDLE, Fighter.State.RUN, Fighter.State.DASH,
+		Fighter.State.SPRINT, Fighter.State.CROUCH, Fighter.State.AIR, Fighter.State.HELPLESS]
 const OUTLINE := Color(0.1, 0.11, 0.17)
 ## Each element's color (Element order).
 const COLORS: Array[Color] = [Color(0.3, 0.6, 1.0), Color(1.0, 0.5, 0.15),

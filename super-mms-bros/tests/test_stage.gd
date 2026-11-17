@@ -19,9 +19,34 @@ func test_collision_layer_names() -> void:
 
 func test_main_platform_is_solid() -> void:
 	var body := _stage.get_node("MainPlatform") as StaticBody2D
-	assert_eq(_shape_rect(body), Rect2(96, 192, 288, 16))
+	assert_eq(_shape_rect(body), Rect2(96, 192, 288, 32), "top 288 wide, 16 + 16 px deep")
 	assert_eq(body.collision_layer, _layer_bit(1), "only on layer 1 (stage_solid)")
 	assert_false(_shape(body).one_way_collision)
+
+
+func test_main_platform_underside_slopes_in_below_the_ledges() -> void:
+	var shape := _shape(_stage.get_node("MainPlatform") as StaticBody2D)
+	var points: Array[Vector2] = []
+	for point in (shape.shape as ConvexPolygonShape2D).points:
+		points.append(shape.global_position + point)
+	assert_eq(points, [
+		Vector2(96, 192), Vector2(384, 192), Vector2(384, 208),
+		Vector2(364, 224), Vector2(116, 224), Vector2(96, 208),
+	] as Array[Vector2], "flat top, straight sides 16 px down, then a wedge 20 px in, 16 down")
+
+
+func test_ledges_are_the_top_corners() -> void:
+	var ledges := _stage.get_ledges()
+	assert_eq(ledges[0].point, Vector2(96, 192))
+	assert_eq(ledges[0].side, -1)
+	assert_eq(ledges[1].point, Vector2(384, 192))
+	assert_eq(ledges[1].side, 1)
+
+
+func test_floor_below_is_the_top() -> void:
+	assert_eq(_stage.floor_below(Vector2(240, 100)), 192.0)
+	assert_eq(_stage.floor_below(Vector2(90, 100)), INF, "beside the stage")
+	assert_eq(_stage.floor_below(Vector2(240, 100), true), 108.0, "the top platform")
 
 
 func test_pass_through_platforms() -> void:
@@ -48,11 +73,11 @@ func _shape(body: StaticBody2D) -> CollisionShape2D:
 	return body.get_node("CollisionShape2D") as CollisionShape2D
 
 
-## The collision rectangle in world coordinates.
+## The collision shape's bounding rectangle in world coordinates.
 func _shape_rect(body: StaticBody2D) -> Rect2:
 	var shape := _shape(body)
-	var size := (shape.shape as RectangleShape2D).size
-	return Rect2(shape.global_position - size / 2.0, size)
+	var rect := shape.shape.get_rect()
+	return Rect2(shape.global_position + rect.position, rect.size)
 
 
 ## Collision layers are stored as bits: layer 1 = 1, layer 2 = 2, layer 3 = 4, ...

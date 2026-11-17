@@ -21,7 +21,12 @@ in px/s², durations in ticks (60 per second).
 
 | Stat | Value | Notes |
 |---|---|---|
-| `run_speed` | 100 | Top ground speed |
+| `run_speed` | 100 | Top walking speed |
+| `sprint_double_tap_frames` | 12 | Max ticks from letting go of a side to pressing it again, to start a dash |
+| `dash_frames` | 10 | Length of a dash (the burst that starts a sprint) |
+| `dash_speed` | 170 | Ground speed during a dash |
+| `dash_accel` | 6000 | How fast a dash reaches `dash_speed` (≈ at once) |
+| `sprint_speed` | 150 | Top ground speed while sprinting |
 | `ground_accel` | 1200 | Toward target speed while holding a direction |
 | `ground_friction` | 1200 | Toward 0 with no input, while crouching, shielding, during ground attacks, and on the ground in hitstun |
 | `air_speed` | 90 | Top air speed from input |
@@ -30,6 +35,7 @@ in px/s², durations in ticks (60 per second).
 | `gravity` | 600 | |
 | `max_fall_speed` | 250 | |
 | `fast_fall_speed` | 400 | Falling speed while fast-falling |
+| `fast_fall_delay` | 4 | Ticks a down press waits before it fast-falls (A in that time makes it a down air instead) |
 | `jump_velocity` | 240 | ≈ 48 px ground jump |
 | `double_jump_velocity` | 219 | ≈ 40 px double jump |
 | `short_hop_cut` | 0.5 | Upward speed is multiplied by this if jump is released early |
@@ -98,7 +104,9 @@ action. Shield, crouch and charging act while their button is *held*.
 | State | Meaning |
 |---|---|
 | `IDLE` | On the ground, not moving by input |
-| `RUN` | On the ground, holding a direction |
+| `RUN` | On the ground, holding a direction: walking |
+| `DASH` | On the ground, the short burst a double-tapped side starts (see [Sprint](#sprint)) |
+| `SPRINT` | On the ground, still holding the direction after a dash: sprinting |
 | `CROUCH` | On the ground, holding down |
 | `AIR` | Airborne (jumping or falling), able to act |
 | `ATTACK` | Performing a move (normal or special, ground or air); which one is in `move` |
@@ -123,7 +131,7 @@ the state is entered.
 
 Checked in this order on each tick; the first that applies happens:
 
-| From `IDLE`, `RUN`, `CROUCH` | From `AIR` |
+| From `IDLE`, `RUN`, `DASH`, `SPRINT`, `CROUCH` | From `AIR` |
 |---|---|
 | attack pressed → ground attack (by direction) | attack pressed → air attack (by direction) |
 | special pressed → special (by direction) | special pressed → special (by direction) |
@@ -133,12 +141,16 @@ Checked in this order on each tick; the first that applies happens:
 | | jump released while rising from a ground jump → short hop cut |
 | down pressed twice within `drop_double_tap_frames` on a pass-through platform → drop through | |
 | down held → `CROUCH` | |
+| a side pressed again within `sprint_double_tap_frames` of letting go of it (from `IDLE`/`RUN`/`SPRINT`), or the opposite side pressed during a `DASH` → `DASH` that way | |
+| in a `DASH` that hasn't run its `dash_frames` → stays in `DASH` | |
+| `move_x ≠ 0` toward facing, from `DASH`/`SPRINT` → `SPRINT` | |
 | `move_x ≠ 0` → `RUN` (facing turns) | |
 | otherwise → `IDLE` | |
 
 ### Other transitions
 
-- `IDLE`/`RUN`/`CROUCH` → `AIR`: jump, drop through a platform, walking off a ledge.
+- `IDLE`/`RUN`/`DASH`/`SPRINT`/`CROUCH` → `AIR`: jump, drop through a platform, walking off a
+  ledge.
 - `AIR` → `IDLE`/`RUN`/`CROUCH`: landing.
 - `ATTACK` → `IDLE`/`RUN`/`CROUCH`/`AIR`: after its last frame, whichever fits; an air attack that
   lands ends at once (specials: see [moves](moves.md)).
@@ -165,9 +177,12 @@ Checked in this order on each tick; the first that applies happens:
 ## Movement rules
 
 - **Ground:** with input, horizontal speed moves toward `move_x × run_speed` at `ground_accel`;
-  without input it moves toward 0 at `ground_friction`.
+  without input it moves toward 0 at `ground_friction`. Dashing and sprinting: see
+  [Sprint](#sprint).
 - **Air:** with input, horizontal speed moves toward `move_x × air_speed` at `air_accel`; without
-  input it moves toward 0 at `air_friction`.
+  input it moves toward 0 at `air_friction`. Already faster than `air_speed` in the held
+  direction (jumping out of a sprint), it slows toward `air_speed` only at `air_friction`, so a
+  sprint's speed carries into the jump. The same goes for air attacks.
 - **Gravity:** every airborne tick, vertical speed increases by `gravity / 60`, capped at
   `max_fall_speed`.
 - **Ground jump:** jump pressed → vertical speed = −`jump_velocity`, state `AIR`.
@@ -182,12 +197,23 @@ Checked in this order on each tick; the first that applies happens:
   there (gravity and `max_fall_speed` don't apply). Holding down while still rising does nothing
   until the fighter starts to fall — except after a double jump: **pressing** down (a new press,
   not one held since before) while still rising from the double jump cancels the rise and starts
-  the fast fall at once. A first jump's rise can't be cancelled this way. It doesn't start on the tick the fighter drops through a
+  the fast fall. A first jump's rise can't be cancelled this way.
+- **Down then A:** a down press only fast-falls once down has been held for more than
+  `fast_fall_delay` ticks (the press is the first), so down with A pressed a moment later is a
+  down air at normal speed. A move that starts while down is held **uses up** that down press:
+  it doesn't fast-fall during the move, nor after it, until down is let go and pressed again. A
+  new down press during an air attack still fast-falls (after the same wait). It doesn't start on the tick the fighter drops through a
   platform (still holding down, it starts the tick after), so a drop-through tap on its own lands
   on the next platform below. A fast fall lasts until landing, a double jump, being hit, an
   up special, or a respawn — releasing down doesn't end it.
 - Walking off a ledge does not use up the double jump.
-- **Facing** changes only in `IDLE`/`RUN`/`CROUCH`, to the sign of `move_x`, and when a side move
+- **Ceilings:** rising into a flat underside stops the rise (Godot's slide leaves no upward
+  speed). Rising into a **sloped** one (the main platform's underside below the ledges, see
+  [match & stage](match-and-stage.md#layout-battlefield)) slides the fighter along it, outward and
+  up, *keeping* its velocity from before the touch, as in Smash: a recovery that comes up just
+  under the edge is guided out to the ledge instead of being stopped. Touching a flat part at the
+  same time stops it as usual.
+- **Facing** changes only in `IDLE`/`RUN`/`CROUCH` (and when a dash starts), to the sign of `move_x`, and when a side move
   starts on the ground. It does not change in the air, while attacking, shielding or in hitstun.
   Exception: when hit, the victim turns to face the attacker.
 - **Pass-through platforms:** one-way collision, so fighters jump up through them and land on top.
@@ -209,6 +235,27 @@ entity sets them again every tick the fighter stays on it. While set:
   steers or slides on the ground; low = slippery);
 - `ground_speed` multiplies the ground top speed (`run_speed`);
 - `ground_jump` multiplies the ground jump's `jump_velocity`.
+
+## Sprint
+
+Inspired by Smash Bros' dash and run. Holding a side walks (`RUN`); **double-tapping** it sprints:
+
+- **Dash:** pressing a side again within `sprint_double_tap_frames` of letting go of it (press,
+  let go, press; how long it was held first doesn't matter) while standing, walking or sprinting starts a `DASH` that way: the fighter turns that way and its
+  speed goes to `dash_speed` at `dash_accel` for `dash_frames` ticks, whether the side is still
+  held or not.
+- **Dash dance:** pressing the opposite side during a dash (once is enough) starts a new dash that
+  way at once.
+- **Sprint:** still holding the dash's direction when the dash ends → `SPRINT`: speed moves toward
+  `sprint_speed` at `ground_accel` for as long as it's held.
+- **Stopping and turning:** letting go during a sprint → `IDLE`, sliding to a stop at
+  `ground_friction` (a skid); holding the other side → walking (`RUN`) that way, the speed swinging
+  over at `ground_accel`. Double-tapping again sprints again.
+- A dash or sprint can be left the same ways as walking: attack (the usual ground attack, no dash
+  attack), special, jump, shield, drop through, crouch. Jumping keeps the speed (see the air rule
+  above). Running off a ledge → `AIR`.
+- Ground modifiers apply as to walking (`ground_grip` on `dash_accel` too, `ground_speed` on the top
+  speeds); so does `speed_scale()`.
 
 ## Crouch
 

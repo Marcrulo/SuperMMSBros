@@ -24,6 +24,8 @@ func test_frame_index_before_the_first_tick() -> void:
 func test_animation_for_movement_states() -> void:
 	assert_eq(FighterVisuals.animation_for(Fighter.State.IDLE, 0.0), "idle")
 	assert_eq(FighterVisuals.animation_for(Fighter.State.RUN, 0.0), "run")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.DASH, 0.0), "run")
+	assert_eq(FighterVisuals.animation_for(Fighter.State.SPRINT, 0.0), "run")
 	assert_eq(FighterVisuals.animation_for(Fighter.State.CROUCH, 0.0), "crouch")
 	assert_eq(FighterVisuals.animation_for(Fighter.State.AIR, -100.0), "jump")
 	assert_eq(FighterVisuals.animation_for(Fighter.State.AIR, 50.0), "fall")
@@ -123,3 +125,15 @@ func test_frame_size_is_the_strip_height() -> void:
 func test_every_frame_is_drawn_48_px_with_the_feet_at_the_origin() -> void:
 	assert_eq(FighterVisuals.frame_rect(), Rect2(-24, -48, 48, 48),
 			"a 48 px frame 1:1, a 64 px frame at 3/4 size")
+
+
+func test_dash_and_sprint_play_the_run_faster() -> void:
+	var timing: Dictionary = FighterVisuals.ANIMATIONS["run"]
+	assert_eq(FighterVisuals.animation_ticks(Fighter.State.RUN, 7), 7, "walking: as drawn")
+	for state: Fighter.State in [Fighter.State.DASH, Fighter.State.SPRINT]:
+		var frames: Array[int] = []
+		for tick in range(1, 19):
+			frames.append(FighterVisuals.frame_index(timing.ticks, true,
+					FighterVisuals.animation_ticks(state, tick)))
+		assert_eq(frames, [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 5, 5] as Array[int],
+				"3 ticks per drawing")

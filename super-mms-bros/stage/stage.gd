@@ -6,8 +6,11 @@ extends Node2D
 ## Which way each player faces at spawn, by player index: 1 = right, -1 = left.
 @export var spawn_facings: Array[int] = [1, -1]
 ## A fighter whose center leaves this rectangle is knocked out (docs/specs/match-and-stage.md).
-## It leaves room off every side for recovering; the camera never shows beyond it.
+## It leaves room off every side for recovering.
 @export var blast_zone: Rect2 = Rect2(-72, -160, 624, 464)
+## The camera never shows beyond this (docs/specs/match-and-stage.md#camera): the blast zone's
+## sides and bottom, with the top cut much lower, as in Smash.
+@export var camera_bounds: Rect2 = Rect2(-72, -40, 624, 344)
 
 var _ledges: Array[Ledge] = []
 
@@ -21,11 +24,18 @@ func get_spawn_position(player_index: int) -> Vector2:
 ## The grabbable ledges: the main platform's two top corners, left one first.
 func get_ledges() -> Array[Ledge]:
 	if _ledges.is_empty():
-		var shape := $MainPlatform/CollisionShape2D as CollisionShape2D
-		var size := (shape.shape as RectangleShape2D).size
-		var top_left := shape.global_position - size / 2.0
-		_ledges = [Ledge.new(top_left, -1), Ledge.new(top_left + Vector2(size.x, 0.0), 1)]
+		var top := _top_edge($MainPlatform)
+		_ledges = [Ledge.new(top.position, -1), Ledge.new(top.position + Vector2(top.size.x, 0.0), 1)]
 	return _ledges
+
+
+## A platform's walkable top in world coordinates: x from its left to its right end, y its top
+## (a zero-height Rect2). The main platform is wider at the top than below (its underside slopes
+## in), so its top is its widest part.
+static func _top_edge(body: Node) -> Rect2:
+	var shape := body.get_node("CollisionShape2D") as CollisionShape2D
+	var rect := shape.shape.get_rect()
+	return Rect2(shape.global_position + rect.position, Vector2(rect.size.x, 0.0))
 
 
 ## The y of the nearest floor top at or below `point` whose x range holds point.x, else INF: the
@@ -36,11 +46,9 @@ func floor_below(point: Vector2, platforms := false) -> float:
 		bodies.append_array($Platforms.get_children())
 	var best := INF
 	for body in bodies:
-		var shape := body.get_node("CollisionShape2D") as CollisionShape2D
-		var size := (shape.shape as RectangleShape2D).size
-		var top_left := shape.global_position - size / 2.0
-		if point.x >= top_left.x and point.x <= top_left.x + size.x and top_left.y >= point.y:
-			best = minf(best, top_left.y)
+		var top := _top_edge(body)
+		if point.x >= top.position.x and point.x <= top.end.x and top.position.y >= point.y:
+			best = minf(best, top.position.y)
 	return best
 
 

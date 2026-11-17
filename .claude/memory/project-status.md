@@ -1,6 +1,6 @@
 ---
 name: project-status
-description: "Where Super MMS Bros stands: v1-rework branch, character moves M6g–M6o (latest: Trine iPad break, 448 tests), awaiting playtests"
+description: "Where Super MMS Bros stands: main, 2026-11-17 movement feel (sprint, sloped ledges, camera cut-off, fast-fall wait), 868 tests"
 metadata:
   node_type: memory
   type: project
@@ -8,6 +8,7 @@ metadata:
   modified: 2026-11-15T07:30:37.461Z
 ---
 
+**2026-11-17 (main, pushed):** pause menu: mute buttons silent, muted icon = original dimmed + red X, RESTART (reloads match scene via Game.go_to(MATCH_PATH)); sprinting (DASH/SPRINT states, double-tap timed from release, dash dance, sprint-jump momentum via _steer_air; no dash attack by user's choice); camera bounds (Stage.camera_bounds, top y −40); sloped main-platform underside (ConvexPolygonShape2D wedge 20 in/16 down, drawn underside matches; rising into a sloped ceiling keeps velocity); fast fall waits fast_fall_delay 4 ticks and a down that aims a move is "used" (down-then-A = normal down air). 868 tests. Possible next: off-screen indicator bubble above the camera cut-off.
 **2026-11-16 (main, pushed):** pause menu (Esc; ui/pause_menu.tscn, CanvasLayer, PROCESS_MODE_ALWAYS: CONTINUE / QUIT = back to character select, plus small mouse icon buttons for music / sfx mute; icons from tools/gen_ui_icons.py in assets/ui; mute saved in user://settings.cfg via Game.music_muted/sfx_muted); --char=<first name|id> option; feel: Side+B turn window (side_special_turn_frames 4, same firing speed), keyboard last-pressed side wins, pressing down while rising from a double jump starts the fast fall. 826 tests. Focus now: movement/attack feel with Casper (see feel-focus-casper).
 **Worktrees cleaned (2026-11-15, night):** every char/<name> branch is merged into main and pushed (main at c8eee48, 791 tests), incl. Nina's Down+B lullaby (was uncommitted in her worktree; plan docs/plans/M6x-nina-lullaby.md; sleep 2 s in range, shield or not; unplaytested). All ../SuperMMSBros-<name> worktree folders were removed; recreate one per CLAUDE.md when working on a character.
 **Mads uppercut (2026-11-15, late):** merged to main as 42eab91 (worktree ../SuperMMSBros-mads): Up+B = rising uppercut (plan docs/plans/M6x-mads-uppercut.md): 3-frame startup, unhittable frames 1–5, phase uppercut_rise 560 up / 70 forward px/s with own gravity 1400 (~107 px), clean hit rise frames 1–4 (13 %, 80°), late hit after (5 %), HELPLESS at the top; UppercutAbility/UppercutData, no shared files; own up_special poses in mads.py; can't ledge-grab while rising (like Kim's ladder). Also Side+B reach sped up: 9/4/24 → 7/4/20 (throw unchanged). 775 tests after merge. Sprite artifact patched in place. Awaiting playtest.

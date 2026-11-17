@@ -14,11 +14,15 @@ const DODGES: Array[Fighter.State] = [
 	Fighter.State.SPOT_DODGE, Fighter.State.ROLL, Fighter.State.AIR_DODGE,
 ]
 const GROUNDED: Array[Fighter.State] = [
-	Fighter.State.IDLE, Fighter.State.RUN, Fighter.State.CROUCH, Fighter.State.SHIELD,
+	Fighter.State.IDLE, Fighter.State.RUN, Fighter.State.DASH, Fighter.State.SPRINT,
+	Fighter.State.CROUCH, Fighter.State.SHIELD,
 ]
 ## Ticks in one run cycle, and the two foot plants in it (docs/specs/art-guide.md: 6 × 5 ticks).
 const RUN_CYCLE := 30
 const FOOT_PLANTS := {0: &"step_1", 15: &"step_2"}
+## The same for dashing and sprinting: the run played at 3 ticks a drawing.
+const SPRINT_CYCLE := 18
+const SPRINT_FOOT_PLANTS := {0: &"step_1", 9: &"step_2"}
 ## The up special's launch: from (at least) standing still to rising faster than this (px/s).
 const BOOST_SPEED := 100.0
 const VOICES := 4
@@ -78,6 +82,10 @@ static func events(before: Dictionary, after: Dictionary) -> Array[StringName]:
 		out.append(&"boost")
 	if state == Fighter.State.RUN:
 		var step: Variant = FOOT_PLANTS.get((int(after.state_frame) - 1) % RUN_CYCLE)
+		if step != null:
+			out.append(step)
+	elif state == Fighter.State.DASH or state == Fighter.State.SPRINT:
+		var step: Variant = SPRINT_FOOT_PLANTS.get((int(after.state_frame) - 1) % SPRINT_CYCLE)
 		if step != null:
 			out.append(step)
 	if state == Fighter.State.AIR and after.velocity.y < 0.0:

@@ -35,7 +35,7 @@ retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
 | Dive | the down special's air dive starts | `dive` |
 | Boost | the up special launches (its frame 5; Gitte: her hop, or her pop off the pyramid's tip) | `boost` |
 | Pyramid | Gitte's pyramid starts rising (her move becomes `pyramid_rise`) | `burst` |
-| Footstep | in `RUN`, on the two foot plants of the run cycle: `(state_frame - 1) % 30` is 0 or 15 | `step_1`, `step_2` (alternating) |
+| Footstep | in `RUN`, on the two foot plants of the run cycle: `(state_frame - 1) % 30` is 0 or 15; in `DASH`/`SPRINT` the same on the faster cycle, `% 18` is 0 or 9 | `step_1`, `step_2` (alternating) |
 | Jump | a ground jump (the fighter leaves the ground going up, not from a hit) | `jump` |
 | Double jump | an air jump (`jumps_left` drops in the air) | `double_jump` |
 | Land | the fighter touches the ground after being airborne | `land` |

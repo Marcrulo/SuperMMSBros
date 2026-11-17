@@ -77,6 +77,9 @@ const HEAL_PLUS := Color(0.39, 0.78, 0.3)
 const HEAL_PLUS_DARK := Color(0.1, 0.11, 0.17)
 
 ## Debug view of hurtboxes and hitboxes: F1 toggles it, `--hitboxes` turns it on at start.
+## The run drawings last 5 ticks; dashing and sprinting show each for 3.
+const RUN_DRAWING_TICKS := 5
+const SPRINT_DRAWING_TICKS := 3
 static var show_boxes := "--hitboxes" in OS.get_cmdline_user_args()
 ## Textures per character id, then per animation name (and "stock_icon").
 static var _textures: Dictionary[String, Dictionary] = {}
@@ -101,6 +104,14 @@ static func frame_index(durations: Array, loop: bool, ticks: int) -> int:
 		if t < 0:
 			return i
 	return durations.size() - 1
+
+
+## Ticks to look up a drawing with: a dash or sprint plays the run at 3 ticks a drawing instead of
+## 5 (docs/specs/art-guide.md), everything else as drawn.
+static func animation_ticks(state: Fighter.State, ticks: int) -> int:
+	if state == Fighter.State.DASH or state == Fighter.State.SPRINT:
+		return maxi(ticks - 1, 0) * RUN_DRAWING_TICKS / SPRINT_DRAWING_TICKS + 1
+	return ticks
 
 
 ## The animation for a state (and, during a move, the move's own animation); an ability's phase
@@ -130,7 +141,7 @@ static func animation_for(state: Fighter.State, velocity_y: float, move: StringN
 			return "ledge"
 		Fighter.State.LEDGE_CLIMB:
 			return "ledge_climb"
-		Fighter.State.RUN:
+		Fighter.State.RUN, Fighter.State.DASH, Fighter.State.SPRINT:
 			return "run"
 		Fighter.State.CROUCH:
 			return "crouch"
@@ -236,7 +247,8 @@ func _draw() -> void:
 	var texture: Texture2D = strip[0]
 	var mirror: int = strip[1]
 	var timing: Dictionary = ANIMATIONS[animation]
-	var frame := frame_index(timing.ticks, timing.loop, _fighter.state_frame)
+	var frame := frame_index(timing.ticks, timing.loop,
+		animation_ticks(_fighter.state, _fighter.state_frame))
 	var drawings: int = timing.ticks.size()
 	var attacking := _fighter.state == Fighter.State.ATTACK
 	if attacking:

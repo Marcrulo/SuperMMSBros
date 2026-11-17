@@ -1,5 +1,6 @@
 extends GutTest
-## Fast fall: holding down while falling (docs/specs/fighter.md#movement-rules).
+## Fast fall: holding down while falling, after a short wait so down then A is a down air
+## (docs/specs/fighter.md#movement-rules).
 
 const STAGE_SCENE := preload("res://stage/battlefield.tscn")
 const FIGHTER_SCENE := preload("res://fighter/fighter.tscn")
@@ -39,12 +40,20 @@ func _make_input(down := false, jump := false, attack := false) -> FighterInput:
 	return input
 
 
-func test_fast_fall_speed_stat() -> void:
+## Holds down long enough to fast-fall (the wait, then the tick it starts).
+func _hold_down_to_fast_fall() -> void:
+	_run(_make_input(true), _stats.fast_fall_delay + 1)
+
+
+func test_fast_fall_stats() -> void:
 	assert_eq(_stats.fast_fall_speed, 400.0)
+	assert_eq(_stats.fast_fall_delay, 4)
 
 
-func test_holding_down_while_falling_fast_falls() -> void:
+func test_holding_down_while_falling_fast_falls_after_the_wait() -> void:
 	await _start_falling()
+	_run(_make_input(true), _stats.fast_fall_delay)
+	assert_lt(_fighter.velocity.y, _stats.fast_fall_speed, "still waiting for an A")
 	_run(_make_input(true), 1)
 	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed)
 	_run(_make_input(), 3)
@@ -75,7 +84,7 @@ func test_holding_down_while_rising_waits_until_falling() -> void:
 
 func test_landing_ends_the_fast_fall() -> void:
 	await _start_falling()
-	_run(_make_input(true), 1)
+	_hold_down_to_fast_fall()
 	for i in 60:
 		_fighter.tick(_make_input())
 		if _fighter.state != Fighter.State.AIR:
@@ -94,7 +103,7 @@ func test_landing_ends_the_fast_fall() -> void:
 
 func test_double_jump_ends_the_fast_fall() -> void:
 	await _start_falling()
-	_run(_make_input(true), 1)
+	_hold_down_to_fast_fall()
 	_run(_make_input(false, true), 1)
 	# The jump tick already has one tick of gravity in it.
 	var step := _stats.gravity / 60.0
@@ -105,7 +114,7 @@ func test_double_jump_ends_the_fast_fall() -> void:
 
 func test_getting_hit_ends_the_fast_fall() -> void:
 	await _start_falling()
-	_run(_make_input(true), 1)
+	_hold_down_to_fast_fall()
 	_fighter.take_hit(_stats.moveset.jab, 1, _fighter.global_position.x - 10.0)
 	var launched := _fighter.velocity.y
 	_fighter.tick(_make_input())
@@ -114,8 +123,59 @@ func test_getting_hit_ends_the_fast_fall() -> void:
 
 func test_fast_fall_during_an_air_attack() -> void:
 	await _start_falling()
+	_hold_down_to_fast_fall()
 	_run(_make_input(true, false, true), 1)
 	assert_eq(_fighter.move, &"down_air")
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "already fast-falling: it goes on")
+
+
+# --- Down then A ----------------------------------------------------------------------------------
+
+
+func _assert_normal_fall() -> void:
+	assert_lt(_fighter.velocity.y, _stats.fast_fall_speed, "not a fast fall")
+
+
+func test_down_and_a_together_is_a_down_air_at_normal_speed() -> void:
+	await _start_falling()
+	_run(_make_input(true, false, true), 1)
+	assert_eq(_fighter.move, &"down_air")
+	_run(_make_input(true), 20)
+	_assert_normal_fall()
+
+
+func test_down_then_a_within_the_wait_is_a_down_air_at_normal_speed() -> void:
+	await _start_falling()
+	_run(_make_input(true), _stats.fast_fall_delay - 1)
+	_run(_make_input(true, false, true), 1)
+	assert_eq(_fighter.state, Fighter.State.ATTACK)
+	assert_eq(_fighter.move, &"down_air")
+	_run(_make_input(true), 20)
+	_assert_normal_fall()
+
+
+func test_the_used_down_needs_a_new_press_after_the_move() -> void:
+	await _start_falling()
+	_run(_make_input(true, false, true), 1)
+	for i in 60:
+		_fighter.tick(_make_input(true))
+		if _fighter.state == Fighter.State.AIR:
+			break
+	assert_eq(_fighter.state, Fighter.State.AIR, "the down air is over, still in the air")
+	_run(_make_input(true), 10)
+	_assert_normal_fall()
+	_run(_make_input(), 1)
+	_hold_down_to_fast_fall()
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "a new press fast-falls")
+
+
+func test_a_new_down_press_during_an_air_attack_fast_falls() -> void:
+	await _start_falling()
+	_run(_make_input(false, false, true), 1)
+	assert_eq(_fighter.move, &"neutral_air")
+	_run(_make_input(true), _stats.fast_fall_delay)
+	_assert_normal_fall()
+	_run(_make_input(true), 1)
 	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed)
 
 
@@ -131,8 +191,10 @@ func test_dropping_through_a_platform_is_not_a_fast_fall_by_itself() -> void:
 	_run(tap, 1)
 	assert_eq(_fighter.state, Fighter.State.AIR, "dropped")
 	assert_lt(_fighter.velocity.y, _stats.fast_fall_speed, "not fast-falling on the drop tick")
+	_run(_make_input(true), _stats.fast_fall_delay - 1)
+	assert_lt(_fighter.velocity.y, _stats.fast_fall_speed, "the wait")
 	_run(_make_input(true), 1)
-	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "still holding down: fast fall next tick")
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "still holding down: then it fast-falls")
 
 
 func test_no_fast_fall_while_helpless() -> void:
@@ -162,7 +224,10 @@ func _press_down() -> FighterInput:
 func test_pressing_down_cancels_a_double_jumps_rise() -> void:
 	await _double_jump_and_rise(5)
 	_run(_press_down(), 1)
-	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "falling fast at once")
+	_run(_make_input(true), _stats.fast_fall_delay - 1)
+	assert_lt(_fighter.velocity.y, 0.0, "still rising during the wait")
+	_run(_make_input(true), 1)
+	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "then falling fast")
 	_run(_make_input(), 3)
 	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed, "and stays a fast fall")
 
@@ -190,4 +255,14 @@ func test_cancelling_works_during_an_air_attack_too() -> void:
 	_run(_make_input(false, false, true), 1)
 	assert_eq(_fighter.state, Fighter.State.ATTACK)
 	_run(_press_down(), 1)
+	_run(_make_input(true), _stats.fast_fall_delay)
 	assert_eq(_fighter.velocity.y, _stats.fast_fall_speed)
+
+
+func test_down_then_a_after_a_double_jump_keeps_rising_into_the_down_air() -> void:
+	await _double_jump_and_rise(3)
+	_run(_press_down(), 1)
+	_run(_make_input(true, false, true), 1)
+	assert_eq(_fighter.move, &"down_air")
+	_run(_make_input(true), 6)
+	assert_lt(_fighter.velocity.y, 0.0, "the double jump's rise goes on")

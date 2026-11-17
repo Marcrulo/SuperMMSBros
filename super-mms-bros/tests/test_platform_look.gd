@@ -17,6 +17,11 @@ func test_wider_in_front_narrower_behind() -> void:
 	assert_almost_eq(PlatformLook.perspective_x(96.0, -8.0, 240.0), 108.672, 0.001)
 
 
+func test_the_drawn_underside_matches_the_collision_wedge() -> void:
+	assert_eq(PlatformLook.MAIN_UNDER_DEPTH, 16.0)
+	assert_eq(PlatformLook.MAIN_UNDER_INSET, 20.0)
+
+
 func test_collapsed_shapes_are_skipped() -> void:
 	# A side face from the camera sweep, 0.0004 px wide: Godot can't triangulate it.
 	var flat := PackedVector2Array([

@@ -11,8 +11,8 @@
 resource_local_to_scene = true
 shader = ExtResource("2_shader")
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_main"]
-size = Vector2(288, 16)
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_main"]
+points = PackedVector2Array(-144, -8, 144, -8, 144, 8, 124, 24, -124, 24, -144, 8)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
 size = Vector2(72, 4)
@@ -53,7 +53,7 @@ position = Vector2(240, 200)
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="MainPlatform"]
-shape = SubResource("RectangleShape2D_main")
+shape = SubResource("ConvexPolygonShape2D_main")
 
 [node name="Platforms" type="Node2D" parent="."]
 

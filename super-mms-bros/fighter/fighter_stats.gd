@@ -5,12 +5,22 @@ extends Resource
 ## The values live in the .tres file (fighter/default_stats.tres), not here.
 
 @export_group("Ground")
-## Top ground speed.
+## Top walking speed.
 @export var run_speed: float
 ## How fast ground speed moves toward the target while holding a direction.
 @export var ground_accel: float
 ## How fast ground speed moves toward 0 with no input.
 @export var ground_friction: float
+
+@export_group("Sprint")
+## Max ticks from letting go of a side to pressing it again, to start a dash.
+@export var sprint_double_tap_frames: int
+## Length of a dash (the burst that starts a sprint), its speed and how fast it gets there.
+@export var dash_frames: int
+@export var dash_speed: float
+@export var dash_accel: float
+## Top ground speed while sprinting (holding the direction after a dash).
+@export var sprint_speed: float
 
 @export_group("Air")
 ## Top air speed from input.
@@ -23,6 +33,8 @@ extends Resource
 @export var max_fall_speed: float
 ## Falling speed while fast-falling (holding down while falling).
 @export var fast_fall_speed: float
+## Ticks a down press waits before it fast-falls (A in that time makes it a down air instead).
+@export var fast_fall_delay: int
 
 @export_group("Jumps")
 @export var jump_velocity: float

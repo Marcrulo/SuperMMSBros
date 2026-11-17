@@ -99,6 +99,16 @@ func test_footsteps_on_the_foot_plants() -> void:
 	assert_eq(steps, {1: &"step_1", 16: &"step_2", 31: &"step_1", 46: &"step_2"})
 
 
+func test_faster_footsteps_while_dashing_and_sprinting() -> void:
+	for state: Fighter.State in [S.DASH, S.SPRINT]:
+		var steps := {}
+		for frame in range(1, 37):
+			for event in _events({"state": state, "state_frame": frame - 1},
+					{"state": state, "state_frame": frame}):
+				steps[frame] = event
+		assert_eq(steps, {1: &"step_1", 10: &"step_2", 19: &"step_1", 28: &"step_2"})
+
+
 func test_jump_and_double_jump() -> void:
 	assert_has(_events({"state": S.IDLE},
 			{"state": S.AIR, "state_frame": 1, "velocity": Vector2(0, -240), "on_floor": false}),

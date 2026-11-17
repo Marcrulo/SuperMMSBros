@@ -6,6 +6,11 @@
 [resource]
 script = ExtResource("1_hc333")
 run_speed = 100.0
+sprint_double_tap_frames = 12
+dash_frames = 10
+dash_speed = 170.0
+dash_accel = 6000.0
+sprint_speed = 150.0
 ground_accel = 1200.0
 ground_friction = 1200.0
 air_speed = 90.0
@@ -14,6 +19,7 @@ air_friction = 150.0
 gravity = 600.0
 max_fall_speed = 250.0
 fast_fall_speed = 400.0
+fast_fall_delay = 4
 jump_velocity = 240.0
 double_jump_velocity = 219.0
 short_hop_cut = 0.5

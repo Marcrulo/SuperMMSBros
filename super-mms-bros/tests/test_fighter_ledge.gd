@@ -218,6 +218,44 @@ func test_up_special_grabs_the_ledge_while_rising() -> void:
 	assert_eq(_p1.state, Fighter.State.LEDGE)
 
 
+## Up special from below, `inset` px inside the right ledge (center x): returns whether it reached
+## the ledge, and records the highest its feet got.
+var _highest_feet := INF
+
+
+func _up_special_from_under(inset: float) -> bool:
+	_p1.spawn_at(Vector2(RIGHT_LEDGE.x - inset, 270), 1)
+	_step()
+	var up_b := _pressed("special_pressed")
+	up_b.up_held = true
+	up_b.special_held = true
+	_step(up_b)
+	_highest_feet = INF
+	for i in 50:
+		_step(_pressed("up_held"))
+		_highest_feet = minf(_highest_feet, _p1.global_position.y)
+		if _p1.state == Fighter.State.LEDGE:
+			return true
+	return false
+
+
+func test_up_special_just_under_the_edge_slides_out_to_the_ledge() -> void:
+	assert_true(_up_special_from_under(2.0))
+
+
+func test_up_special_further_under_the_edge_slides_out_to_the_ledge() -> void:
+	assert_true(_up_special_from_under(6.0))
+
+
+func test_up_special_well_under_the_edge_slides_out_to_the_ledge() -> void:
+	assert_true(_up_special_from_under(10.0))
+
+
+func test_up_special_far_under_the_stage_is_blocked() -> void:
+	assert_false(_up_special_from_under(60.0), "the flat underside stops it")
+	assert_almost_eq(_highest_feet, 224.0 + 24.0, 1.0, "head against the underside, not through")
+
+
 func test_a_held_ledge_cannot_be_grabbed() -> void:
 	_fall_onto_ledge()
 	var p2 := _match.get_fighter(1)

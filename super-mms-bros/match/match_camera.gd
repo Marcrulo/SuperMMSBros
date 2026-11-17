@@ -2,7 +2,7 @@ class_name MatchCamera
 extends Camera2D
 ## A smash-style camera (docs/specs/match-and-stage.md#camera): frames every fighter plus the
 ## middle of the stage, zooming out when they spread apart and in when they're close, and glides
-## there smoothly. Presentation only: it reads positions and never changes gameplay.
+## there smoothly; it never looks beyond the stage's camera bounds. Presentation only: it reads positions and never changes gameplay.
 
 ## The middle of the stage always counts as a point to keep in view.
 const STAGE_FOCUS := Vector2(240, 160)
@@ -21,17 +21,20 @@ var _placed := false
 
 
 ## Where the camera should look and how far it should zoom to frame `points` (and the stage
-## focus), without showing anything outside `blast_zone`.
-static func target_framing(points: Array[Vector2], blast_zone: Rect2) -> Dictionary:
+## focus), without showing anything outside `bounds` (the stage's camera bounds). A point beyond
+## the bounds counts as if on their edge, so it neither drags the view nor zooms it out.
+static func target_framing(points: Array[Vector2], bounds: Rect2) -> Dictionary:
 	var box := Rect2(STAGE_FOCUS, Vector2.ZERO)
 	for point in points:
-		box = box.expand(point)
-	box = box.grow_individual(MARGIN.x, MARGIN.y, MARGIN.x, MARGIN.y)
-	var zoom_level := clampf(minf(VIEW.x / box.size.x, VIEW.y / box.size.y), MIN_ZOOM, MAX_ZOOM)
+		box = box.expand(point.clamp(bounds.position, bounds.end))
+	box = box.grow_individual(MARGIN.x, MARGIN.y, MARGIN.x, MARGIN.y).intersection(bounds)
+	# Never so far out that the view is bigger than the bounds.
+	var min_zoom := maxf(MIN_ZOOM, maxf(VIEW.x / bounds.size.x, VIEW.y / bounds.size.y))
+	var zoom_level := clampf(minf(VIEW.x / box.size.x, VIEW.y / box.size.y), min_zoom, MAX_ZOOM)
 	var half_view := VIEW / zoom_level / 2.0
 	var center := box.get_center()
-	center.x = clampf(center.x, blast_zone.position.x + half_view.x, blast_zone.end.x - half_view.x)
-	center.y = clampf(center.y, blast_zone.position.y + half_view.y, blast_zone.end.y - half_view.y)
+	center.x = clampf(center.x, bounds.position.x + half_view.x, bounds.end.x - half_view.x)
+	center.y = clampf(center.y, bounds.position.y + half_view.y, bounds.end.y - half_view.y)
 	return {"position": center, "zoom": zoom_level}
 
 
@@ -44,7 +47,7 @@ func _process(delta: float) -> void:
 		if fighter.state != Fighter.State.KO:
 			points.append(fighter.get_center())
 	var stage := match_node.get_node("Stage") as Stage
-	var target := target_framing(points, stage.blast_zone)
+	var target := target_framing(points, stage.camera_bounds)
 	var weight := 1.0 - exp(-FOLLOW_SPEED * delta) if _placed else 1.0
 	_placed = true
 	position = position.lerp(target.position, weight)

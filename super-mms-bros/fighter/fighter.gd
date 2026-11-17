@@ -7,7 +7,7 @@ extends CharacterBody2D
 
 enum State {
 	IDLE, RUN, CROUCH, AIR, ATTACK, SHIELD, SHIELD_DROP, SHIELD_BREAK, HITSTUN, HELPLESS, KO,
-	SPOT_DODGE, ROLL, AIR_DODGE, LEDGE, LEDGE_CLIMB, TRIPPED, HELD,
+	SPOT_DODGE, ROLL, AIR_DODGE, LEDGE, LEDGE_CLIMB, TRIPPED, HELD, DASH, SPRINT,
 }
 
 ## One tick of game time, in seconds (the game runs at 60 ticks per second).
@@ -15,6 +15,9 @@ const DELTA := 1.0 / 60.0
 ## Collision layer of pass-through platforms (docs/specs/architecture.md#collision-layers).
 const STAGE_PLATFORM_LAYER := 2
 const MAX_PERCENT := 999.0
+## A ceiling whose normal leans sideways at least this much is sloped (see
+## _keep_rise_along_slopes()); less is flat.
+const SLOPE_MIN_NORMAL_X := 0.05
 ## No move in progress.
 const NO_MOVE := &""
 ## Normal attacks (ground and air) end when they land; specials have their own landing rules.
@@ -80,10 +83,21 @@ var ground_jump: float = 1.0
 var _can_short_hop: bool = false
 ## Fast-falling: falls at fast_fall_speed until landing, a double jump, a hit or an up special.
 var _fast_falling: bool = false
+## Ticks down has been held (0 = not held; the press is 1). A down press fast-falls only once
+## held for more than fast_fall_delay, so down then A is a down air.
+var _down_hold_ticks: int = 0
+## The held down press aimed a move: it doesn't fast-fall until down is pressed again.
+var _down_press_used: bool = false
+## The held down was pressed while rising from a double jump (it may cancel the rise).
+var _down_pressed_in_double_jump_rise: bool = false
 ## Ticks left before pass-through platforms become solid again after dropping through one.
 var _drop_through_frames_left: int = 0
 ## Ticks since down was last pressed (a second press soon after drops through a platform).
 var _ticks_since_down_press: int = 1000
+## The side held last (−1/1, 0 none) and ticks since it was let go (pressing it again soon after
+## dashes).
+var _last_side: int = 0
+var _ticks_since_side_held: int = 1000
 ## The move in progress has been in the air; a normal attack then ends on landing.
 var _move_airborne: bool = false
 ## Player indexes the move in progress has hit (each move hits a fighter once).
@@ -536,8 +550,13 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 	has_projectile = false
 	_can_short_hop = false
 	_fast_falling = false
+	_down_hold_ticks = 0
+	_down_press_used = false
+	_down_pressed_in_double_jump_rise = false
 	_drop_through_frames_left = 0
 	_ticks_since_down_press = 1000
+	_last_side = 0
+	_ticks_since_side_held = 1000
 	_hit_victims.clear()
 	_block_stun = 0
 	_charged_punch = null
@@ -562,6 +581,7 @@ func spawn_at(spawn_position: Vector2, spawn_facing: int) -> void:
 func tick(input: FighterInput) -> void:
 	assert(Engine.is_in_physics_frame(), "Fighter.tick() must run inside a physics frame")
 	_take_ground_modifiers()
+	_count_down_hold(input)
 	if state == State.KO:
 		return
 	if state == State.HELD:
@@ -574,7 +594,7 @@ func tick(input: FighterInput) -> void:
 	match state:
 		State.AIR:
 			_air_actions(input)
-		State.IDLE, State.RUN, State.CROUCH:
+		State.IDLE, State.RUN, State.DASH, State.SPRINT, State.CROUCH:
 			_ground_actions(input)
 		State.SHIELD:
 			_shield_actions(input)
@@ -593,7 +613,9 @@ func tick(input: FighterInput) -> void:
 	else:
 		_apply_movement(input)
 		_update_platform_collision(input)
+		var before_slide := velocity
 		move_and_slide()
+		_keep_rise_along_slopes(before_slide)
 		_after_move(input)
 		if is_on_floor():
 			_ledge_intangibility_earned = true
@@ -606,6 +628,10 @@ func tick(input: FighterInput) -> void:
 	if input.down_pressed:
 		_ticks_since_down_press = 0
 	_ticks_since_down_press += 1
+	if input.move_x != 0.0:
+		_last_side = int(signf(input.move_x))
+		_ticks_since_side_held = 0
+	_ticks_since_side_held += 1
 	state_frame += 1
 
 
@@ -614,6 +640,22 @@ func _placing_ability() -> FighterAbility:
 		if a.places_fighter():
 			return a
 	return null
+
+
+## Counts how long down has been held; a new press starts fresh (not used by a move yet).
+func _count_down_hold(input: FighterInput) -> void:
+	if not input.down_held:
+		_down_hold_ticks = 0
+		return
+	_down_hold_ticks += 1
+	if _down_hold_ticks == 1:
+		_down_press_used = false
+		_down_pressed_in_double_jump_rise = _is_double_jump_rising()
+
+
+## Rising from a double jump: an air jump used, and nothing since has given it back.
+func _is_double_jump_rising() -> bool:
+	return velocity.y < 0.0 and jumps_left < stats.max_air_jumps and not is_on_floor()
 
 
 ## Leaves a state whose time is up. Runs first, so the fighter can act that same tick.
@@ -691,8 +733,9 @@ func _has_normals() -> bool:
 	return true
 
 
-## IDLE/RUN/CROUCH, first that applies: attack, special, drop through a platform (jump with down
-## held), jump, shield, drop through a platform (down pressed twice), crouch, run, stand.
+## IDLE/RUN/DASH/SPRINT/CROUCH, first that applies: attack, special, drop through a platform (jump
+## with down held), jump, shield, drop through a platform (down pressed twice), crouch, dash, keep
+## dashing, sprint, walk, stand (docs/specs/fighter.md#sprint).
 func _ground_actions(input: FighterInput) -> void:
 	if input.attack_pressed and _has_normals():
 		_start_move(_pick_normal(input), input)
@@ -710,11 +753,31 @@ func _ground_actions(input: FighterInput) -> void:
 	elif input.down_held:
 		_turn_toward(input.move_x)
 		set_state(State.CROUCH)
+	elif _starts_dash(input):
+		_turn_toward(input.side_pressed)
+		state = State.DASH
+		state_frame = 0  # Set directly: a dash dance starts a new dash.
+	elif state == State.DASH and state_frame < stats.dash_frames:
+		pass
+	elif input.move_x != 0.0 and (state == State.DASH or state == State.SPRINT) \
+			and signf(input.move_x) == facing:
+		set_state(State.SPRINT)
 	elif input.move_x != 0.0:
 		_turn_toward(input.move_x)
 		set_state(State.RUN)
 	else:
 		set_state(State.IDLE)
+
+
+## A side pressed again within sprint_double_tap_frames of letting go of it (not from a crouch), or
+## the opposite side pressed during a dash (a dash dance).
+func _starts_dash(input: FighterInput) -> bool:
+	if input.side_pressed == 0 or state == State.CROUCH:
+		return false
+	if state == State.DASH and input.side_pressed == -facing:
+		return true
+	return input.side_pressed == _last_side \
+			and _ticks_since_side_held <= stats.sprint_double_tap_frames
 
 
 ## AIR: attack, special, double jump, or cut a ground jump short.
@@ -948,6 +1011,8 @@ func _start_move(move_name: StringName, input: FighterInput) -> void:
 		_fast_falling = false
 	for a in abilities:
 		a.on_move_started(move_name)
+	if input.down_held:
+		_down_press_used = true  # This down aimed the move: it doesn't fast-fall.
 	_move_airborne = not on_ground
 	_can_short_hop = false
 	_hit_victims.clear()
@@ -979,7 +1044,7 @@ func _turn_toward(move_x: float) -> void:
 func _apply_movement(input: FighterInput) -> void:
 	match state:
 		State.AIR:
-			_steer(input.move_x, stats.air_speed * speed_scale(), stats.air_accel, stats.air_friction)
+			_steer_air(input.move_x, stats.air_speed * speed_scale())
 			_fall(input)
 		State.ATTACK:
 			_move_during_attack(input)
@@ -1002,6 +1067,16 @@ func _apply_movement(input: FighterInput) -> void:
 				_apply_gravity()
 		State.AIR_DODGE:
 			velocity = velocity.move_toward(Vector2.ZERO, stats.air_dodge_friction * DELTA)
+		State.DASH:
+			_steer(facing, stats.dash_speed * speed_scale() * _ground_speed,
+				stats.dash_accel * _grip, 0.0)
+			if not is_on_floor():
+				_apply_gravity()
+		State.SPRINT:
+			_steer(input.move_x, stats.sprint_speed * speed_scale() * _ground_speed,
+				stats.ground_accel * _grip, stats.ground_friction * _grip)
+			if not is_on_floor():
+				_apply_gravity()
 		State.CROUCH, State.SHIELD, State.SHIELD_DROP, State.SHIELD_BREAK, State.SPOT_DODGE, \
 				State.TRIPPED:
 			# No walking: slide to a stop.
@@ -1028,7 +1103,7 @@ func _move_during_attack(input: FighterInput) -> void:
 		# A move on the ground doesn't steer: slide to a stop.
 		_steer(0.0, 0.0, 0.0, stats.ground_friction * _grip)
 	elif move in NORMALS:
-		_steer(input.move_x, stats.air_speed * speed_scale(), stats.air_accel, stats.air_friction)
+		_steer_air(input.move_x, stats.air_speed * speed_scale())
 		_fall(input)
 	else:
 		_steer(input.move_x, stats.air_speed * speed_scale(), stats.air_accel, stats.air_friction)
@@ -1043,18 +1118,26 @@ func _steer(move_x: float, top_speed: float, accel: float, friction: float) -> v
 		velocity.x = move_toward(velocity.x, 0.0, friction * DELTA)
 
 
-## Falling in AIR and during air attacks: holding down once falling, or pressing down while rising
-## from a double jump, starts a fast fall (not on the tick of a drop-through), which then holds the
-## fall at fast_fall_speed; otherwise normal gravity.
+## Air steering: like _steer(), but already faster than `top_speed` in the held direction (a
+## sprint jump) it only slows at air_friction, so the speed carries into the air.
+func _steer_air(move_x: float, top_speed: float) -> void:
+	if move_x != 0.0 and signf(move_x) == signf(velocity.x) and absf(velocity.x) > top_speed:
+		velocity.x = move_toward(velocity.x, move_x * top_speed, stats.air_friction * DELTA)
+	else:
+		_steer(move_x, top_speed, stats.air_accel, stats.air_friction)
+
+
+## Falling in AIR and during air attacks: down held once falling, or pressed while rising from a
+## double jump, starts a fast fall once it has been held for more than fast_fall_delay ticks and
+## no move used it (not on the tick of a drop-through); the fast fall then holds the fall at
+## fast_fall_speed. Otherwise normal gravity.
 func _fall(input: FighterInput) -> void:
 	var dropping_now := _drop_through_frames_left == stats.drop_through_frames
-	if not _fast_falling and input.down_held and velocity.y >= 0.0 and not dropping_now:
-		_fast_falling = true
-	# Down pressed while rising from a double jump (an air jump used, nothing since has given it
-	# back) cancels the rise.
-	var double_jump_rising := velocity.y < 0.0 and jumps_left < stats.max_air_jumps
-	if not _fast_falling and input.down_pressed and double_jump_rising and not dropping_now:
-		_fast_falling = true
+	var down_ready := input.down_held and _down_hold_ticks > stats.fast_fall_delay \
+			and not _down_press_used and not dropping_now
+	if not _fast_falling and down_ready:
+		if velocity.y >= 0.0 or (_down_pressed_in_double_jump_rise and _is_double_jump_rising()):
+			_fast_falling = true
 	if _fast_falling:
 		velocity.y = stats.fast_fall_speed
 	else:
@@ -1072,6 +1155,24 @@ func _apply_gravity() -> void:
 	velocity.y = minf(velocity.y + stats.gravity * DELTA, stats.max_fall_speed)
 
 
+## Rising into a sloped ceiling (the main platform's underside below a ledge) slides along it
+## keeping the velocity from before the touch, so a recovery is guided out to the ledge; a flat
+## ceiling (also touched at the same time) stops the rise as usual (docs/specs/fighter.md).
+func _keep_rise_along_slopes(before_slide: Vector2) -> void:
+	if before_slide.y >= 0.0 or not is_on_ceiling():
+		return
+	var sloped := false
+	for i in get_slide_collision_count():
+		var normal := get_slide_collision(i).get_normal()
+		if normal.y <= 0.0:
+			continue  # A floor or a straight wall.
+		if absf(normal.x) < SLOPE_MIN_NORMAL_X:
+			return  # A flat ceiling.
+		sloped = true
+	if sloped:
+		velocity = before_slide
+
+
 ## Landing, walking off ledges and the specials' air rules, decided from where move_and_slide()
 ## left the fighter.
 func _after_move(input: FighterInput) -> void:
@@ -1083,7 +1184,7 @@ func _after_move(input: FighterInput) -> void:
 			_after_move_in_attack(input)
 		State.HITSTUN, State.TRIPPED:
 			pass  # Lands on platforms like anyone, but stays stunned.
-		State.IDLE, State.RUN, State.CROUCH:
+		State.IDLE, State.RUN, State.DASH, State.SPRINT, State.CROUCH:
 			if not is_on_floor():
 				# Walked off a ledge: the double jump is still there.
 				set_state(State.AIR)

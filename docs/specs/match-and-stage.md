@@ -65,25 +65,27 @@ later (one training game = one reset).
 
 - The `pause` action (Esc / gamepad Start) during the match pauses the game with
   `get_tree().paused = true` and shows the pause menu (`ui/pause_menu.tscn`, a `CanvasLayer` over
-  the HUD): the game dimmed behind a dark see-through overlay, **PAUSED**, two choices,
-  **CONTINUE** and **QUIT** (CONTINUE highlighted when it opens), and along the bottom of the
+  the HUD): the game dimmed behind a dark see-through overlay, **PAUSED**, three choices,
+  **CONTINUE**, **RESTART** and **QUIT** (CONTINUE highlighted when it opens), and along the bottom of the
   panel two small mouse icon buttons, **music** and **sound effects**.
 - Up / down (`ui_up` / `ui_down`: W/S, arrows) move the highlight, no wrapping; `ui_accept` (J,
   Space, Enter) chooses. The highlighted choice is drawn in white on a red bar (#b13e53), the
-  other in grey. Moving plays `menu_move`, choosing `menu_confirm`.
+  others in grey. Moving plays `menu_move`, choosing `menu_confirm`.
 - **CONTINUE**, `pause` again or `ui_cancel` (Esc, L) unpauses and hides the menu.
+- **RESTART** unpauses and starts the same match over: same characters, stage and command-line
+  options, a fresh match (`Game.go_to(Game.MATCH_PATH)` loads the match scene again).
 - **QUIT** unpauses and goes back to the **character select** (`Game.go_to()`), ending the match.
 - The **music** / **sound effects** buttons (mouse click) mute or unmute the `Music` / `SFX`
   audio bus (`Game.music_muted`, `Game.sfx_muted`): all music, or all sound effects (fight and
   menu sounds). They show pixel icons, 18×12 (`assets/ui/`, made by `tools/gen_ui_icons.py`):
   a white speaker with a music note (`icon_music`) / with a comic "bang" burst, white spikes round
-  a yellow middle (`icon_sfx`); muted, a grey speaker with a small red cross (`icon_*_off`) on a
-  darker button. Hovering shows a tooltip ("Music", "Sound effects"). The menu stays open. They take no keyboard focus, so the keys keep driving CONTINUE / QUIT. The choice
+  a yellow middle (`icon_sfx`); muted, the same icon dimmed with a red cross over it
+  (`icon_*_off`) on a darker button. Hovering shows a tooltip ("Music", "Sound effects"). Clicking
+  them makes no sound. The menu stays open. They take no keyboard focus, so the keys keep driving the choices. The choice
   is saved in `user://settings.cfg` and loaded when the game starts.
 - The Match is pausable (it stops ticking, and its music pauses). The pause menu uses
   `PROCESS_MODE_ALWAYS`, so it hears `pause` both when the game runs and while it's paused; the
   Game autoload's menu sounds use it too, so they play while paused.
-- Restart (start the same match over) comes with the rest of M7.
 
 ## Result screen
 
@@ -170,7 +172,7 @@ starting points, tuned in M9.
 
 | Element | Type | Position |
 |---|---|---|
-| Main platform | solid (`stage_solid`) | x 96–384 (18 fighter widths), top at y 192, 16 px thick |
+| Main platform | solid (`stage_solid`) | x 96–384 (18 fighter widths), top at y 192; straight sides 16 px down, then an underside sloping 20 px in over 16 px (bottom x 116–364 at y 224) |
 | Left platform | pass-through (`stage_platform`) | x 132–204, top at y 150 |
 | Right platform | pass-through | x 276–348, top at y 150 |
 | Top platform | pass-through | x 204–276, top at y 108 |
@@ -178,13 +180,16 @@ starting points, tuned in M9.
 | P1 spawn | point | (168, 192), facing right |
 | P2 spawn | point | (312, 192), facing left |
 | Blast zone | rectangle (fighter center must stay inside) | x −72…552, y −160…304 |
+| Camera bounds | rectangle the camera never shows beyond | x −72…552, y −40…304 |
 
 - Platforms are 42 px apart vertically, so each one is reachable with a single ground jump (48 px),
   and a fighter (29 px tall) standing under a thin platform fits fully below its drawing (the walk
   line + 3 px of top face + 6 px front face), with 4 px to spare.
 - The main platform floats: below and beside it is empty space.
-- The blast zone leaves room off every side for recovering and for launches at high %. The camera
-  never shows beyond it.
+- The blast zone leaves room off every side for recovering and for launches at high %.
+- The camera bounds (`Stage.camera_bounds`) are the blast zone with the top cut much lower, as in
+  Smash: the view reaches about a double jump above the top platform. A fighter higher than that
+  goes off the top of the screen (it isn't KO'd until it leaves the blast zone).
 
 ### Stage scene
 
@@ -195,7 +200,7 @@ Battlefield            (Node2D, stage/stage.gd)
 ├── Light              (CanvasModulate: the stage's light color)
 ├── PlatformLook       (Node2D, stage/platform_look.gd, z_index −1: the platforms behind the fighters)
 ├── PlatformFront      (Node2D, the same script with `front` on, z_index 1: the thin platforms' fronts)
-├── MainPlatform       (StaticBody2D, layer stage_solid) + CollisionShape2D
+├── MainPlatform       (StaticBody2D, layer stage_solid) + CollisionShape2D (ConvexPolygonShape2D: flat top, sloped underside)
 ├── Platforms          (Node2D)
 │   ├── Left / Right / Top   (StaticBody2D, layer stage_platform, one-way collision)
 ├── P1Spawn, P2Spawn   (Marker2D)
@@ -223,7 +228,8 @@ Collision is unchanged by any of this.
   panels…) from the style. Main platform 16 px tall, thin platforms 6 px.
 - **Side face:** an end is drawn only if it faces the vanishing x (so panning turns the platforms
   slightly); shaded. Shapes that collapse to no area are skipped.
-- **Underside:** the main platform has a dark underside narrowing 12 px downward.
+- **Underside:** the main platform has a dark underside narrowing 20 px on each side over 16 px
+  downward, the same wedge as its collision (`MAIN_UNDER_INSET`, `MAIN_UNDER_DEPTH`).
 - **Shadows:** each thin platform casts a shadow straight down onto the main platform's top face,
   in the same depth band; the top platform's shadow is fainter.
 - **In front of the fighters:** a thin platform is split at its walk line. The part behind it (the
@@ -258,9 +264,11 @@ A smash-style `Camera2D` (`match/match_camera.gd`). Presentation only: it reads 
 and never changes gameplay.
 
 - Every frame it frames a box around every fighter's center (not `KO`) plus a fixed stage focus
-  point (240, 160), grown by 120 px on the sides and 80 px above and below.
-- Zoom fits that box in the 480×270 view, clamped between 0.77 (zoomed out: never shows beyond the
-  blast zone) and 1.4 (zoomed in).
+  point (240, 160), grown by 120 px on the sides and 80 px above and below. Each fighter's center
+  is first moved inside the stage's camera bounds, and the grown box is cut to them, so a fighter
+  beyond the bounds (high above the stage) neither drags the view nor zooms it out further.
+- Zoom fits that box in the 480×270 view, clamped between 0.77 (zoomed out) and 1.4 (zoomed in),
+  and never so far out that the view is bigger than the camera bounds.
 - Position and zoom glide toward the target (`1 − e^(−4·delta)` per frame); the first frame jumps
-  straight there. The view is clamped to stay inside the blast zone.
+  straight there. The view is clamped to stay inside the camera bounds.
 - The window is rendered at its real resolution (`canvas_items` stretch), so zooming is smooth.

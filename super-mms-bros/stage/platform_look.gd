@@ -13,6 +13,11 @@ const STAGE_CENTER_X := 240.0
 ## How much wider a platform gets per pixel toward the viewer (and narrower per pixel away).
 ## The same for every platform, like one camera looking at the whole stage.
 const PERSPECTIVE := 0.011
+## The main platform's underside, below its front face: this deep, narrowing this much on each
+## side. Its collision has the same wedge (stage/battlefield.tscn), so a fighter rising into it
+## slides out to the ledge.
+const MAIN_UNDER_DEPTH := 16.0
+const MAIN_UNDER_INSET := 20.0
 
 ## Which part of a platform `_platform()` draws.
 enum Part { WHOLE, BEHIND, IN_FRONT }
@@ -83,7 +88,8 @@ func _draw() -> void:
 		for thin in _thin_platforms():
 			_platform(thin.x, 72, thin.y, 4, 3, style.thin_bands, 0, null, Part.IN_FRONT)
 		return
-	_platform(96, 288, 192, 8, 6, style.main_bands, 12, style.quoins if style.has_quoins else null)
+	_platform(96, 288, 192, 8, 6, style.main_bands, MAIN_UNDER_DEPTH,
+			style.quoins if style.has_quoins else null)
 	# Shadows of the thin platforms, cast straight down onto the main platform's top face, in the
 	# same depth band the platform occupies (4 px behind its walk line to 3 px in front).
 	_shadow(132, 72, 192, 4, 3, style.shadow)
@@ -177,11 +183,11 @@ func _platform(x: float, width: float, walk_y: float, back: float, front: float,
 		y += height
 	if quoins != null:
 		_quoins(left, right, front_y, face_height, quoins)
-	# Underside, narrowing as it goes down.
+	# Underside, narrowing as it goes down (the main platform's collision slopes in the same way).
 	if under > 0.0:
 		_polygon(PackedVector2Array([
 			Vector2(left, y), Vector2(right, y),
-			Vector2(right - 20, y + under), Vector2(left + 20, y + under),
+			Vector2(right - MAIN_UNDER_INSET, y + under), Vector2(left + MAIN_UNDER_INSET, y + under),
 		]), style.under)
 
 

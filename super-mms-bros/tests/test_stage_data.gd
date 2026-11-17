@@ -79,6 +79,6 @@ func _collision_rects(stage: Stage) -> Array[Rect2]:
 	var rects: Array[Rect2] = []
 	for path in ["MainPlatform", "Platforms/Left", "Platforms/Right", "Platforms/Top"]:
 		var shape := stage.get_node(path + "/CollisionShape2D") as CollisionShape2D
-		var size := (shape.shape as RectangleShape2D).size
-		rects.append(Rect2(shape.global_position - size / 2.0, size))
+		var rect := shape.shape.get_rect()
+		rects.append(Rect2(shape.global_position + rect.position, rect.size))
 	return rects

@@ -45,7 +45,7 @@ when the move can hit, and what players read.
 | Animation | Used for | Frames | Timing (ticks per drawing) | Loops |
 |---|---|---|---|---|
 | `idle` | `IDLE` | 4 | 8 each | yes |
-| `run` | `RUN` | 6 | 5 each | yes |
+| `run` | `RUN` (also `DASH`/`SPRINT`, played at 3 ticks each) | 6 | 5 each | yes |
 | `crouch` | `CROUCH` | 2 | 2, then hold the second | no |
 | `jump` | `AIR`, rising | 2 | 4, then hold | no |
 | `fall` | `AIR`, falling | 2 | 6 each | yes |
