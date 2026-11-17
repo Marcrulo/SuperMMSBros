@@ -474,3 +474,34 @@ func test_tool_swing_stretches_the_body_drawings_over_the_frames() -> void:
 	assert_eq(swing.drawing("side_tilt", 0), 2, "the strike drawing on the active frames")
 	_steps(12)
 	assert_gte(swing.drawing("side_tilt", 0), 3, "recovering")
+
+
+# --- Sounds (docs/specs/characters/kim.md#sounds) ------------------------------------------------
+
+
+func _sounds_heard(fighter: Fighter) -> Array[AudioStream]:
+	var heard: Array[AudioStream] = []
+	var sounds := fighter.get_node("Sounds") as FighterSounds
+	sounds.played.connect(func(_sound: StringName) -> void: heard.append(sounds.last_stream))
+	return heard
+
+
+func test_the_hammer_clangs_when_it_hits() -> void:
+	await _place(Vector2(150, 192), Vector2(215, 192), _special("none"))
+	var heard := _sounds_heard(_p2)
+	_steps(60)
+	assert_has(heard, load("res://characters/kim/sounds/pipe.wav"), "the victim hears metal")
+
+
+func test_the_torch_roars_once_when_the_flame_comes_out() -> void:
+	await _place(Vector2(150, 192), Vector2(300, 192), _special("side"))
+	var heard := _sounds_heard(_p1)
+	_steps(50)
+	assert_eq(heard.count(load("res://characters/kim/sounds/flame.wav")), 1)
+
+
+func test_the_axe_chops() -> void:
+	await _place(Vector2(150, 192), Vector2(300, 192), _attack("side"))
+	var heard := _sounds_heard(_p1)
+	_steps(30)
+	assert_eq(heard.count(load("res://characters/kim/sounds/chop.wav")), 1)

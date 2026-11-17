@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
 [ext_resource type="Resource" path="res://characters/kim/moves/axe_swing.tres" id="2_swing"]
+[ext_resource type="AudioStream" uid="uid://t1qe6g88evk1" path="res://characters/kim/sounds/chop.wav" id="s_chop"]
 
 [resource]
 script = ExtResource("1_move")
@@ -16,3 +17,4 @@ knockback_growth = 2.0
 angle_deg = 38.0
 direction = 0
 ability = ExtResource("2_swing")
+active_sound = ExtResource("s_chop")

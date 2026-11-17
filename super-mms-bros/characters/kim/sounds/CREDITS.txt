@@ -1,0 +1,13 @@
+Kim's own sounds (tools/gen_character_sfx.py kim,
+list in tools/sfx/characters/kim.py).
+Changes: cut where noted, silence trimmed, loudness normalized, 44.1 kHz WAV.
+
+pipe.wav
+  "metal hit 1.wav" by deleted_user_4541234, https://freesound.org/people/deleted_user_4541234/sounds/455184/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+flame.wav
+  "Flamethrower" by 1bob, https://freesound.org/people/1bob/sounds/831929/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
+chop.wav
+  "Axe Cut #9" by birdswkaren, https://freesound.org/people/birdswkaren/sounds/712103/
+  License: Creative Commons 0 (public domain), http://creativecommons.org/publicdomain/zero/1.0/
