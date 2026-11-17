@@ -56,6 +56,15 @@ enum Direction { FACING, AWAY }
 ## A character's own mechanic on this move (docs/specs/architecture.md#abilities), or null.
 @export var ability: AbilityData
 
+@export_group("Sound")
+## While this move is in progress, these default sounds (by name: swing, zap, burst...) play
+## these streams instead (docs/specs/sound.md#character-sounds).
+@export var sounds: Dictionary[StringName, AudioStream] = {}
+## Plays when this move's hitbox comes out (its first active frame).
+@export var active_sound: AudioStream
+## What the victim hears when this move's hit lands, instead of the light/medium/heavy hit.
+@export var hit_sound: AudioStream
+
 func total_frames() -> int:
 	return startup + active + recovery
 

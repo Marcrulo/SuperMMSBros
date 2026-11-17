@@ -46,6 +46,7 @@ dive, which turns into the burst, and `HELPLESS`, which ends.
 | `base_knockback`, `knockback_growth` | Launch speed = base + growth × victim's % (after this hit's damage), in px/s |
 | `angle_deg` | Launch angle above horizontal; negative launches downward (a spike) |
 | `direction` | `FACING`: launched toward the attacker's facing side. `AWAY`: launched away from the attacker's center (for moves that hit both sides or behind) |
+| `sounds`, `active_sound`, `hit_sound` | Optional, a character's own sounds for this move: default sounds it replaces, a sound when its hitbox comes out, and the victim's hit sound (see [sound](sound.md#character-sounds)) |
 
 Every move has its own clear launch angle; where exactly the hitboxes overlap doesn't change it.
 

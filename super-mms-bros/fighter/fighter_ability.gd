@@ -219,7 +219,9 @@ func draw(_visuals: FighterVisuals, _animation: String, _frame: int) -> void:
 
 
 ## Sounds (docs/specs/sound.md): {"start": {phase: sound}, "hit": [phases that make the burst
-## sound when their hitbox comes out], "pop": [phases an up special pops out of]}.
+## sound when their hitbox comes out], "pop": [phases an up special pops out of], "loop": {phase:
+## sound that loops while in it}, "streams": {name: AudioStream, its own sound files, usable by name
+## in the others and in Match.owner_sound}}.
 func sounds() -> Dictionary:
 	return {}
 

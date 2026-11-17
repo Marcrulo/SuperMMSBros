@@ -10,10 +10,10 @@ A match should sound like a movie fight: a meaty punch when a hit lands, heavier
 launches, with footsteps, jumps, swings and a big knockout boom around it. The menus keep their
 retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
 
-- **Goals:** every common action is heard; hit strength is audible; sounds come from free libraries
-  with clear licenses.
-- **Non-goals (for now):** per-character sounds (voices, weapon sounds; they come with the
-  per-character moves), a volume settings screen, positional effects beyond left/right panning.
+- **Goals:** every common action is heard; hit strength is audible; a character's own moves can
+  have their own sounds (see [Character sounds](#character-sounds)); sounds come from free
+  libraries with clear licenses.
+- **Non-goals (for now):** a volume settings screen, positional effects beyond left/right panning.
 - **Anti-goals:** a sound that changes gameplay in any way (the game must play the same headless);
   the same sample firing identically many times a second (it gets grating, so repeated sounds vary
   slightly); fight sounds drowning out the stage music.
@@ -28,7 +28,7 @@ retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
 | Blocked | a hit lands on a shield (new signal `Match.fighter_blocked`) | `block` |
 | Swing | a normal attack (jab, tilts, aerials) starts | `swing` |
 | Charged punch | the neutral special's punch starts (Michael: his summon starts) | `swing_heavy` |
-| Charging | while the neutral special charges (loops; stops when the charge ends) | `charge` |
+| Charging | while the neutral special charges (a loop, see [Loops](#loops)) | `charge` |
 | Projectile | the side special's projectile appears | `zap` |
 | Hand slam | Michael's hand reaches the floor (`Match.owner_sound`, owner's sounds) | `burst` |
 | Burst | the down special's ground burst starts its active frames | `burst` |
@@ -58,15 +58,57 @@ retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
   emitted at the end of every `step()`, so events are found per tick even when several ticks run in
   one frame; and `fighter_blocked(player_index)` for shield hits.
 - **Players:** each fighter has an `AudioStreamPlayer2D` (panned left/right by where the fighter is
-  on screen, relative to the camera) with a few voices of polyphony, on the `SFX` bus. The `charge`
-  loop has its own player so it can be stopped. KO and respawn sounds play unpanned (the fighter is
-  off screen).
+  on screen, relative to the camera) with a few voices of polyphony, on the `SFX` bus. Loops have
+  their own player so they can be stopped. KO and respawn sounds play unpanned (the fighter is off
+  screen).
 - **Variation:** each play picks a pitch between 0.95 and 1.05 from a presentation-only random
   generator (never the Match's seeded RNG, which is for gameplay).
 - **Resource:** a `FightSounds` resource (`match/fight_sounds.tres`) maps each sound name to its
   `AudioStream` and holds the hit-strength thresholds and the pitch range, so they can be tuned in
-  the Inspector. Per-character sound sets can later override it.
+  the Inspector. A character's own sounds come on top of it (below).
 - A sound whose file is missing is silent, as in the menus.
+
+### Loops
+
+A loop plays from when a move (or an ability's phase) starts until the fighter is no longer in it:
+another move, another phase, hitstun, a KO. One loop at a time per fighter; a new one replaces the
+old. Which sound loops for the move in progress:
+
+- `neutral_special_charge`: `charge`;
+- an ability's phase listed in its `sounds()` under `"loop"` (`{phase: sound}`);
+- an ability's phase whose `"start"` sound is `charge` (it was always meant to loop).
+
+## Character sounds
+
+A character's own moves can sound like what they are (a chop, a scream, a choir). Everything here
+is character-owned: the sounds live in the character's folder and are plugged in through the move
+data and the ability hooks, so the shared code never names a character's sound.
+
+- **On a move** (`MoveData`, so in the character's `moves/*.tres`; set in the Inspector):
+  - `sounds` (`{default sound name: AudioStream}`): while this move is in progress, these of the
+    default sounds play this stream instead. E.g. a side special's projectile `zap` → a metallic
+    whoosh; a down special's `burst` → a choir.
+  - `active_sound`: plays when this move's hitbox comes out (its first active frame), on top of
+    the defaults (unless `sounds` replaces `burst`, which plays at the same moment).
+  - `hit_sound`: what the victim hears when this move's hit lands, instead of the light/medium/heavy
+    hit. It works for any hit the Match resolves (normals, specials, projectiles, entities, ability
+    hits), so an ability's `modify_hit()` can give a hit its sound too.
+  - To find them, `FighterSounds` reads `Fighter.current_move()` each tick; for the hit it reads the
+    move from the Match's new signal `hit_landed(player_index, move: MoveData)`, emitted for every
+    hit that lands, just before `fighter_hit`. Hits that only emit `fighter_hit` (an ability's own
+    damage) keep the default hit sound.
+- **On an ability** (`FighterAbility.sounds()`):
+  - `"streams"` (`{name: AudioStream}`): its own sound files, by name. Names here can be used
+    anywhere a sound name goes for that fighter: `"start"`, `"loop"`, and
+    `Match.owner_sound(player_index, name)` from its entities. They take priority over the default
+    set, for that fighter only.
+  - `"loop"` (`{phase: sound}`): see [Loops](#loops).
+- **Files:** `characters/<name>/sounds/<sound>.wav`, prepared like the fight sounds (cut where
+  needed, trimmed, loudness-normalized, 44.1 kHz) by `tools/gen_character_sfx.py <name>`, which
+  reads the character's list in `tools/sfx/characters/<name>.py` (source, cut, gain, reverse) and
+  writes `characters/<name>/sounds/CREDITS.txt` (one per character, so branches don't collide).
+  Freesound sounds come from their public high-quality previews (an MP3 of the original).
+- What each character's moves sound like is in its own spec (`docs/specs/characters/<name>.md`).
 
 ## Files and licenses
 
@@ -84,4 +126,6 @@ retro chiptune sounds; fight sounds are realistic (recorded foley), not beeps.
 - The event detection is a pure function (previous and current fighter state → events) with unit
   tests for each row of the table, including footstep timing and the hit-strength thresholds.
 - Every sound name in the table has a file in `assets/sfx/fight/` and a credit in `CREDITS.txt`.
+- Loops, a move's `sounds` / `active_sound` / `hit_sound`, and ability streams each have tests; every
+  file in a character's `sounds/` folder has a credit in its `CREDITS.txt`.
 - A headless match runs with sounds attached and plays exactly as without them.

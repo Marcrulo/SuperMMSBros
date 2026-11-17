@@ -7,6 +7,9 @@ extends Node2D
 
 ## A fighter took a hit (not a blocked one). The HUD bumps its card.
 signal fighter_hit(player_index: int)
+## A hit the Match resolved landed on a fighter (not blocked), with the move that hit; emitted just
+## before fighter_hit (the sounds read the move's hit_sound; docs/specs/sound.md#character-sounds).
+signal hit_landed(player_index: int, move: MoveData)
 ## A hit landed on a fighter's shield (docs/specs/sound.md).
 signal fighter_blocked(player_index: int)
 ## The end of every step(): one tick of the match is done (presentation reads it, per tick).
@@ -320,6 +323,7 @@ func _resolve_hits() -> void:
 			victim.take_hit(hit.move, hit.side, hit.attacker_x)
 			if hit.has("landed"):
 				(hit.landed as Callable).call(victim)
+			hit_landed.emit(victim.player_index, hit.move)
 			if hit.get("normal", false):
 				# A normal attack that lands can heal the attacker (an ability's lifesteal).
 				var attacker := hit.attacker as Fighter

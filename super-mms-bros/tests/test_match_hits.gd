@@ -71,6 +71,14 @@ func test_jab_hits_on_its_first_active_frame() -> void:
 	assert_almost_eq(_p2.velocity.x, cos(deg_to_rad(30.0)) * JAB_SPEED, 0.01)
 
 
+func test_a_landed_hit_is_announced_with_its_move() -> void:
+	await _place(Vector2(230, 192), 1, Vector2(250, 192), -1, _jabs(), [])
+	watch_signals(_match)
+	_steps(6)
+	assert_signal_emitted_with_parameters(_match, "hit_landed", [1, _p1.stats.moveset.jab])
+	assert_signal_emit_count(_match, "hit_landed", 1)
+
+
 func test_out_of_range_misses() -> void:
 	await _place(Vector2(230, 192), 1, Vector2(270, 192), -1, _jabs(), [])
 	_steps(20)

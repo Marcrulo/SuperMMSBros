@@ -37,8 +37,6 @@ func test_the_same_move_again_swings_again() -> void:
 
 
 func test_specials() -> void:
-	assert_has(_events({}, {"state": S.ATTACK, "state_frame": 1, "move": &"neutral_special_charge"}),
-			&"charge")
 	assert_has(_events({"state": S.ATTACK, "move": &"neutral_special_charge"},
 			{"state": S.ATTACK, "state_frame": 1, "move": &"neutral_special"}), &"swing_heavy")
 	assert_has(_events({"state": S.AIR, "on_floor": false},
@@ -83,11 +81,71 @@ func test_boost_when_she_pops_off_the_pyramid() -> void:
 	assert_has(_events(before, after), &"boost")
 
 
-func test_charge_stops_when_the_charge_ends() -> void:
-	var charging := {"state": S.ATTACK, "move": &"neutral_special_charge"}
-	assert_has(_events(charging, {"state": S.HITSTUN, "move": Fighter.NO_MOVE}), &"charge_stop")
-	assert_has(_events(charging, {"state": S.ATTACK, "move": &"neutral_special", "state_frame": 1}),
-			&"charge_stop")
+func _loop(snap: Dictionary) -> StringName:
+	return FighterSounds.loop_sound(_snap(snap))
+
+
+func test_the_charge_loops_while_charging() -> void:
+	assert_eq(_loop({"state": S.ATTACK, "move": &"neutral_special_charge"}), &"charge")
+	assert_eq(_loop({"state": S.ATTACK, "move": &"neutral_special"}), &"", "the punch")
+	assert_eq(_loop({"state": S.HITSTUN, "move": Fighter.NO_MOVE}), &"", "hit out of it")
+	assert_does_not_have(_events({}, {"state": S.ATTACK, "state_frame": 1,
+			"move": &"neutral_special_charge"}), &"charge", "a loop, not a one-shot")
+
+
+func test_an_abilitys_phase_can_loop() -> void:
+	var sounds := {"loop": {&"glide": &"wind"}, "start": {&"rise": &"charge"}}
+	assert_eq(_loop({"state": S.ATTACK, "move": &"glide", "sounds": sounds}), &"wind")
+	assert_eq(_loop({"state": S.ATTACK, "move": &"rise", "sounds": sounds}), &"charge",
+			"a phase starting with the charge sound loops it")
+	assert_eq(_loop({"state": S.AIR, "move": Fighter.NO_MOVE, "sounds": sounds}), &"",
+			"stops when the phase ends")
+	assert_does_not_have(_events({}, {"state": S.ATTACK, "state_frame": 1, "move": &"rise",
+			"sounds": sounds}), &"charge")
+
+
+func _move(sounds: Dictionary = {}, active: AudioStream = null, hit: AudioStream = null) -> MoveData:
+	var data := MoveData.new()
+	data.sounds.assign(sounds)
+	data.active_sound = active
+	data.hit_sound = hit
+	return data
+
+
+func test_a_moves_active_sound_on_its_first_active_frame() -> void:
+	var data := _move({}, AudioStreamWAV.new())
+	var before := {"state": S.ATTACK, "move": &"side_tilt", "state_frame": 11, "move_data": data}
+	var after := {"state": S.ATTACK, "move": &"side_tilt", "state_frame": 12, "hitbox_active": true,
+			"move_data": data}
+	assert_has(_events(before, after), FighterSounds.ACTIVE_SOUND)
+	before.hitbox_active = true
+	after.state_frame = 13
+	assert_does_not_have(_events(before, after), FighterSounds.ACTIVE_SOUND, "only once")
+	after.move_data = _move()
+	before.hitbox_active = false
+	assert_does_not_have(_events(before, after), FighterSounds.ACTIVE_SOUND, "none set")
+
+
+func test_streams_come_from_the_move_then_the_abilities_then_the_set() -> void:
+	var set_ := FightSounds.new()
+	var default_zap := AudioStreamWAV.new()
+	var own_zap := AudioStreamWAV.new()
+	var ability_zap := AudioStreamWAV.new()
+	var scream := AudioStreamWAV.new()
+	set_.streams[&"zap"] = default_zap
+	var abilities := {"streams": {&"zap": ability_zap, &"scream": scream}}
+	assert_eq(FighterSounds.stream_for(&"zap", null, {}, set_), default_zap)
+	assert_eq(FighterSounds.stream_for(&"zap", null, abilities, set_), ability_zap)
+	assert_eq(FighterSounds.stream_for(&"scream", null, abilities, set_), scream)
+	assert_eq(FighterSounds.stream_for(&"zap", _move({&"zap": own_zap}), abilities, set_), own_zap)
+	assert_eq(FighterSounds.stream_for(&"zap", _move({&"burst": own_zap}), {}, set_), default_zap)
+	assert_null(FighterSounds.stream_for(&"nothing", null, abilities, set_))
+
+
+func test_ability_sounds_merge_streams_and_loops() -> void:
+	var merged := FighterSounds.ability_sounds(autofree(Fighter.new()))
+	assert_eq(merged.get("streams"), {})
+	assert_eq(merged.get("loop"), {})
 
 
 func test_footsteps_on_the_foot_plants() -> void:
@@ -213,6 +271,22 @@ func test_hits_play_for_the_victim() -> void:
 	assert_eq(played, [&"hit_medium"] as Array[StringName])
 
 
+func test_a_moves_hit_sound_plays_for_the_victim() -> void:
+	await _start_match()
+	var sounds := _sounds(1)
+	var pipe := AudioStreamWAV.new()
+	_match.hit_landed.emit(1, _move({}, null, pipe))
+	_match.fighter_hit.emit(1)
+	assert_eq(sounds.last_played, FighterSounds.MOVE_HIT)
+	assert_eq(sounds.last_stream, pipe)
+	_match.get_fighter(1).velocity = Vector2(250, 0)
+	_match.hit_landed.emit(1, _move())
+	_match.fighter_hit.emit(1)
+	assert_eq(sounds.last_played, &"hit_medium", "no hit sound of its own: by strength")
+	_match.fighter_hit.emit(1)
+	assert_eq(sounds.last_played, &"hit_medium", "a hit without hit_landed (an ability's own)")
+
+
 func test_charge_stops_when_hit() -> void:
 	await _start_match()
 	var sounds := _sounds(0)
@@ -266,3 +340,19 @@ func test_sounds_use_the_sfx_bus() -> void:
 	await _start_match()
 	for player in _sounds(0).find_children("*", "AudioStreamPlayer2D", false, false):
 		assert_eq((player as AudioStreamPlayer2D).bus, &"SFX")
+
+
+func test_every_character_sound_is_credited() -> void:
+	var characters := DirAccess.open("res://characters")
+	var files := 0
+	for character in characters.get_directories():
+		var folder := "res://characters/%s/sounds" % character
+		if not DirAccess.dir_exists_absolute(folder):
+			continue
+		var credits := FileAccess.get_file_as_string(folder + "/CREDITS.txt")
+		for file in DirAccess.get_files_at(folder):
+			if file.ends_with(".wav"):
+				files += 1
+				assert_string_contains(credits, file, "%s/%s" % [character, file])
+	if files == 0:
+		pass_test("no character sounds yet")
