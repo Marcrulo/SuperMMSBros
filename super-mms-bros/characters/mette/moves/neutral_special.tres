@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="MoveData" format=3]
 
 [ext_resource type="Script" path="res://fighter/move_data.gd" id="1_move"]
+[ext_resource type="AudioStream" uid="uid://bdojvjtvhqlg" path="res://characters/mette/sounds/glass.wav" id="s_glass"]
 
 [resource]
 script = ExtResource("1_move")
@@ -14,3 +15,4 @@ base_knockback = 70.0
 knockback_growth = 0.5
 angle_deg = 40.0
 direction = 0
+active_sound = ExtResource("s_glass")

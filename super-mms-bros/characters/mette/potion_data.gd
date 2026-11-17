@@ -39,6 +39,16 @@ extends AbilityData
 @export var glue_speed: float
 @export var glue_jump: float
 
+@export_group("Sounds")
+## Her own sounds (docs/specs/sound.md#character-sounds); none = silent. A flask breaking (the smash
+## has it as its active_sound; a thrown flask when it shatters), a flask leaving her hand, and its
+## potion splashing onto the floor, by colour.
+@export var glass_sound: AudioStream
+@export var throw_sound: AudioStream
+@export var splash_red: AudioStream
+@export var splash_blue: AudioStream
+@export var splash_green: AudioStream
+
 @export_group("Reactions")
 ## Steam (red + blue): its area (bottom center on the floor), ticks and hit.
 @export var steam_size: Vector2
