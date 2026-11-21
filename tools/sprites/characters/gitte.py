@@ -50,6 +50,11 @@ def scissors(grip, angle, opening=0):
     return out
 
 
+def air_held(angle, front=True, **changes):
+    """`held` with the aerials' base pose (as `air_pose`)."""
+    return held(angle, front, **{**AIR, **changes})
+
+
 # Gitte's scissor cut: held out in front, open while charging, snapped shut on the strike.
 SCISSOR_ANIMATIONS = {
     "neutral_special_charge": [
@@ -60,6 +65,61 @@ SCISSOR_ANIMATIONS = {
                              bk=0.2),
                         held(-90, lean=2, fa=1.5, fe=0.0, reach=1.4, ft=0.45, bt=-0.45),
                         held(-60, fa=1.0, fe=0.3, ft=0.15, bt=-0.15)],
+    # Tilts and aerials are swung with the scissors (5 drawings each, the strike 3rd; the blades
+    # snap open for the strike). The jab stays the default bare-fisted one.
+    "side_tilt": [held(105, False, lean=-1, fa=-0.8, fe=0.6, ft=-0.3, fk=0.9, bt=0.1),
+                  held(115, False, lean=-2, fa=-1.1, fe=0.4, ft=0.6, fk=1.6, bt=-0.1),
+                  held(-90, lean=-2, fa=1.57, fe=0.0, reach=2.4, ft=1.57, fk=0.0, bt=-0.2, bk=0.2,
+                       opening=35),
+                  held(-60, lean=-1, fa=1.3, fe=0.0, reach=1.2, ft=1.0, fk=0.5, bt=-0.1,
+                       opening=15),
+                  held(-25, ft=0.4, fk=0.4, bt=-0.2, fa=0.7, fe=0.3)],
+    "up_tilt": [held(-70, lean=-1, fa=1.2, fe=0.4, ba=0.9),
+                held(-125, lean=-1, crouch=1, fa=2.1, fe=0.4, ba=1.8),
+                held(180, lean=1, fa=3.0, fe=0.0, reach=1.0, ft=0.2, bt=-0.2, opening=35),
+                held(160, fa=2.7, fe=0.3, opening=15),
+                held(-100, fa=1.7, fe=0.6)],
+    "down_tilt": [held(-40, crouch=2, lean=-1, ft=0.6, fk=1.2, bt=0.2, bk=0.8, fa=0.7, fe=0.5),
+                  held(-30, crouch=3, lean=-1, ft=-0.3, fk=1.5, bt=0.4, bk=1.0, fa=0.5, fe=0.6),
+                  held(-65, crouch=3, lean=1, ft=1.5, fk=0.0, bt=0.5, bk=1.4, fa=1.15, fe=0.0,
+                       reach=1.6, opening=35),
+                  held(-50, crouch=2, ft=1.0, fk=0.6, bt=0.3, bk=1.0, fa=0.9, fe=0.2, opening=15),
+                  held(-30, crouch=1, ft=0.4, fk=0.4, bt=-0.1, bk=0.4, fa=0.6, fe=0.4)],
+    "neutral_air": [air_held(120, False, crouch=1, ft=0.9, fk=1.6, bt=0.5, bk=1.5, fa=-1.5, fe=0.5),
+                    air_held(150, False, crouch=1, ft=1.0, fk=1.8, bt=0.6, bk=1.6, fa=-2.5,
+                             fe=0.4),
+                    air_held(-90, fa=1.57, fe=0.0, reach=1.4, ft=0.9, fk=0.0, bt=-0.9, bk=0.0,
+                             opening=60),
+                    air_held(-30, fa=0.5, fe=0.4, ft=0.6, fk=0.3, bt=-0.6, bk=0.3, opening=25),
+                    air_held(110, False, fa=-1.2, fe=0.6)],
+    # Forward air: the scissors stay in front of her (where the hitbox is) the whole move, chopping
+    # down from forward-up to forward-down.
+    "forward_air": [air_held(-140, lean=-1, fa=2.4, fe=0.2, ba=2.2),
+                    air_held(-115, lean=-1, fa=2.0, fe=0.2, ba=1.8),
+                    air_held(-75, lean=2, fa=1.3, fe=0.0, reach=1.8, ft=0.6, fk=0.3, opening=35),
+                    air_held(-45, lean=1, fa=0.8, fe=0.3, reach=0.6, opening=15),
+                    air_held(-25, fa=0.5, fe=0.5)],
+    "back_air": [air_held(-60, lean=1, bt=0.4, bk=1.6, fa=1.0, fe=0.5),
+                 air_held(-20, lean=2, bt=0.6, bk=2.0, ft=0.6, fk=1.0, fa=0.4, fe=0.4),
+                 air_held(95, False, lean=2, head_dx=1, bt=-1.57, bk=0.0, ft=0.5, fk=0.8,
+                          fa=-1.65, fe=0.0, reach=1.8, opening=35),
+                 air_held(80, False, lean=1, bt=-1.0, bk=0.4, ft=0.4, fk=0.6, fa=-1.4, fe=0.2,
+                          opening=15),
+                 air_held(40, False, fa=-0.7, fe=0.4)],
+    "up_air": [air_held(-60, fa=1.0, fe=0.5, ba=0.9),
+               air_held(-125, crouch=1, fa=2.2, fe=0.4, ft=0.7, fk=1.2, bt=0.4, bk=1.2),
+               air_held(180, head_dy=-1, fa=3.0, fe=0.0, reach=1.0, ft=0.2, fk=0.2, bt=-0.2,
+                        bk=0.2, opening=35),
+               air_held(160, fa=2.6, fe=0.3, opening=15),
+               air_held(-110, fa=1.8, fe=0.5)],
+    # Down air: a stab. The scissors point down the whole time: held in front of her chest as she
+    # tucks her legs up (so the blades stay on the canvas), driven down, then let go.
+    "down_air": [air_held(0, crouch=-1, ft=1.1, fk=1.9, bt=0.8, bk=1.8, fa=1.3, fe=0.5, ba=1.1),
+                 air_held(0, crouch=-2, ft=1.3, fk=2.2, bt=1.0, bk=2.1, fa=1.4, fe=0.3, ba=1.2),
+                 air_held(0, crouch=-2, head_dy=-1, ft=1.4, fk=2.5, bt=1.1, bk=2.4, fa=1.55,
+                          fe=0.0, reach=0.8, ba=1.35),
+                 air_held(0, crouch=-2, ft=1.3, fk=2.3, bt=1.0, bk=2.2, fa=1.4, fe=0.1, ba=1.2),
+                 air_held(0, fa=1.1, fe=0.5, ba=0.9)],
     # Stance switch: hands crossed in front, then flung out wide.
     "down_special": [pose(fa=1.2, fe=1.6, ba=1.0, be=1.8, crouch=1),
                      pose(fa=1.1, fe=1.7, ba=0.9, be=1.9, crouch=2, lean=-1),

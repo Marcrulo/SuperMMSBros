@@ -121,7 +121,8 @@ With `--autoquit`, the game prints the result line and quits instead of showing 
     row on the name's line, starting at x 60 of the card, 10 px apart.
   - for a fighter with **stances** (Gitte): a 9×9 badge on the portrait's bottom-right corner
     (dark `#1a1c2c` square, 1 px border in the player color) with her current stance's sign drawn
-    in light lines: `+`, `−`, `÷` (a line and two dots) or `×`.
+    in lines in the stance's color ([Gitte](characters/gitte.md#stance-colors): `+` red, `−` blue,
+    `÷` orange, `×` green): `+`, `−`, `÷` (a line and two dots) or `×`.
   - for a fighter with the **frenzy** (Sjippepigen): the frenzy meter, a 62×4 bar along the card's
     bottom at (30, 25) (`FrenzyBar`): dark `#1a1c2c`, filled from the left in her first rope color
     as the meter refills, flashing (lightened 60 %, 8 frames on, 8 off) when full (see
