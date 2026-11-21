@@ -44,10 +44,18 @@ a stop sign for the smash, and the burst is stop-sign red (see [art guide](#look
   down in front of him. On frame 24 (`slam_frame`) the victim lands on his feet line, 13 px from
   him on that far side, and is hit by the slam: damage 12, base 220, growth 1.3, angle 60°,
   launched **away from Mads** (they bounce up off the floor and fly). He is free after frame 40.
+- **The table** (`GrabTable`, a `MatchEntity`): the moment Side+B starts (after he has turned toward
+  the held side) a table is standing **behind him**, on the slam spot where the victim will land
+  (his feet line, 13 px behind him). It has no hitbox and nothing collides with it. The slam
+  **breaks it apart**: the top splits in two and the legs fly out, falling away, for 30 ticks
+  (`table_break_ticks`), then it's gone. If the reach misses, it goes when the move ends. It also
+  goes if Mads is KO'd. A new Side+B never leaves two tables: the old one goes.
 - **Data:** `MoveData.ability` → `GrabData` (`throw_frames` 40, `turn_frame` 15, `slam_frame` 24,
-  `path`, `held_middle` 16, `slam_hit` → a `MoveData` with the slam's hit values). Files:
+  `path`, `held_middle` 16, `table_size` 40×20,
+  `table_break_ticks` 30, `slam_hit` → a `MoveData` with the slam's hit values). Files:
   `characters/mads/moves/` (`moveset.tres`, `side_special.tres`, `slam.tres`, `slam_hit.tres`).
-- **Look** (see [art guide](#look)): his own throw drawings; the victim is drawn in
+- **Look** (see [art guide](#look)): his own throw drawings; the table is drawn in code (a
+  wooden top and four legs, brown with a darker edge), behind the fighters; the victim is drawn in
   their hurt pose behind him (his hands and head in front), turning over round the middle of their
   body as they go (half a turn by the slam, head first onto the floor).
 

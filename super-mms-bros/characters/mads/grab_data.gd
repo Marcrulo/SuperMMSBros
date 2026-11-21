@@ -14,6 +14,10 @@ extends AbilityData
 @export var path: PackedVector2Array
 ## How far above the victim's feet the middle of its body is (px).
 @export var held_middle: float
+## The table's size (px), bottom center at the slam spot.
+@export var table_size: Vector2 = Vector2(40, 20)
+## Ticks the broken table's pieces fly before they are gone.
+@export var table_break_ticks: int = 30
 ## The slam's hit (damage and knockback; launched away from the thrower).
 @export var slam_hit: MoveData
 

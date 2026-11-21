@@ -215,3 +215,49 @@ func test_both_are_drawn_mid_throw() -> void:
 	_steps(20)
 	await wait_frames(2)
 	assert_eq(_p2.state, Fighter.State.HELD)
+
+
+# --- The table --------------------------------------------------------------------------------------
+
+func _catch_setup() -> void:
+	await _place(Vector2(200, 192), Vector2(222, 192), _reach())
+
+
+func _tables() -> Array[MatchEntity]:
+	return _match.get_entities(GrabTable)
+
+
+func test_table_stands_behind_him_when_the_move_starts() -> void:
+	await _catch_setup()
+	_steps(1)
+	assert_eq(_tables().size(), 0, "not before the move")
+	_steps(2)
+	assert_eq(_tables().size(), 1, "there as soon as Side+B starts")
+	var table := _tables()[0] as GrabTable
+	assert_lt(table.global_position.x, _p1.global_position.x, "behind him (he faces right)")
+	assert_almost_eq(table.global_position.y, 192.0, 0.5)
+	assert_false(table.is_broken())
+
+
+func test_a_miss_takes_the_table_away() -> void:
+	await _place(Vector2(200, 192), Vector2(380, 192), _reach())
+	_steps(3)
+	assert_eq(_tables().size(), 1)
+	_steps(40)
+	assert_eq(_tables().size(), 0, "no catch: the table goes when the move ends")
+
+
+func test_slam_breaks_the_table_and_it_goes() -> void:
+	await _catch_setup()
+	_steps(9 + 24)
+	var table := _tables()[0] as GrabTable
+	assert_true(table.is_broken(), "the slam breaks it")
+	assert_almost_eq(table.global_position.y, 192.0, 1.0)
+	_steps(_grab().table_break_ticks + 1)
+	assert_eq(_tables().size(), 0, "the pieces are gone after table_break_ticks")
+
+
+func test_table_goes_with_its_owner() -> void:
+	await _catch_setup()
+	_steps(9 + 14)
+	assert_true(_tables()[0].removed_with_owner())

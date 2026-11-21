@@ -29,6 +29,31 @@ func replaces(move: StringName) -> bool:
 	return move == slot  # No projectile.
 
 
+## The table stands behind him from the first frame of the move; if the reach ends without a
+## catch, it goes.
+func spawn_entities(match_: Match) -> void:
+	var reaching := fighter.state == Fighter.State.ATTACK and fighter.move == slot
+	var throwing := fighter.state == Fighter.State.ATTACK and fighter.move == &"grab_throw"
+	var own := match_.get_entities(GrabTable, fighter.player_index)
+	if reaching:
+		if own.any(func(t: MatchEntity) -> bool: return not (t as GrabTable).is_broken()):
+			return  # This move's table is already standing.
+		for old in own:
+			match_.remove_entity(old)
+		var table := GrabTable.new()
+		match_.add_entity(table)
+		table.setup(fighter.player_index, slam_spot(fighter.facing), _numbers())
+	elif not reaching and not throwing:
+		for table in own:
+			if not (table as GrabTable).is_broken():
+				match_.remove_entity(table)
+
+
+## Where the victim lands (and the table stands): on his feet line, on the far side.
+func slam_spot(facing: int) -> Vector2:
+	return fighter.global_position + Vector2(_numbers().path[-1].x * facing, 0.0)
+
+
 ## The grab box is out now.
 func is_grab_box() -> bool:
 	var move_data := fighter.current_move()
@@ -67,6 +92,8 @@ func advance_held(match_: Match) -> bool:
 		fighter.facing = -fighter.throw_facing  # Turned round with the victim overhead.
 	if fighter.state_frame >= _numbers().slam_frame:
 		_slam()
+		for table in match_.get_entities(GrabTable, fighter.player_index):
+			(table as GrabTable).break_apart()
 		match_.fighter_hit.emit(victim.player_index)
 	else:
 		victim.global_position = throw_position(fighter.state_frame)
@@ -90,7 +117,7 @@ func _slam() -> void:
 	fighter.throwing = null
 	victim.held_by = null
 	# On the floor (his feet line) where the path ends.
-	victim.global_position = fighter.global_position + Vector2(grab.path[-1].x * fighter.throw_facing, 0.0)
+	victim.global_position = slam_spot(fighter.throw_facing)
 	victim.take_hit(grab.slam_hit, -fighter.throw_facing, fighter.global_position.x)
 	fighter.hit_dealt(victim)
 	fighter.facing = -fighter.throw_facing
