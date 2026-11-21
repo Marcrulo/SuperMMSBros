@@ -75,13 +75,31 @@ func _stances() -> StanceData:
 # --- Data -----------------------------------------------------------------------------------------
 
 
+## Her tilts and aerials are swung with the scissors: the default's timing and hit values, but the
+## hitbox reaches further (the outer edge of its box 6-8 px further out).
+func test_scissor_normals_reach_further() -> void:
+	var defaults := (load("res://fighter/default_stats.tres") as FighterStats).moveset
+	var moves := _p1.stats.moveset
+	for name in ["side_tilt", "up_tilt", "down_tilt", "neutral_air", "forward_air", "back_air",
+			"up_air", "down_air"]:
+		var mine: MoveData = moves.get(name)
+		var base: MoveData = defaults.get(name)
+		assert_ne(mine, base, name)
+		assert_eq([mine.startup, mine.active, mine.recovery, mine.damage, mine.base_knockback,
+			mine.knockback_growth, mine.angle_deg], [base.startup, base.active, base.recovery,
+			base.damage, base.base_knockback, base.knockback_growth, base.angle_deg], name)
+		var a := Rect2(base.hitbox_center - base.hitbox_size / 2, base.hitbox_size)
+		var b := Rect2(mine.hitbox_center - mine.hitbox_size / 2, mine.hitbox_size)
+		assert_true(b.encloses(a), "%s: the old box is inside the new one" % name)
+		assert_gt(b.get_area(), a.get_area(), name)
+
+
 func test_gitte_has_her_own_specials() -> void:
 	var defaults := (load("res://fighter/default_stats.tres") as FighterStats).moveset
 	var moves := _p1.stats.moveset
 	for name in ["neutral_special", "side_special", "down_special", "up_special"]:
 		assert_ne(moves.get(name), defaults.get(name), name)
-	for name in ["jab", "side_tilt", "neutral_air"]:
-		assert_eq(moves.get(name), defaults.get(name), name)
+	assert_eq(moves.jab, defaults.jab, "the jab stays the default")
 	var s := _stances()
 	assert_eq([s.knockback, s.pull_cone_deg, s.pull_reach, s.pull_speed, s.small_scale,
 		s.small_speed, s.large_scale, s.large_special], [1.25, 30.0, 120.0, 300.0, 0.75, 1.25, 1.25, 1.3])
@@ -389,6 +407,34 @@ func test_card_shows_her_stance() -> void:
 	assert_eq((hud.cards[0].get_badge(StanceBadge) as StanceBadge).stance, StanceAbility.Stance.DIVIDE)
 
 
+func test_card_badge_sign_is_stance_colored() -> void:
+	var hud := _match.get_node("HUD") as Hud
+	var badge := hud.cards[0].get_badge(StanceBadge) as StanceBadge
+	for stance in StanceAbility.Stance.values():
+		_stance().stance = stance
+		hud.cards[0].refresh()
+		assert_eq(badge.sign_color(), StanceAbility.stance_color(stance))
+
+
+# --- Switch pop-up --------------------------------------------------------------------------------
+
+
+func test_switch_pops_up_the_new_stance_briefly() -> void:
+	await _place(Vector2(150, 192), Vector2(380, 192), _moves("switch"))
+	assert_eq(_stance().popup_ticks, 0, "none before")
+	_steps(9)
+	assert_eq(_stance().stance, StanceAbility.Stance.MINUS)
+	assert_gt(_stance().popup_ticks, 0, "shown on the switch")
+	_steps(StanceAbility.POPUP_TICKS + 1)
+	assert_eq(_stance().popup_ticks, 0, "gone again")
+
+
+func test_popup_cleared_on_respawn() -> void:
+	_stance().popup_ticks = 20
+	_stance().reset()
+	assert_eq(_stance().popup_ticks, 0)
+
+
 # --- Hand glow ------------------------------------------------------------------------------------
 
 
@@ -404,15 +450,19 @@ func test_hands_json_covers_her_drawings() -> void:
 
 
 func test_glow_colors() -> void:
-	_stance().stance = StanceAbility.Stance.PLUS
-	var plus := _stance().glow_color()
-	assert_true(plus.r > 0.8 and plus.b < 0.4, "red")
-	_stance().stance = StanceAbility.Stance.MINUS
-	var minus := _stance().glow_color()
-	assert_true(minus.b > 0.8 and minus.r < 0.4, "blue")
-	for stance in [StanceAbility.Stance.DIVIDE, StanceAbility.Stance.MULTIPLY]:
+	# Every stance has its own color: + red, − blue, ÷ orange, × green.
+	var expect := {
+		StanceAbility.Stance.PLUS: func(c: Color) -> bool: return c.r > 0.8 and c.g < 0.4 and c.b < 0.4,
+		StanceAbility.Stance.MINUS: func(c: Color) -> bool: return c.b > 0.8 and c.r < 0.4,
+		StanceAbility.Stance.DIVIDE: func(c: Color) -> bool: return c.r > 0.8 and c.g > 0.5 and c.g < 0.75 and c.b < 0.4,
+		StanceAbility.Stance.MULTIPLY: func(c: Color) -> bool: return c.g > 0.7 and c.r < 0.5 and c.b < 0.5,
+	}
+	for stance: StanceAbility.Stance in expect:
 		_stance().stance = stance
-		assert_eq(_stance().glow_color().a, 0.0, "no glow")
+		var color := _stance().glow_color()
+		assert_true((expect[stance] as Callable).call(color), "stance %d: %s" % [stance, color])
+		assert_eq(color.a, 1.0)
+		assert_eq(color, StanceAbility.stance_color(stance))
 
 
 func test_hands_lookup() -> void:

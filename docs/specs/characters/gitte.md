@@ -6,7 +6,25 @@ and the [art guide](../art-guide.md).
 ## Gitte — scissors and stances
 
 Gitte carries a large pair of scissors on her back (see [art guide](#look)). All
-four of her specials are her own; everything else is the default move set.
+four of her specials are her own, and so are her tilts and aerials; only the jab is the default.
+
+**Scissor normals** (`side_tilt`, `up_tilt`, `down_tilt`, `neutral_air`, `forward_air`, `back_air`,
+`up_air`, `down_air`, each a `.tres` in `characters/gitte/moves/`): she swings the scissors, so they
+reach a little further than the default's fist. Timing, damage, knockback and angle are the default's;
+only the hitbox grows, its outer edge 6-8 px further out (the old box always stays inside the new one):
+
+| Move | Hitbox center | Hitbox size |
+|---|---|---|
+| side tilt | (23, −12) | 26×8 |
+| up tilt | (2, −35) | 24×20 |
+| down tilt | (18, −3) | 26×6 |
+| neutral air | (0, −13) | 40×34 |
+| forward air | (20, −14) | 24×12 |
+| back air | (−20, −12) | 24×12 |
+| up air | (2, −36) | 24×20 |
+| down air | (0, 8) | 18×18 (a stab straight down) |
+
+The stances scale and tug with these boxes like any other.
 
 **Neutral special — scissor cut** (`neutral_special.tres`): charged like the default one (hold K up
 to 60 ticks; she holds the scissors out in front, open, while charging), then she snaps them shut:
@@ -46,6 +64,26 @@ collected (the `resolve_contacts` hook):
   them from acting while they fly in. It isn't a landed hit: no hit spark, no hit sound.
 - A **shielding** opponent instead gets the usual block push toward her (0 damage: the shield loses
   nothing).
+
+### Stance colors
+
+Each stance has a color, used for her hands' glow, the sign on her player card and the switch pop-up
+(`StanceAbility.stance_color()`):
+
+| Stance | Color |
+|---|---|
+| `+` plus | red `#ff4a3d` |
+| `−` minus | blue `#4aa8ff` |
+| `÷` divide | orange `#ff9a3d` |
+| `×` multiply | green `#5fd35f` |
+
+**Switch pop-up.** When she switches stance (on the switch's frame 8), the new stance's icon pops up
+over her head for 45 ticks (`POPUP_TICKS`): the same sign as on her card, drawn in the stance's color
+on a dark `#1a1c2c` square with a border in that color, 9 grid pixels of 2 px (18×18 game px), its
+bottom edge 34 px above her feet (scaled by her size). It pops in over 6 ticks with a little
+overshoot (up to ×1.3, then settling at ×1), drifts 8 px up over its life and fades out over the
+last 12 ticks. It's drawn by the ability (presentation only; a counter `popup_ticks` is set on the
+switch and counts down each tick, and `reset()` clears it).
 
 The numbers live in `StanceData` (`knockback` 1.25, `pull_cone_deg` 30, `pull_reach` 120,
 `pull_speed` 300, `small_scale` 0.75, `small_speed` 1.25, `large_scale` 1.25, `large_special` 1.3).
@@ -107,8 +145,8 @@ Her own sounds ([character sounds](../sound.md#character-sounds)), in `character
   then flung out wide. Her volley's picture (`projectile.png`): a small pair of scissors, 3
   drawings of 16×16 turned 120° further each.
 - **Stances ÷ and ×** draw her frames at ×0.75 / ×1.25 of the usual ¾ size, feet at the origin.
-- **Stances + and −** light her hands: a small soft glow (a few px across, a bright core in a
-  fainter halo, gently pulsing) at each fist, red (`+`) or blue (`−`), drawn over her in every
+- **Every stance** has a color ([below](#stance-colors)) and lights her hands: a small soft glow (a few px
+  across, a bright core in a fainter halo, gently pulsing) at each fist in the stance's color, drawn over her in every
   drawing where the fist's spot is known. The spots come from `slot_02/hands.json`, written by her
   sprite generator: `{animation: [drawing: [[front x, y], [back x, y]]]}` in game px from the feet,
   facing right, at size 1 (the game mirrors and scales them). Only drawing: the game plays the
@@ -129,6 +167,16 @@ dark outline goes around the whole pyramid. The colors are fixed (sand, not per 
 In the game the drawing's bottom center sits on the floor top, and only the part above the floor
 is drawn: rising, it comes up out of the floor, and sinking, it goes back down into it, shaking
 1 px left and right every 2 ticks. Drawn behind the fighters, in front of the stage.
+
+Her **tilts and aerials** (the default's drawing counts, strike 3rd) are drawn with the scissors in her
+front fist, the back hand on them too: wound up behind or at the side, then swung through the move's
+direction (side tilt and forward air forward, up tilt and up air straight up, down tilt forward and
+down, back air behind her, neutral air held out in front; the forward air stays in front of her in all five drawings, chopping down
+from forward-up to forward-down, since that's where its hitbox is; the down air is a stab, not a swing: scissors point
+straight down, closed, in all five drawings: held at her chest, driven down, then let go; her legs are
+tucked up so the blades stay on the canvas) with the blades
+snapped open (35°, 60° for the neutral air) on the strike drawing and the follow-through,
+closed otherwise. Her jab stays bare-fisted.
 
 Her own **up special** pose (3 drawings): a crouch with the front hand out low over the ground
 (calling the pyramid up), then standing with her fist raised forward and up (riding the tip; shown

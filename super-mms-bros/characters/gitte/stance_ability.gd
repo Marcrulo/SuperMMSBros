@@ -8,14 +8,30 @@ extends FighterAbility
 ## In switching order.
 enum Stance { PLUS, MINUS, DIVIDE, MULTIPLY }
 
-## Her hands' glow in + and − (docs/specs/characters/gitte.md#weapon-and-own-drawings).
+## Each stance's color (docs/specs/characters/gitte.md#stance-colors): her hands' glow, the sign on
+## her player card and the switch pop-up.
 const PLUS_GLOW := Color("#ff4a3d")
 const MINUS_GLOW := Color("#4aa8ff")
+const DIVIDE_GLOW := Color("#ff9a3d")
+const MULTIPLY_GLOW := Color("#5fd35f")
 const GLOW_HALO := 4.0
 const GLOW_CORE := 2.0
 ## The halo's radius swings ±GLOW_PULSE px over GLOW_PULSE_TICKS ticks.
 const GLOW_PULSE := 0.5
 const GLOW_PULSE_TICKS := 30
+
+## The pop-up after a switch: the new stance's icon over her head for this many ticks. It pops in
+## (POPUP_GROW ticks, overshooting), drifts up POPUP_RISE px and fades out over the last POPUP_FADE.
+const POPUP_TICKS := 45
+const POPUP_GROW := 6
+const POPUP_FADE := 12
+const POPUP_RISE := 8.0
+## The icon's pixel size (the badge's 9 px grid × this), and its distance above her head (at size 1).
+const POPUP_UNIT := 2.0
+const POPUP_HEIGHT := 34.0
+
+## Ticks left of the switch pop-up (0 = none). Only the drawing reads it.
+var popup_ticks := 0
 
 ## Each character's fists per drawing (hands.json), looked up once.
 static var _hands: Dictionary[String, Dictionary] = {}
@@ -34,6 +50,11 @@ func _numbers() -> StanceData:
 
 func reset() -> void:
 	stance = Stance.PLUS
+	popup_ticks = 0
+
+
+func after_tick(_input: FighterInput) -> void:
+	popup_ticks = maxi(popup_ticks - 1, 0)
 
 
 func pick_special(input: FighterInput, choice: StringName) -> StringName:
@@ -48,6 +69,7 @@ func move_tick(_input: FighterInput) -> bool:
 	# On its frame `startup` (state_frame counts up at the end of the tick).
 	if fighter.state_frame + 1 == (fighter.stats.moveset.get(slot) as MoveData).startup:
 		stance = ((stance + 1) % Stance.size()) as Stance
+		popup_ticks = POPUP_TICKS
 	return true
 
 
@@ -136,14 +158,21 @@ func tug_data(from: Vector2, to: Vector2) -> Array:
 	return [data, side]
 
 
-## Her hands' glow color: red in +, blue in −, none otherwise.
-func glow_color() -> Color:
-	match stance:
-		Stance.PLUS:
-			return PLUS_GLOW
+## A stance's color: red +, blue −, orange ÷, green ×.
+static func stance_color(of: Stance) -> Color:
+	match of:
 		Stance.MINUS:
 			return MINUS_GLOW
-	return Color.TRANSPARENT
+		Stance.DIVIDE:
+			return DIVIDE_GLOW
+		Stance.MULTIPLY:
+			return MULTIPLY_GLOW
+	return PLUS_GLOW
+
+
+## Her hands' glow color: her stance's.
+func glow_color() -> Color:
+	return stance_color(stance)
 
 
 ## The fists [front, back] in a drawing (game px from the feet, facing right, size 1), from the
@@ -163,18 +192,39 @@ static func hands(character_id: String, animation: String, frame: int) -> Array[
 	return out
 
 
-## A small pulsing glow on each fist in + and − (only reads).
+## A small pulsing glow on each fist, then the switch pop-up (only reads).
 func draw(visuals: FighterVisuals, animation: String, frame: int) -> void:
-	var color := glow_color()
-	if color.a == 0.0:
-		return
 	var s := fighter.size_scale()
+	_draw_popup(visuals, s)
+	var color := glow_color()
 	var phase := float(fighter.state_frame % GLOW_PULSE_TICKS) / GLOW_PULSE_TICKS
 	var halo := (GLOW_HALO + GLOW_PULSE * sin(phase * TAU)) * s
 	for hand in hands(fighter.character_id, animation, frame):
 		var at := Vector2(hand.x * fighter.facing, hand.y) * s
 		visuals.draw_circle(at, halo, Color(color, 0.35))
 		visuals.draw_circle(at, GLOW_CORE * s, Color(color, 0.8))
+
+
+## The new stance's icon over her head: a dark square with a border and the sign in the stance's
+## color, popping in, drifting up and fading out (see POPUP_TICKS).
+func _draw_popup(visuals: FighterVisuals, s: float) -> void:
+	if popup_ticks <= 0:
+		return
+	var age := POPUP_TICKS - popup_ticks
+	var grow := clampf(float(age + 1) / POPUP_GROW, 0.0, 1.0)
+	var pop := (1.0 + 0.3 * sin(grow * PI)) * grow   # overshoots, then settles at 1
+	var alpha := clampf(float(popup_ticks) / POPUP_FADE, 0.0, 1.0)
+	var unit := POPUP_UNIT * pop
+	var side := StanceBadge.SIZE * unit
+	var rise := POPUP_RISE * float(age) / POPUP_TICKS
+	var center := Vector2(0.0, -(POPUP_HEIGHT * s + rise) - side / 2.0)
+	var color := stance_color(stance)
+	visuals.draw_rect(Rect2(center - Vector2(side, side) / 2.0, Vector2(side, side)),
+			Color(StanceBadge.BACKGROUND, alpha))
+	visuals.draw_rect(Rect2(center - Vector2(side, side) / 2.0 + Vector2(unit, unit) / 2.0,
+			Vector2(side, side) - Vector2(unit, unit)), Color(color, alpha), false, unit)
+	StanceBadge.draw_sign(visuals, stance, center - Vector2(side, side) / 2.0, unit,
+			Color(color, alpha))
 
 
 ## The stance sign on the portrait's bottom-right corner.
